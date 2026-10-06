@@ -1,0 +1,49 @@
+name: Burndown chart
+
+on:
+  schedule:
+    - cron: "0 22 * * *"   # every day at 22:00 UTC (00:00 in Spain, summer time)
+  workflow_dispatch:         # run it manually from the Actions tab
+
+env:
+  MILESTONE: Sprint 1
+  SPRINT_START: "2026-10-05"
+  SPRINT_END: "2026-10-27"
+  THEME: light               # light or dark, like your GitHub theme
+
+jobs:
+  burndown:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          # Noto Sans is the font GitHub uses on Linux
+          sudo apt-get update && sudo apt-get install -y fonts-noto-core
+          pip install matplotlib
+
+      - name: Generate burndown
+        env:
+          GH_TOKEN: ${{ github.token }}   # lets the gh CLI read the repo's issues
+        run: |
+          python scripts/burndown.py \
+            --repo "${{ github.repository }}" \
+            --milestone "$MILESTONE" \
+            --start "$SPRINT_START" \
+            --end "$SPRINT_END" \
+            --theme "$THEME" \
+            --output "burndown-$MILESTONE.png"
+
+      - name: Upload chart
+        uses: actions/upload-artifact@v4
+        with:
+          name: burndown-${{ env.MILESTONE }}
+          path: burndown-${{ env.MILESTONE }}.png
