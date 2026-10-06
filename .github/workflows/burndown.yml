@@ -9,6 +9,7 @@ env:
   MILESTONE: Sprint 1
   SPRINT_START: "2026-10-05"
   SPRINT_END: "2026-10-27"
+  OUTPUT_FILE: burndown-sprint-1.png
   THEME: light               # light or dark, like your GitHub theme
 
 jobs:
@@ -40,10 +41,10 @@ jobs:
             --start "$SPRINT_START" \
             --end "$SPRINT_END" \
             --theme "$THEME" \
-            --output "burndown-$MILESTONE.png"
+            --output "$OUTPUT_FILE"
 
       - name: Upload chart
         uses: actions/upload-artifact@v4
         with:
-          name: burndown-${{ env.MILESTONE }}
-          path: burndown-${{ env.MILESTONE }}.png
+          name: burndown-sprint-1
+          path: ${{ env.OUTPUT_FILE }}
