@@ -35,7 +35,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}   # lets the gh CLI read the repo's issues
         run: |
           python scripts/burndown.py \
-            --repo "${{ github.repository }}" \
+            --repo "$GITHUB_REPOSITORY" \
             --milestone "$MILESTONE" \
             --start "$SPRINT_START" \
             --end "$SPRINT_END" \
