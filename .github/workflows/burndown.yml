@@ -10,13 +10,15 @@ env:
   SPRINT_START: "2026-10-05"
   SPRINT_END: "2026-10-27"
   OUTPUT_FILE: burndown-sprint-1.png
-  THEME: light               # light or dark, like your GitHub theme
+  THEME: light                       # light or dark
+  PROJECT_NUMBER: "1"                # number in the Project's URL: github.com/users/<owner>/projects/<number>
+  ESTIMATE_FIELD: Hours estimated    # exact name of the Project's estimated-hours field
+  ACTUAL_FIELD: Hours completed      # exact name of the Project's actual-hours field
 
 jobs:
   burndown:
     runs-on: ubuntu-latest
     permissions:
-      issues: read
       contents: read
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +35,8 @@ jobs:
 
       - name: Generate burndown
         env:
-          GH_TOKEN: ${{ github.token }}   # lets the gh CLI read the repo's issues
+          # Personal token with the read:project scope (github.token cannot read user Projects)
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
         run: |
           python scripts/burndown.py \
             --repo "$GITHUB_REPOSITORY" \
@@ -41,6 +44,9 @@ jobs:
             --start "$SPRINT_START" \
             --end "$SPRINT_END" \
             --theme "$THEME" \
+            --project-number "$PROJECT_NUMBER" \
+            --estimate-field "$ESTIMATE_FIELD" \
+            --actual-field "$ACTUAL_FIELD" \
             --output "$OUTPUT_FILE"
 
       - name: Upload chart
