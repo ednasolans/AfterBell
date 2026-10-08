@@ -1,0 +1,24 @@
+name: Set Actual Start
+
+# When a branch is created, write today's date in the "Actual Start" field of
+# the issue whose number is in the branch name (only if the field is empty).
+on:
+  create:
+
+jobs:
+  set-actual-start:
+    if: github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set Actual Start
+        env:
+          # Personal token with the project and repo scopes
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          BRANCH: ${{ github.event.ref }}
+          REPO: ${{ github.repository }}
+          PROJECT_NUMBER: "2"     # number in the Project's URL
+        run: python3 scripts/set_actual_start.py
