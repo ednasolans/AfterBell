@@ -21,4 +21,4 @@ jobs:
           BRANCH: ${{ github.event.ref }}
           REPO: ${{ github.repository }}
           PROJECT_NUMBER: "2"     # number in the Project's URL
-        run: python3 scripts/set_actual_start.py
+        run: python3 scripts/set-actual-start.py
