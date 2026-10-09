@@ -7,7 +7,7 @@ on:
 
 env:
   MILESTONE: Sprint 1
-  SPRINT_START: "2026-10-05"
+  SPRINT_START: "2026-10-06"
   SPRINT_END: "2026-10-27"
   THEME: light                        # light or dark
   PROJECT_NUMBER: "2"                
