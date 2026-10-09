@@ -1,0 +1,53 @@
+name: Sprint EVM metrics
+
+# Run it once, at the end of each sprint, from the Actions tab (Run workflow).
+on:
+  workflow_dispatch:
+    inputs:
+      milestone:
+        description: "Milestone title (e.g. Sprint 1)"
+        required: true
+        default: "Sprint 1"
+      report_date:
+        description: "Report date, usually the last day of the sprint (YYYY-MM-DD)"
+        required: true
+      hourly_rate:
+        description: "Cost of one hour in euros"
+        required: true
+        default: "20"
+
+jobs:
+  evm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Calculate EVM metrics
+        env:
+          # Personal token with the read:project scope (same one as the sprint charts)
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          MILESTONE: ${{ inputs.milestone }}
+          REPORT_DATE: ${{ inputs.report_date }}
+          HOURLY_RATE: ${{ inputs.hourly_rate }}
+          PROJECT_NUMBER: "2"
+        run: |
+          python scripts/evm.py \
+            --repo "$GITHUB_REPOSITORY" \
+            --milestone "$MILESTONE" \
+            --date "$REPORT_DATE" \
+            --hourly-rate "$HOURLY_RATE" \
+            --project-number "$PROJECT_NUMBER" > evm-report.md
+          # Show the report on the run's summary page
+          cat evm-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: evm-report
+          path: evm-report.md
