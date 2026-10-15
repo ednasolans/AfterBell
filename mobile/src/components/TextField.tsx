@@ -1,4 +1,4 @@
-import { type KeyboardTypeOptions, View, Text, TextInput, StyleSheet } from 'react-native';
+import { type KeyboardTypeOptions, View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
 
 interface TextFieldProps {
   label: string;
@@ -7,6 +7,7 @@ interface TextFieldProps {
   error?: string;
   placeholder?: string;
   keyboardType?: KeyboardTypeOptions;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
 }
 
 export function TextField({ label, value, onChangeText, error, placeholder, keyboardType }: TextFieldProps) {
