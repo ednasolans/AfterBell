@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TextField } from '@/components/TextField';
 import { useTechnicalSheetForm } from '../hooks/useTechnicalSheetForm';
 import { Select, SelectOption } from '@/components/Select';    
@@ -9,6 +9,7 @@ import { AGE_RANGE_LABELS, AGE_RANGES, type AgeRange } from '@/lib/ages';
 import { ACTIVITY_CATEGORIES, ACTIVITY_CATEGORY_LABELS } from '../types';
 import { ScheduleEditor } from './ScheduleEditor';
 import { PriceField } from './PriceField';
+import { hasErrors } from '../validation';
 
 
 
@@ -39,8 +40,19 @@ const FACILITY_OPTIONS: SelectOption<Facility>[] = FACILITIES.map((facility) => 
   label: FACILITY_LABELS[facility],
 }));
 
-export function TechnicalSheetForm() {
-  const { form, updateField } = useTechnicalSheetForm();
+type TechnicalSheetFormProps = {
+  onSaved?: () => void;
+};
+
+export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
+  const { form, updateField, errors, isSaving, saveError, submit } = useTechnicalSheetForm();
+
+  async function handleSave() {
+    const saved = await submit();
+    if (saved) {
+      onSaved?.();
+    }
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -50,6 +62,7 @@ export function TechnicalSheetForm() {
         label="Name"
         value={form.name}
         onChangeText={(text) => updateField('name', text)}
+        error={errors.name}
       />
     
       <Select
@@ -58,23 +71,27 @@ export function TechnicalSheetForm() {
           options={providerTypeOptions}
           value={form.providerType}
           onChange={(type) => updateField('providerType', type)}
+          error={errors.providerType}
       />
 
       <TextField
         label="City"
         value={form.city}
         onChangeText={(text) => updateField('city', text)}
+        error={errors.city}
       />
       <TextField
         label="Address"
         value={form.address}
         onChangeText={(text) => updateField('address', text)}
+        error={errors.address}
       />
       <TextField
         label="Phone number"
         value={form.phoneNumber}
         keyboardType="phone-pad"
         onChangeText={(text) => updateField('phoneNumber', text)}
+        error={errors.phoneNumber}
       />
       <TextField
         label="Email"
@@ -82,6 +99,7 @@ export function TechnicalSheetForm() {
         keyboardType="email-address"
         autoCapitalize="none"
         onChangeText={(text) => updateField('email', text)}
+        error={errors.email}
       />
       <TextField
         label="Website"
@@ -89,6 +107,7 @@ export function TechnicalSheetForm() {
         keyboardType="url"
         autoCapitalize="none"
         onChangeText={(text) => updateField('website', text)}
+        error={errors.website}
       />
       <Text style={styles.sectionTitle}>Activity</Text>
 
@@ -98,6 +117,7 @@ export function TechnicalSheetForm() {
         options={ageRangeOptions}
         values={form.targetAgeRanges}
         onChange={(ranges) => updateField('targetAgeRanges', ranges)}
+        error={errors.targetAgeRanges}
       />
       <MultiSelect
         label="Activity"
@@ -105,10 +125,12 @@ export function TechnicalSheetForm() {
         options={activityCategoryOptions}
         values={form.activityTypes}
         onChange={(types) => updateField('activityTypes', types)}
+        error={errors.activityTypes}
       />
       <ScheduleEditor
         schedule={form.schedule}
         onChange={(schedule) => updateField('schedule', schedule)}
+        error={errors.schedule}
       />
       
       <Text style={styles.sectionTitle}>Prices</Text>
@@ -119,6 +141,7 @@ export function TechnicalSheetForm() {
               label="Minimum price (€)"
               value={form.priceMin}
               onChange={(value) => updateField('priceMin', value)}
+              error={errors.priceMin}
             />
           </View>
           <View style={styles.rowItem}>
@@ -126,6 +149,7 @@ export function TechnicalSheetForm() {
               label="Maximum price (€)"
               value={form.priceMax}
               onChange={(value) => updateField('priceMax', value)}
+              error={errors.priceMax}
             />
           </View>
         </View>
@@ -147,6 +171,26 @@ export function TechnicalSheetForm() {
           onChange={(values) => updateField('facilities', values)}
           placeholder="Choose the facilities you offer"
         />
+
+        {hasErrors(errors) ? (
+          <Text style={styles.formError}>Please fix the errors above before saving.</Text>
+        ) : null}
+
+        {saveError ? <Text style={styles.formError}>{saveError}</Text> : null}
+
+        <Pressable
+          onPress={handleSave}
+          disabled={isSaving}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: isSaving, busy: isSaving }}
+          style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+        >
+          {isSaving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>Save</Text>
+          )}
+        </Pressable>
     </ScrollView>
   );
 }
@@ -160,5 +204,26 @@ const styles = StyleSheet.create({
   },
   rowItem: {
     flex: 1,
+  },
+  formError: {
+  color: '#c00',
+  marginTop: 8,
+  textAlign: 'center',
+  },
+  saveButton: {
+    marginTop: 16,
+    marginBottom: 32,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#2563eb',
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
