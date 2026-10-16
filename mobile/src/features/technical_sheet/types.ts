@@ -73,3 +73,12 @@ export const EMPTY_TECHNICAL_SHEET_FORM: TechnicalSheetForm = {
     pricePeriod: null,
     facilities: [],
 };
+
+export const PROVIDER_TYPE_LABELS: Record<ProviderType, string> = {
+  sports_club: 'Sports club',
+  music_school: 'Music school',
+  language_school: 'Language school',
+  art_school: 'Art school',
+  tutoring_academy: 'Tutoring academy',
+  private_tutor: 'Private tutor'
+};
