@@ -112,3 +112,13 @@ export const PROVIDER_TYPE_LABELS: Record<ProviderType, string> = {
   tutoring_academy: 'Tutoring academy',
   private_tutor: 'Private tutor'
 };
+
+export const WEEK_DAY_LABELS: Record<WeekDay, string> = {
+  monday: 'Monday',
+  tuesday: 'Tuesday',
+  wednesday: 'Wednesday',
+  thursday: 'Thursday',
+  friday: 'Friday',
+  saturday: 'Saturday',
+  sunday: 'Sunday',
+};

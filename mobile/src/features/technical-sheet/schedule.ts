@@ -1,4 +1,4 @@
-import { TimeSlot, WEEK_DAYS } from './types';
+import { TimeSlot, WEEK_DAY_LABELS, WEEK_DAYS, type WeekDay } from './types';
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -25,4 +25,21 @@ export function addTimeSlot(schedule: readonly TimeSlot[], slot: TimeSlot): Time
 
 export function removeTimeSlot(schedule: readonly TimeSlot[], index: number): TimeSlot[] {
   return schedule.filter((_, i) => i !== index);
+}
+
+export function formatTimeSlot(slot: TimeSlot): string {
+  return `${WEEK_DAY_LABELS[slot.day]} ${slot.startTime}–${slot.endTime}`;
+}
+
+// Builds a slot from the editor inputs, or returns null if they are not a valid slot yet
+export function buildTimeSlot(
+  day: WeekDay | null,
+  startTime: string,
+  endTime: string,
+): TimeSlot | null {
+  if (day === null) {
+    return null;
+  }
+  const slot: TimeSlot = { day, startTime: startTime.trim(), endTime: endTime.trim() };
+  return isValidTimeSlot(slot) ? slot : null;
 }

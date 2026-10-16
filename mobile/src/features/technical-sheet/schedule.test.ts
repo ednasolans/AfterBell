@@ -1,4 +1,4 @@
-import { addTimeSlot, isValidTime, isValidTimeSlot, removeTimeSlot } from './schedule';
+import { addTimeSlot, buildTimeSlot, formatTimeSlot, isValidTime, isValidTimeSlot, removeTimeSlot } from './schedule';
 import { type TimeSlot } from './types';
 
 // Reusable slots for the add/remove tests
@@ -69,5 +69,29 @@ describe('removeTimeSlot', () => {
 
   it('returns the same slots when the position does not exist', () => {
     expect(removeTimeSlot([MONDAY], 5)).toEqual([MONDAY]);
+  });
+});
+describe('formatTimeSlot', () => {
+  it('shows the day label and the time range', () => {
+    expect(formatTimeSlot(MONDAY)).toBe('Monday 17:00–18:30');
+  });
+});
+
+describe('buildTimeSlot', () => {
+  it('builds a slot from valid inputs', () => {
+    expect(buildTimeSlot('monday', '17:00', '18:30')).toEqual(MONDAY);
+  });
+
+  it('trims spaces around the times', () => {
+    expect(buildTimeSlot('monday', ' 17:00 ', '18:30 ')).toEqual(MONDAY);
+  });
+
+  it('returns null when no day is chosen', () => {
+    expect(buildTimeSlot(null, '17:00', '18:30')).toBeNull();
+  });
+
+  it('returns null when the times are not a valid slot', () => {
+    expect(buildTimeSlot('monday', '18:30', '17:00')).toBeNull();
+    expect(buildTimeSlot('monday', '', '')).toBeNull();
   });
 });

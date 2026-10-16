@@ -6,6 +6,8 @@ import { ActivityCategory, PROVIDER_TYPES, PROVIDER_TYPE_LABELS } from '../types
 import { MultiSelect } from '@/components/MultiSelect';
 import { AGE_RANGE_LABELS, AGE_RANGES, type AgeRange } from '@/lib/ages';
 import { ACTIVITY_CATEGORIES, ACTIVITY_CATEGORY_LABELS } from '../types';
+import { ScheduleEditor } from './ScheduleEditor';
+
 const providerTypeOptions = PROVIDER_TYPES.map((type) => ({
   value: type,
   label: PROVIDER_TYPE_LABELS[type],
@@ -89,6 +91,10 @@ export function TechnicalSheetForm() {
         options={activityCategoryOptions}
         values={form.activityTypes}
         onChange={(types) => updateField('activityTypes', types)}
+      />
+      <ScheduleEditor
+        schedule={form.schedule}
+        onChange={(schedule) => updateField('schedule', schedule)}
       />
     </ScrollView>
   );
