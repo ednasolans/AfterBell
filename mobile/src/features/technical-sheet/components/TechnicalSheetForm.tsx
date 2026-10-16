@@ -2,12 +2,14 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TextField } from '@/components/TextField';
 import { useTechnicalSheetForm } from '../hooks/useTechnicalSheetForm';
 import { Select, SelectOption } from '@/components/Select';    
-import { ActivityCategory, PROVIDER_TYPES, PROVIDER_TYPE_LABELS } from '../types';
+import { ActivityCategory, PROVIDER_TYPES, PROVIDER_TYPE_LABELS,FACILITIES,
+  FACILITY_LABELS, PRICE_PERIODS, PRICE_PERIOD_LABELS, type Facility, type PricePeriod, } from '../types';
 import { MultiSelect } from '@/components/MultiSelect';
 import { AGE_RANGE_LABELS, AGE_RANGES, type AgeRange } from '@/lib/ages';
 import { ACTIVITY_CATEGORIES, ACTIVITY_CATEGORY_LABELS } from '../types';
 import { ScheduleEditor } from './ScheduleEditor';
 import { PriceField } from './PriceField';
+
 
 
 const providerTypeOptions = PROVIDER_TYPES.map((type) => ({
@@ -26,6 +28,16 @@ const activityCategoryOptions: SelectOption<ActivityCategory>[] = ACTIVITY_CATEG
     label: ACTIVITY_CATEGORY_LABELS[category],
   }),
 );
+
+const PRICE_PERIOD_OPTIONS: SelectOption<PricePeriod>[] = PRICE_PERIODS.map((period) => ({
+  value: period,
+  label: PRICE_PERIOD_LABELS[period],
+}));
+
+const FACILITY_OPTIONS: SelectOption<Facility>[] = FACILITIES.map((facility) => ({
+  value: facility,
+  label: FACILITY_LABELS[facility],
+}));
 
 export function TechnicalSheetForm() {
   const { form, updateField } = useTechnicalSheetForm();
@@ -117,6 +129,24 @@ export function TechnicalSheetForm() {
             />
           </View>
         </View>
+
+        <Select
+          label="Price period"
+          value={form.pricePeriod}
+          options={PRICE_PERIOD_OPTIONS}
+          onChange={(value) => updateField('pricePeriod', value)}
+          placeholder="Choose a period"
+        />
+
+        <Text style={styles.sectionTitle}>Facilities</Text>
+
+        <MultiSelect
+          label="Facilities"
+          values={form.facilities}
+          options={FACILITY_OPTIONS}
+          onChange={(values) => updateField('facilities', values)}
+          placeholder="Choose the facilities you offer"
+        />
     </ScrollView>
   );
 }

@@ -62,6 +62,43 @@ export const PRICE_PERIODS = [
     'per_year',
 ] as const;
 
+export const PRICE_PERIOD_LABELS: Record<PricePeriod, string> = {
+  per_hour: 'Per hour',
+  per_day: 'Per day',
+  per_week: 'Per week',
+  per_month: 'Per month',
+  per_term: 'Per term',
+  per_year: 'Per year',
+};
+
+export const FACILITIES = [
+  'parking',
+  'changing_rooms',
+  'showers',
+  'lockers',
+  'waiting_area',
+  'cafeteria',
+  'wifi',
+  'air_conditioning',
+  'outdoor_space',
+  'wheelchair_access',
+] as const;
+
+export type Facility = (typeof FACILITIES)[number];
+
+export const FACILITY_LABELS: Record<Facility, string> = {
+  parking: 'Parking',
+  changing_rooms: 'Changing rooms',
+  showers: 'Showers',
+  lockers: 'Lockers',
+  waiting_area: 'Waiting area for families',
+  cafeteria: 'Cafeteria',
+  wifi: 'Wi-Fi',
+  air_conditioning: 'Air conditioning',
+  outdoor_space: 'Outdoor space',
+  wheelchair_access: 'Wheelchair access',
+};
+
 export type PricePeriod = (typeof PRICE_PERIODS)[number];
 
 export interface TimeSlot{
@@ -84,7 +121,7 @@ export interface TechnicalSheetForm {
     priceMin: number | null;
     priceMax: number | null;
     pricePeriod: PricePeriod | null;
-    facilities: string[];
+    facilities: Facility[];
 }
 
 export const EMPTY_TECHNICAL_SHEET_FORM: TechnicalSheetForm = {

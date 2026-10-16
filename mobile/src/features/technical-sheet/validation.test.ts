@@ -1,6 +1,7 @@
 import { EMPTY_TECHNICAL_SHEET_FORM, type TechnicalSheetForm } from './types';
 import { hasErrors, validateTechnicalSheet } from './validation';
 import { ActivityCategory } from './types';
+import { Facility } from './types';
 
 const VALID_SHEET: TechnicalSheetForm = {
             name: 'Some Name',
@@ -16,7 +17,7 @@ const VALID_SHEET: TechnicalSheetForm = {
             priceMin: 10,
             priceMax: 100,
             pricePeriod: 'per_hour',
-            facilities: ['facility1', 'facility2'],
+            facilities: ['wifi', 'cafeteria'] as Facility[],
         };
 
 
