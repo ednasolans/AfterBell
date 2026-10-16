@@ -30,7 +30,7 @@ describe('validateTechnicalSheet', () => {
             phoneNumber: 'Enter a phone number or an email',
             activityTypes: 'At least one activity type is required',
             targetAgeRanges: 'At least one target age range is required',
-            schedule: 'At least one time slot is required',
+            schedule: 'Add at least one time slot',
             priceMin: 'Minimum price is required',
             priceMax: 'Maximum price is required',
         });
@@ -95,12 +95,33 @@ describe('validateTechnicalSheet', () => {
         it('requires at least one time slot', () => {
             const sheetWithoutSchedule = { ...VALID_SHEET, schedule: [] };
             const errors = validateTechnicalSheet(sheetWithoutSchedule);
-            expect(errors.schedule).toBe('At least one time slot is required');
+            expect(errors.schedule).toBe('Add at least one time slot');
         });
         it('treats activity types with only whitespace as empty', () => {
             const errors = validateTechnicalSheet({ ...VALID_SHEET, activityTypes: [] });
             expect(errors.activityTypes).toBeDefined();
         });
+        it('rejects a schedule with an invalid time slot', () => {
+            const sheet: TechnicalSheetForm = {
+                ...VALID_SHEET,
+                schedule: [
+                { day: 'monday', startTime: '17:00', endTime: '18:00' },
+                { day: 'friday', startTime: '19:00', endTime: '18:00' },
+                ],
+            };
+            expect(validateTechnicalSheet(sheet).schedule).toBeDefined();
+            });
+
+            it('accepts a schedule with several valid time slots', () => {
+            const sheet: TechnicalSheetForm = {
+                ...VALID_SHEET,
+                schedule: [
+                { day: 'monday', startTime: '17:00', endTime: '18:00' },
+                { day: 'friday', startTime: '10:00', endTime: '11:30' },
+                ],
+            };
+            expect(validateTechnicalSheet(sheet).schedule).toBeUndefined();
+            });
     });
     describe('prices', () => {
         it('requires both minimum and maximum prices', () => {

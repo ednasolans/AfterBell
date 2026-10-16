@@ -1,5 +1,6 @@
 import { isValidEmail } from '../../lib/validation';
 import type { TechnicalSheetForm } from './types';
+import { isValidTimeSlot } from './schedule';
 
 export type SheetErrors = Partial<Record<keyof TechnicalSheetForm, string>>;
 
@@ -38,7 +39,9 @@ function validateActivity(sheet: TechnicalSheetForm, errors: SheetErrors): void 
     errors.targetAgeRanges = 'At least one target age range is required';
   }
   if (sheet.schedule.length === 0) {
-    errors.schedule = 'At least one time slot is required';
+    errors.schedule = 'Add at least one time slot';
+  } else if (!sheet.schedule.every(isValidTimeSlot)) {
+    errors.schedule = 'Each time slot needs a valid start time before its end time (HH:MM)';
   }
 }
 
