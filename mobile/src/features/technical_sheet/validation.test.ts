@@ -1,5 +1,6 @@
 import { EMPTY_TECHNICAL_SHEET_FORM, type TechnicalSheetForm } from './types';
 import { hasErrors, validateTechnicalSheet } from './validation';
+import { ActivityCategory } from './types';
 
 const VALID_SHEET: TechnicalSheetForm = {
             name: 'Some Name',
@@ -9,7 +10,7 @@ const VALID_SHEET: TechnicalSheetForm = {
             website: '',
             phoneNumber: '1234567890',
             email: 'user@example.com',
-            activityTypes: ['football'],
+            activityTypes: ['football', 'music'] as ActivityCategory[],
             targetAgeRanges: ['0-3', '4-6'],
             schedule: [{ day: 'monday', startTime: '09:00', endTime: '17:00' } ],
             priceMin: 10,
@@ -97,7 +98,7 @@ describe('validateTechnicalSheet', () => {
             expect(errors.schedule).toBe('At least one time slot is required');
         });
         it('treats activity types with only whitespace as empty', () => {
-            const errors = validateTechnicalSheet({ ...VALID_SHEET, activityTypes: ['  '] });
+            const errors = validateTechnicalSheet({ ...VALID_SHEET, activityTypes: [] });
             expect(errors.activityTypes).toBeDefined();
         });
     });

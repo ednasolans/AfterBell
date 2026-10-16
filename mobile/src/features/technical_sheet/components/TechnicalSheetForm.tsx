@@ -2,10 +2,10 @@ import { ScrollView, StyleSheet, Text } from 'react-native';
 import { TextField } from '@/components/TextField';
 import { useTechnicalSheetForm } from '../hooks/useTechnicalSheetForm';
 import { Select, SelectOption } from '@/components/Select';    
-import { PROVIDER_TYPES, PROVIDER_TYPE_LABELS } from '../types';
+import { ActivityCategory, PROVIDER_TYPES, PROVIDER_TYPE_LABELS } from '../types';
 import { MultiSelect } from '@/components/MultiSelect';
 import { AGE_RANGE_LABELS, AGE_RANGES, type AgeRange } from '@/lib/ages';
-
+import { ACTIVITY_CATEGORIES, ACTIVITY_CATEGORY_LABELS } from '../types';
 const providerTypeOptions = PROVIDER_TYPES.map((type) => ({
   value: type,
   label: PROVIDER_TYPE_LABELS[type],
@@ -15,6 +15,13 @@ const ageRangeOptions: SelectOption<AgeRange>[] = AGE_RANGES.map((range) => ({
   value: range,
   label: AGE_RANGE_LABELS[range],
 }));
+
+const activityCategoryOptions: SelectOption<ActivityCategory>[] = ACTIVITY_CATEGORIES.map(
+  (category) => ({
+    value: category,
+    label: ACTIVITY_CATEGORY_LABELS[category],
+  }),
+);
 
 export function TechnicalSheetForm() {
   const { form, updateField } = useTechnicalSheetForm();
@@ -76,7 +83,13 @@ export function TechnicalSheetForm() {
         values={form.targetAgeRanges}
         onChange={(ranges) => updateField('targetAgeRanges', ranges)}
       />
-      
+      <MultiSelect
+        label="Activity"
+        placeholder="Select activity"
+        options={activityCategoryOptions}
+        values={form.activityTypes}
+        onChange={(types) => updateField('activityTypes', types)}
+      />
     </ScrollView>
   );
 }

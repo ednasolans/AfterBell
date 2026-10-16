@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, StyleSheet, Text } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
 export interface SelectOption<T extends string> {
   value: T;
@@ -32,7 +32,7 @@ export function OptionsModal<T extends string>({
         {/* Catches touches inside the sheet so they do not reach the backdrop and close it */}
         <Pressable style={styles.sheet} onPress={() => {}}>
           <Text style={styles.title}>{title}</Text>
-
+          <ScrollView style={styles.optionsList}>
           {options.map((option) => {
             const selected = isSelected(option.value);
 
@@ -51,6 +51,7 @@ export function OptionsModal<T extends string>({
               </Pressable>
             );
           })}
+          </ScrollView>
 
           {multiple ? (
             <Pressable style={styles.doneButton} onPress={onClose} accessibilityRole="button">
@@ -84,4 +85,5 @@ const styles = StyleSheet.create({
   optionTextSelected: { fontWeight: '600', color: '#0f766e' },
   doneButton: { alignSelf: 'flex-end', paddingHorizontal: 16, paddingVertical: 12 },
   doneText: { fontSize: 16, fontWeight: '600', color: '#0f766e' },
+  optionsList: { maxHeight: 400 },
 });
