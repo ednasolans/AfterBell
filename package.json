@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "db:types": "supabase gen types typescript --local --schema public > mobile/src/lib/database.types.ts"
+  },
+  "devDependencies": {
+    "supabase": "^2.121.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0"
+  }
+}

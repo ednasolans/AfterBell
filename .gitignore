@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Supabase temporary files
+supabase/.branches/
+supabase/.temp/
+
+# Temporal scripts
+test-company.mjs
+test-rls.mjs
+
+# Others
+.DS_Store
