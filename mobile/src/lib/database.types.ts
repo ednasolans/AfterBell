@@ -37,6 +37,26 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"technical_sheets": {
+                  Row: {
+                    "activity_types": (string)[],"address": string | null,"city": string,"created_at": string,"email": string | null,"facilities": (string)[],"id": string,"name": string,"phone_number": string | null,"price_max": number,"price_min": number,"price_period": string,"provider_id": string,"provider_type": string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"website": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "activity_types": (string)[],"address"?: string | null,"city": string,"created_at"?: string,"email"?: string | null,"facilities"?: (string)[],"id"?: string,"name": string,"phone_number"?: string | null,"price_max": number,"price_min": number,"price_period"?: string,"provider_id"?: string,"provider_type": string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"website"?: string | null
+                  }
+                  Update: {
+                    "activity_types"?: (string)[],"address"?: string | null,"city"?: string,"created_at"?: string,"email"?: string | null,"facilities"?: (string)[],"id"?: string,"name"?: string,"phone_number"?: string | null,"price_max"?: number,"price_min"?: number,"price_period"?: string,"provider_id"?: string,"provider_type"?: string,"schedule"?: NonNullable<Json>,"target_age_ranges"?: (string)[],"website"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "technical_sheets_provider_id_fkey"
+      columns: ["provider_id"]
+isOneToOne: false
+      referencedRelation: "accounts"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
