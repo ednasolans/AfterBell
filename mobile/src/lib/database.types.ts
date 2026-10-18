@@ -3,7 +3,25 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type Database = {
   
-  "public": {
+  "graphql_public": {
+          Tables: {
+            [_ in never]: never
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "graphql":
+{ Args: { "extensions"?: Json,"operationName"?: string,"query"?: string,"variables"?: Json }; Returns: Json
+                           }
+          }
+          Enums: {
+            [_ in never]: never
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        },"public": {
           Tables: {
             "accounts": {
                   Row: {
@@ -18,6 +36,26 @@ export type Database = {
                   }
                   Relationships: [
                     
+                  ]
+                },"technical_sheets": {
+                  Row: {
+                    "activity_types": (string)[],"address": string | null,"city": string,"created_at": string,"email": string | null,"facilities": (string)[],"id": string,"name": string,"phone_number": string | null,"price_max": number,"price_min": number,"price_period": string,"provider_id": string,"provider_type": string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"website": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "activity_types": (string)[],"address"?: string | null,"city": string,"created_at"?: string,"email"?: string | null,"facilities"?: (string)[],"id"?: string,"name": string,"phone_number"?: string | null,"price_max": number,"price_min": number,"price_period"?: string,"provider_id"?: string,"provider_type": string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"website"?: string | null
+                  }
+                  Update: {
+                    "activity_types"?: (string)[],"address"?: string | null,"city"?: string,"created_at"?: string,"email"?: string | null,"facilities"?: (string)[],"id"?: string,"name"?: string,"phone_number"?: string | null,"price_max"?: number,"price_min"?: number,"price_period"?: string,"provider_id"?: string,"provider_type"?: string,"schedule"?: NonNullable<Json>,"target_age_ranges"?: (string)[],"website"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "technical_sheets_provider_id_fkey"
+      columns: ["provider_id"]
+isOneToOne: false
+      referencedRelation: "accounts"
+      referencedColumns: ["id"]
+    }
                   ]
                 }
           }
@@ -144,7 +182,11 @@ export type CompositeTypes<
   : never
 
 export const Constants = {
-  "public": {
+  "graphql_public": {
+          Enums: {
+            
+          }
+        },"public": {
           Enums: {
             
           }
