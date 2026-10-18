@@ -56,7 +56,7 @@ export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.sectionTitle}>Basic information</Text>
+      <Text style={styles.sectionTitle} accessibilityRole='header'>Basic information</Text>
 
       <TextField
         label="Name"
@@ -109,7 +109,7 @@ export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
         onChangeText={(text) => updateField('website', text)}
         error={errors.website}
       />
-      <Text style={styles.sectionTitle}>Activity</Text>
+      <Text style={styles.sectionTitle} accessibilityRole='header'>Activity</Text>
 
       <MultiSelect
         label="Target ages"
@@ -133,7 +133,7 @@ export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
         error={errors.schedule}
       />
       
-      <Text style={styles.sectionTitle}>Prices</Text>
+      <Text style={styles.sectionTitle} accessibilityRole='header'>Prices</Text>
 
         <View style={styles.row}>
           <View style={styles.rowItem}>
@@ -163,7 +163,7 @@ export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
           error={errors.pricePeriod}
         />
 
-        <Text style={styles.sectionTitle}>Facilities</Text>
+        <Text style={styles.sectionTitle} accessibilityRole='header'>Facilities</Text>
 
         <MultiSelect
           label="Facilities"

@@ -20,6 +20,7 @@ export function TextField({ label, value, onChangeText, error, placeholder, keyb
                 onChangeText={onChangeText}
                 placeholder={placeholder}
                 keyboardType={keyboardType}
+                accessibilityLabel={label}
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
