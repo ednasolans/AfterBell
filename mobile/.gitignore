@@ -42,4 +42,4 @@ example
 /ios
 /android
 
-coverage/*
+coverage/
