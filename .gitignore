@@ -18,3 +18,7 @@ test-rls.mjs
 
 # Others
 .DS_Store
+
+.vscode/
+
+.claude/
