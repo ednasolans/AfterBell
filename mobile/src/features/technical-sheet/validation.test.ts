@@ -34,6 +34,7 @@ describe('validateTechnicalSheet', () => {
             schedule: 'Add at least one time slot',
             priceMin: 'Minimum price is required',
             priceMax: 'Maximum price is required',
+            pricePeriod: 'Select how the price is charged (per hour, per month, etc.)',
         });
     });
 
@@ -153,6 +154,10 @@ describe('validateTechnicalSheet', () => {
             const errors = validateTechnicalSheet(sheetWithFreeService);
             expect(errors.priceMin).toBeUndefined();
             expect(errors.priceMax).toBeUndefined();
+        });
+        it('requires a price period', () => {
+            const errors = validateTechnicalSheet({ ...VALID_SHEET, pricePeriod: null });
+            expect(errors.pricePeriod).toBeDefined();
         });
     });
 });

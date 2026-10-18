@@ -160,6 +160,7 @@ export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
           options={PRICE_PERIOD_OPTIONS}
           onChange={(value) => updateField('pricePeriod', value)}
           placeholder="Choose a period"
+          error={errors.pricePeriod}
         />
 
         <Text style={styles.sectionTitle}>Facilities</Text>

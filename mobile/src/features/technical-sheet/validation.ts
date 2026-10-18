@@ -62,6 +62,10 @@ function validatePrices(sheet: TechnicalSheetForm, errors: SheetErrors): void {
   } else if (priceMin !== null && priceMax < priceMin) {
     errors.priceMax = 'Maximum price cannot be less than minimum price';
   }
+
+  if (sheet.pricePeriod === null) {
+    errors.pricePeriod = 'Select how the price is charged (per hour, per month, etc.)';
+  }
 }
 
 export function validateTechnicalSheet(sheet: TechnicalSheetForm): SheetErrors {
