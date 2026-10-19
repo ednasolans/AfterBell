@@ -21,7 +21,7 @@ import {
   ACTIVITY_CATEGORY_LABELS,
   type ActivityCategory,
 } from "@/lib/activityCategories";
-import { hasErrors } from "../validation";
+import { hasErrors } from "@/lib/validation";
 
 const providerTypeOptions = PROVIDER_TYPES.map((type) => ({
   value: type,

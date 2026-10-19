@@ -2,7 +2,9 @@ import { useState } from "react";
 
 import { saveTechnicalSheet } from "../api/saveTechnicalSheet";
 import { EMPTY_TECHNICAL_SHEET_FORM, type TechnicalSheetForm } from "../types";
-import { hasErrors, validateTechnicalSheet } from "../validation";
+import { hasErrors } from "@/lib/validation";
+
+import { validateTechnicalSheet } from "../validation";
 
 export function useTechnicalSheetForm() {
   const [form, setForm] = useState<TechnicalSheetForm>(

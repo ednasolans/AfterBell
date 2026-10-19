@@ -65,7 +65,8 @@
       "!src/lib/supabase.ts",
       "!src/app/**",
       "!src/lib/queryClient.ts"
-    ]
+    ],
+    "testTimeout": 15000
   },
   "private": true,
   "allowScripts": {

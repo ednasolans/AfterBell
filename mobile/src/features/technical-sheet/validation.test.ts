@@ -1,5 +1,5 @@
 import { EMPTY_TECHNICAL_SHEET_FORM, type TechnicalSheetForm } from "./types";
-import { hasErrors, validateTechnicalSheet } from "./validation";
+import { validateTechnicalSheet } from "./validation";
 import { type ActivityCategory } from "@/lib/activityCategories";
 import { Facility } from "./types";
 
@@ -94,13 +94,5 @@ describe("validateTechnicalSheet", () => {
       });
       expect(errors.activityTypes).toBeDefined();
     });
-  });
-});
-describe("hasErrors", () => {
-  it("returns false when there are no errors", () => {
-    expect(hasErrors({})).toBe(false);
-  });
-  it("returns true when there is at least one error", () => {
-    expect(hasErrors({ name: "Name is required" })).toBe(true);
   });
 });

@@ -46,7 +46,3 @@ export function validateTechnicalSheet(sheet: TechnicalSheetForm): SheetErrors {
 
   return errors;
 }
-
-export function hasErrors(errors: SheetErrors): boolean {
-  return Object.keys(errors).length > 0;
-}
