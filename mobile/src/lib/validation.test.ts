@@ -1,11 +1,11 @@
-import {isValidPassword } from './validation';
+import { isValidPassword } from "./validation";
 
-describe('isValidPassword', () => {
-  it('accepts passwords with at least 8 characters', () => {
-    expect(isValidPassword('12345678')).toBe(true);
+describe("isValidPassword", () => {
+  it("accepts passwords with at least 8 characters", () => {
+    expect(isValidPassword("12345678")).toBe(true);
   });
 
-  it('rejects shorter passwords', () => {
-    expect(isValidPassword('1234567')).toBe(false);
+  it("rejects shorter passwords", () => {
+    expect(isValidPassword("1234567")).toBe(false);
   });
 });
