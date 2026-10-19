@@ -38,6 +38,7 @@
     "jest": "~29.7.0",
     "jest-expo": "~57.0.5",
     "prettier": "^3.6.2",
+    "test-renderer": "~1.2.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -60,6 +61,7 @@
       "src/**/*.{ts,tsx}",
       "!src/**/*.test.{ts,tsx}",
       "!src/lib/database.types.ts",
+      "!src/lib/supabase.ts",
       "!src/app/**"
     ]
   },
