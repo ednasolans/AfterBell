@@ -1,11 +1,7 @@
-import { isValidEmail } from "../../lib/validation";
+import { isValidEmail, isBlank } from "../../lib/validation";
 import type { TechnicalSheetForm } from "./types";
 
 export type SheetErrors = Partial<Record<keyof TechnicalSheetForm, string>>;
-
-function isBlank(value: string): boolean {
-  return value.trim() === "";
-}
 
 // Section 1: basic information and contact
 function validateBasicInfo(
