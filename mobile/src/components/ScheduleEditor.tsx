@@ -1,10 +1,18 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Select, type SelectOption } from '../../../components/Select'; // NEW
-import { TextField } from '../../../components/TextField'; // NEW
-import { addTimeSlot, buildTimeSlot, formatTimeSlot, removeTimeSlot } from '../schedule';
-import { WEEK_DAYS, WEEK_DAY_LABELS, type TimeSlot, type WeekDay } from '../types';
+import { Select, type SelectOption } from "@/components/Select";
+import { TextField } from "@/components/TextField";
+import {
+  WEEK_DAYS,
+  WEEK_DAY_LABELS,
+  addTimeSlot,
+  buildTimeSlot,
+  formatTimeSlot,
+  removeTimeSlot,
+  type TimeSlot,
+  type WeekDay,
+} from "@/lib/schedule";
 
 // NEW: built once, outside the component, like the other option lists
 const DAY_OPTIONS: SelectOption<WeekDay>[] = WEEK_DAYS.map((day) => ({
@@ -18,11 +26,15 @@ type ScheduleEditorProps = {
   error?: string;
 };
 
-export function ScheduleEditor({ schedule, onChange, error }: ScheduleEditorProps) {
+export function ScheduleEditor({
+  schedule,
+  onChange,
+  error,
+}: ScheduleEditorProps) {
   // NEW: draft of the slot being added; it is not part of the form until "Add" is pressed
   const [day, setDay] = useState<WeekDay | null>(null);
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   const newSlot = buildTimeSlot(day, startTime, endTime); // NEW
   const canAdd = newSlot !== null; // NEW
@@ -33,8 +45,8 @@ export function ScheduleEditor({ schedule, onChange, error }: ScheduleEditorProp
       return;
     }
     onChange(addTimeSlot(schedule, newSlot));
-    setStartTime('');
-    setEndTime('');
+    setStartTime("");
+    setEndTime("");
   }
 
   return (
@@ -45,7 +57,10 @@ export function ScheduleEditor({ schedule, onChange, error }: ScheduleEditorProp
         <Text style={styles.empty}>No time slots yet</Text>
       ) : (
         schedule.map((slot, index) => (
-          <View key={`${slot.day}-${slot.startTime}-${index}`} style={styles.slotRow}>
+          <View
+            key={`${slot.day}-${slot.startTime}-${index}`}
+            style={styles.slotRow}
+          >
             <Text style={styles.slotText}>{formatTimeSlot(slot)}</Text>
             <Pressable
               onPress={() => onChange(removeTimeSlot(schedule, index))}
@@ -112,21 +127,21 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 6,
   },
   empty: {
-    color: '#888',
-    fontStyle: 'italic',
+    color: "#888",
+    fontStyle: "italic",
   },
   slotRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     marginBottom: 6,
   },
@@ -135,10 +150,10 @@ const styles = StyleSheet.create({
   },
   removeText: {
     fontSize: 16,
-    color: '#c00',
+    color: "#c00",
   },
   error: {
-    color: '#c00',
+    color: "#c00",
     fontSize: 12,
     marginTop: 4,
   },
@@ -147,10 +162,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   timeRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   timeField: {
@@ -160,14 +175,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#2563eb',
+    alignItems: "center",
+    backgroundColor: "#2563eb",
   },
   addButtonDisabled: {
     opacity: 0.4,
   },
   addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
   },
 });

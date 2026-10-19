@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import { TextField } from '../../../components/TextField';
-import { parsePrice } from '../price';
+import { TextField } from "@/components/TextField";
+import { parsePrice } from "@/lib/price";
 
 type PriceFieldProps = {
   label: string;
@@ -12,7 +12,7 @@ type PriceFieldProps = {
 
 export function PriceField({ label, value, onChange, error }: PriceFieldProps) {
   // The text can be incomplete while typing ("30,"), so it lives here; the form only gets the number
-  const [text, setText] = useState(value === null ? '' : String(value));
+  const [text, setText] = useState(value === null ? "" : String(value));
 
   function handleChangeText(newText: string) {
     setText(newText);

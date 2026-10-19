@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import { saveTechnicalSheet } from '../api/saveTechnicalSheet';
-import { EMPTY_TECHNICAL_SHEET_FORM, type TechnicalSheetForm } from '../types';
-import { hasErrors, validateTechnicalSheet } from '../validation';
+import { saveTechnicalSheet } from "../api/saveTechnicalSheet";
+import { EMPTY_TECHNICAL_SHEET_FORM, type TechnicalSheetForm } from "../types";
+import { hasErrors, validateTechnicalSheet } from "../validation";
 
 export function useTechnicalSheetForm() {
-  const [form, setForm] = useState<TechnicalSheetForm>(EMPTY_TECHNICAL_SHEET_FORM);
+  const [form, setForm] = useState<TechnicalSheetForm>(
+    EMPTY_TECHNICAL_SHEET_FORM,
+  );
   const [submitted, setSubmitted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -13,7 +15,10 @@ export function useTechnicalSheetForm() {
   // Errors are only shown after the first attempt to save, then they update while typing
   const errors = submitted ? validateTechnicalSheet(form) : {};
 
-  function updateField<K extends keyof TechnicalSheetForm>(field: K, value: TechnicalSheetForm[K]) {
+  function updateField<K extends keyof TechnicalSheetForm>(
+    field: K,
+    value: TechnicalSheetForm[K],
+  ) {
     setForm((previous) => ({ ...previous, [field]: value }));
   }
 
@@ -30,7 +35,7 @@ export function useTechnicalSheetForm() {
       await saveTechnicalSheet(form);
       return true;
     } catch {
-      setSaveError('The technical sheet could not be saved. Please try again.');
+      setSaveError("The technical sheet could not be saved. Please try again.");
       return false;
     } finally {
       setIsSaving(false);
