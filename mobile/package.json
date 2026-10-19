@@ -64,7 +64,8 @@
       "!src/lib/database.types.ts",
       "!src/lib/supabase.ts",
       "!src/app/**",
-      "!src/lib/queryClient.ts"
+      "!src/lib/queryClient.ts",
+      "!src/test-utils/**"
     ],
     "testTimeout": 15000
   },
