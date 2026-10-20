@@ -2,9 +2,11 @@ import { Alert, FlatList, Pressable, StyleSheet, Text } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
+import { formatAddress } from "@/lib/addresses";
 
 import { useDeleteActivity } from "../hooks/useDeleteActivity";
 import { useMyActivities } from "../hooks/useMyActivities";
+import { useMyAddresses } from "../hooks/useMyAddresses";
 import { type Activity } from "../types";
 import { ActivityCard } from "./ActivityCard";
 
@@ -16,6 +18,15 @@ type MyActivitiesListProps = {
 export function MyActivitiesList({ onCreate, onEdit }: MyActivitiesListProps) {
   const activities = useMyActivities();
   const deleteActivity = useDeleteActivity();
+  // Only used to show where each activity takes place: while they load,
+  // or if they fail, the cards are shown without the address
+  const addresses = useMyAddresses();
+  const addressById = new Map(
+    (addresses.data ?? []).map((address) => [
+      address.id,
+      formatAddress(address),
+    ]),
+  );
 
   // Deleting cannot be undone, so the provider has to confirm it
   function confirmDelete(activity: Activity) {
@@ -75,6 +86,7 @@ export function MyActivitiesList({ onCreate, onEdit }: MyActivitiesListProps) {
       renderItem={({ item }) => (
         <ActivityCard
           activity={item}
+          address={addressById.get(item.addressId)}
           onEdit={() => onEdit(item.id)}
           onDelete={() => confirmDelete(item)}
           isDeleting={

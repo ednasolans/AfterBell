@@ -30,6 +30,7 @@ const ROW: ActivityRow = {
   price_max: 40,
   price_period: "per_month",
   max_participants: 12,
+  address_id: "address-1",
   created_at: "2026-10-20T08:00:00Z",
 };
 
@@ -43,6 +44,7 @@ const FORM: ActivityForm = {
   priceMax: 45,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  addressId: "address-1",
 };
 
 const DATABASE_ERROR = { message: "database error" };

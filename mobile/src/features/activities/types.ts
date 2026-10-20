@@ -17,6 +17,8 @@ export interface ActivityForm {
   priceMax: number | null;
   pricePeriod: PricePeriod | null;
   maxParticipants: number | null;
+  // One of the addresses of the provider, entered in its technical sheet
+  addressId: string | null;
 }
 
 export const EMPTY_ACTIVITY_FORM: ActivityForm = {
@@ -29,6 +31,7 @@ export const EMPTY_ACTIVITY_FORM: ActivityForm = {
   priceMax: null,
   pricePeriod: null,
   maxParticipants: null,
+  addressId: null,
 };
 
 // A saved activity, as the app uses it after reading it from the database
@@ -45,5 +48,6 @@ export interface Activity {
   priceMax: number;
   pricePeriod: PricePeriod;
   maxParticipants: number;
+  addressId: string;
   createdAt: string;
 }

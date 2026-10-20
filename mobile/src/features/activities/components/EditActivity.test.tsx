@@ -18,6 +18,9 @@ import { EditActivity } from "./EditActivity";
 
 jest.mock("../api/fetchActivity", () => ({ fetchActivity: jest.fn() }));
 jest.mock("../api/updateActivity", () => ({ updateActivity: jest.fn() }));
+jest.mock("../api/fetchMyAddresses", () => ({
+  fetchMyAddresses: jest.fn().mockResolvedValue([]),
+}));
 
 async function renderEdit(onSaved = jest.fn()) {
   await render(<EditActivity id="activity-1" onSaved={onSaved} />, {

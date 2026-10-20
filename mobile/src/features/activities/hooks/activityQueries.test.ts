@@ -34,6 +34,7 @@ const ACTIVITY: Activity = {
   priceMax: 40,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  addressId: "address-1",
   createdAt: "2026-10-20T08:00:00Z",
 };
 
@@ -47,6 +48,7 @@ const FORM: ActivityForm = {
   priceMax: 45,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  addressId: "address-1",
 };
 
 // Renders a hook inside a fresh QueryClientProvider and spies on invalidations

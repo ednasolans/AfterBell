@@ -8,6 +8,8 @@ import { type Activity } from "../types";
 
 type ActivityCardProps = {
   activity: Activity;
+  // Text of the address where it takes place, if it is already known
+  address?: string;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting: boolean;
@@ -15,6 +17,7 @@ type ActivityCardProps = {
 
 export function ActivityCard({
   activity,
+  address,
   onEdit,
   onDelete,
   isDeleting,
@@ -25,6 +28,7 @@ export function ActivityCard({
       <Text style={styles.detail}>
         {ACTIVITY_CATEGORY_LABELS[activity.category]}
       </Text>
+      {address ? <Text style={styles.detail}>{address}</Text> : null}
       <Text style={styles.detail}>
         {activity.schedule.map(formatTimeSlot).join(", ")}
       </Text>

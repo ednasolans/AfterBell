@@ -13,11 +13,13 @@ import {
 } from "@/test-utils/queryClientWrapper";
 
 import { deleteActivity } from "../api/deleteActivity";
+import { fetchMyAddresses } from "../api/fetchMyAddresses";
 import { fetchMyActivities } from "../api/fetchMyActivities";
 import { MyActivitiesList } from "./MyActivitiesList";
 
 jest.mock("../api/fetchMyActivities", () => ({ fetchMyActivities: jest.fn() }));
 jest.mock("../api/deleteActivity", () => ({ deleteActivity: jest.fn() }));
+jest.mock("../api/fetchMyAddresses", () => ({ fetchMyAddresses: jest.fn() }));
 
 async function renderList(onEdit = jest.fn(), onCreate = jest.fn()) {
   await render(<MyActivitiesList onCreate={onCreate} onEdit={onEdit} />, {
@@ -34,6 +36,11 @@ function pressAlertButton(text: string) {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(Alert, "alert").mockImplementation(() => {});
+  jest
+    .mocked(fetchMyAddresses)
+    .mockResolvedValue([
+      { id: "address-1", address: "C/ Major 1", city: "Lleida" },
+    ]);
 });
 
 describe("MyActivitiesList", () => {
@@ -42,6 +49,16 @@ describe("MyActivitiesList", () => {
     await renderList();
 
     expect(await screen.findByText("Swimming for kids")).toBeOnTheScreen();
+    expect(await screen.findByText("C/ Major 1, Lleida")).toBeOnTheScreen();
+  });
+
+  it("shows the activities without their address if the addresses fail to load", async () => {
+    jest.mocked(fetchMyActivities).mockResolvedValue([ACTIVITY]);
+    jest.mocked(fetchMyAddresses).mockRejectedValue(new Error("Network error"));
+    await renderList();
+
+    expect(await screen.findByText("Swimming for kids")).toBeOnTheScreen();
+    expect(screen.queryByText("C/ Major 1, Lleida")).not.toBeOnTheScreen();
   });
 
   it("shows a message when there are no activities, and can create one", async () => {
