@@ -9,7 +9,7 @@ const VALID_SHEET: TechnicalSheetForm = {
   providerType: "sports_club",
   city: "Some City",
   website: "",
-  phoneNumber: "1234567890",
+  phoneNumber: "973 000 000",
   email: "user@example.com",
   activityTypes: ["football", "music"] as ActivityCategory[],
   facilities: ["wifi", "cafeteria"] as Facility[],
@@ -73,7 +73,7 @@ describe("validateTechnicalSheet", () => {
       const sheetWithValidPhone = {
         ...VALID_SHEET,
         email: "",
-        phoneNumber: "1234567890",
+        phoneNumber: "973 000 000",
       };
       const errors = validateTechnicalSheet(sheetWithValidPhone);
       expect(errors.phoneNumber).toBeUndefined();
