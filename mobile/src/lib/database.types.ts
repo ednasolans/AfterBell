@@ -39,14 +39,14 @@ export type Database = {
                   ]
                 },"activities": {
                   Row: {
-                    "category": string,"created_at": string,"description": string | null,"id": string,"price_max": number,"price_min": number,"price_period": string,"provider_id": string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"title": string,"type": string
+                    "category": string,"created_at": string,"description": string | null,"id": string,"max_participants": number,"price_max": number,"price_min": number,"price_period": string,"provider_id": string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"title": string,"type": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": string,"created_at"?: string,"description"?: string | null,"id"?: string,"price_max": number,"price_min": number,"price_period": string,"provider_id"?: string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"title": string,"type"?: string
+                    "category": string,"created_at"?: string,"description"?: string | null,"id"?: string,"max_participants": number,"price_max": number,"price_min": number,"price_period": string,"provider_id"?: string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"title": string,"type"?: string
                   }
                   Update: {
-                    "category"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"price_max"?: number,"price_min"?: number,"price_period"?: string,"provider_id"?: string,"schedule"?: NonNullable<Json>,"target_age_ranges"?: (string)[],"title"?: string,"type"?: string
+                    "category"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"max_participants"?: number,"price_max"?: number,"price_min"?: number,"price_period"?: string,"provider_id"?: string,"schedule"?: NonNullable<Json>,"target_age_ranges"?: (string)[],"title"?: string,"type"?: string
                   }
                   Relationships: [
                     {

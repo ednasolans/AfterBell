@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { FormSubmit } from "@/components/FormSubmit";
 import { MultiSelect } from "@/components/MultiSelect";
+import { NumberField } from "@/components/NumberField";
 import { PriceField } from "@/components/PriceField";
 import { ScheduleEditor } from "@/components/ScheduleEditor";
 import { Select, type SelectOption } from "@/components/Select";
@@ -12,6 +13,7 @@ import {
   type ActivityCategory,
 } from "@/lib/activityCategories";
 import { AGE_RANGES, AGE_RANGE_LABELS, type AgeRange } from "@/lib/ages";
+import { parseInteger } from "@/lib/numbers";
 import {
   PRICE_PERIODS,
   PRICE_PERIOD_LABELS,
@@ -105,6 +107,14 @@ export function ActivityForm({
         values={form.targetAgeRanges}
         onChange={(ranges) => updateField("targetAgeRanges", ranges)}
         error={errors.targetAgeRanges}
+      />
+      <NumberField
+        label="Maximum participants"
+        placeholder="e.g. 12"
+        value={form.maxParticipants}
+        onChange={(value) => updateField("maxParticipants", value)}
+        parse={parseInteger}
+        error={errors.maxParticipants}
       />
 
       <Text style={styles.sectionTitle} accessibilityRole="header">

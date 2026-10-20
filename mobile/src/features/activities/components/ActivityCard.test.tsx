@@ -19,6 +19,7 @@ describe("ActivityCard", () => {
     expect(screen.getByText("Swimming")).toBeOnTheScreen();
     expect(screen.getByText("Tuesday 17:00–18:00")).toBeOnTheScreen();
     expect(screen.getByText("30–40 € per month")).toBeOnTheScreen();
+    expect(screen.getByText("Up to 12 people")).toBeOnTheScreen();
   });
 
   it("calls onEdit and onDelete from its buttons", async () => {

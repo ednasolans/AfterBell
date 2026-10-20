@@ -29,6 +29,7 @@ const ROW: ActivityRow = {
   price_min: 30,
   price_max: 40,
   price_period: "per_month",
+  max_participants: 12,
   created_at: "2026-10-20T08:00:00Z",
 };
 
@@ -41,6 +42,7 @@ const FORM: ActivityForm = {
   priceMin: 30,
   priceMax: 45,
   pricePeriod: "per_month",
+  maxParticipants: 12,
 };
 
 const DATABASE_ERROR = { message: "database error" };

@@ -24,6 +24,7 @@ export function toActivity(row: ActivityRow): Activity {
     priceMin: row.price_min,
     priceMax: row.price_max,
     pricePeriod: row.price_period as PricePeriod,
+    maxParticipants: row.max_participants,
     createdAt: row.created_at,
   };
 }
@@ -39,5 +40,6 @@ export function toActivityForm(activity: Activity): ActivityForm {
     priceMin: activity.priceMin,
     priceMax: activity.priceMax,
     pricePeriod: activity.pricePeriod,
+    maxParticipants: activity.maxParticipants,
   };
 }

@@ -1,6 +1,4 @@
-import { useState } from "react";
-
-import { TextField } from "@/components/TextField";
+import { NumberField } from "@/components/NumberField";
 import { parsePrice } from "@/lib/price";
 
 type PriceFieldProps = {
@@ -10,23 +8,17 @@ type PriceFieldProps = {
   error?: string;
 };
 
+// A NumberField for prices: decimals with a comma or a dot
 export function PriceField({ label, value, onChange, error }: PriceFieldProps) {
-  // The text can be incomplete while typing ("30,"), so it lives here; the form only gets the number
-  const [text, setText] = useState(value === null ? "" : String(value));
-
-  function handleChangeText(newText: string) {
-    setText(newText);
-    onChange(parsePrice(newText));
-  }
-
   return (
-    <TextField
+    <NumberField
       label={label}
-      value={text}
-      onChangeText={handleChangeText}
-      error={error}
+      value={value}
+      onChange={onChange}
+      parse={parsePrice}
       placeholder="0,00"
       keyboardType="decimal-pad"
+      error={error}
     />
   );
 }

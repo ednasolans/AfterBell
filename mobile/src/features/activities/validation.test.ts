@@ -1,6 +1,8 @@
 import { EMPTY_ACTIVITY_FORM, type ActivityForm } from "./types";
 import {
   DESCRIPTION_MAX_LENGTH,
+  MAX_PARTICIPANTS,
+  MIN_PARTICIPANTS,
   TITLE_MAX_LENGTH,
   validateActivity,
 } from "./validation";
@@ -15,6 +17,7 @@ const VALID_ACTIVITY: ActivityForm = {
   priceMin: 30,
   priceMax: 40,
   pricePeriod: "per_month",
+  maxParticipants: 12,
 };
 
 describe("validateActivity", () => {
@@ -27,6 +30,7 @@ describe("validateActivity", () => {
     expect(Object.keys(errors).sort()).toEqual(
       [
         "category",
+        "maxParticipants",
         "priceMax",
         "priceMin",
         "pricePeriod",
@@ -64,6 +68,33 @@ describe("validateActivity", () => {
           .description,
       ).toBeDefined();
     });
+  });
+
+  describe("maximum participants", () => {
+    it("accepts the limits of the range", () => {
+      expect(
+        validateActivity({
+          ...VALID_ACTIVITY,
+          maxParticipants: MIN_PARTICIPANTS,
+        }),
+      ).toEqual({});
+      expect(
+        validateActivity({
+          ...VALID_ACTIVITY,
+          maxParticipants: MAX_PARTICIPANTS,
+        }),
+      ).toEqual({});
+    });
+
+    it.each([MIN_PARTICIPANTS - 1, MAX_PARTICIPANTS + 1])(
+      "rejects %d",
+      (maxParticipants) => {
+        expect(
+          validateActivity({ ...VALID_ACTIVITY, maxParticipants })
+            .maxParticipants,
+        ).toBeDefined();
+      },
+    );
   });
 
   describe("schedule", () => {

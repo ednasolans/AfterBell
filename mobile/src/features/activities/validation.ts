@@ -9,6 +9,8 @@ export type ActivityErrors = Partial<Record<keyof ActivityForm, string>>;
 // Same limits as the CHECK constraints of the activities table
 export const TITLE_MAX_LENGTH = 120;
 export const DESCRIPTION_MAX_LENGTH = 1000;
+export const MIN_PARTICIPANTS = 1;
+export const MAX_PARTICIPANTS = 1000;
 
 function validateDetails(form: ActivityForm, errors: ActivityErrors): void {
   if (isBlank(form.title)) {
@@ -24,6 +26,14 @@ function validateDetails(form: ActivityForm, errors: ActivityErrors): void {
   }
   if (form.targetAgeRanges.length === 0) {
     errors.targetAgeRanges = "Choose at least one age range";
+  }
+  if (form.maxParticipants === null) {
+    errors.maxParticipants = "Enter the maximum number of people";
+  } else if (
+    form.maxParticipants < MIN_PARTICIPANTS ||
+    form.maxParticipants > MAX_PARTICIPANTS
+  ) {
+    errors.maxParticipants = `The maximum must be between ${MIN_PARTICIPANTS} and ${MAX_PARTICIPANTS} people`;
   }
 }
 

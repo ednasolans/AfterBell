@@ -35,6 +35,7 @@ export function ActivityCard({
           activity.pricePeriod,
         )}
       </Text>
+      <Text style={styles.detail}>Up to {activity.maxParticipants} people</Text>
 
       <View style={styles.actions}>
         <Pressable

@@ -18,6 +18,7 @@ const FORM: ActivityForm = {
   priceMin: 30,
   priceMax: 40,
   pricePeriod: "per_month",
+  maxParticipants: 12,
 };
 
 const insert = jest.fn();

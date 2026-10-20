@@ -17,6 +17,7 @@ const SAVED_ACTIVITY: ActivityFormValues = {
   priceMin: 30,
   priceMax: 40,
   pricePeriod: "per_month",
+  maxParticipants: 12,
 };
 
 // Opens a Select and picks its first option
@@ -95,6 +96,10 @@ describe("ActivityForm", () => {
     );
     await pickFirstOption("Choose a category");
     await tickFirstOption("Choose the age ranges");
+    await fireEvent.changeText(
+      screen.getByLabelText("Maximum participants"),
+      "12",
+    );
     await pickFirstOption("Choose a day");
     const [startInput, endInput] = screen.getAllByPlaceholderText("HH:MM");
     await fireEvent.changeText(startInput, "17:00");
@@ -120,6 +125,7 @@ describe("ActivityForm", () => {
         schedule: [{ day: "monday", startTime: "17:00", endTime: "18:00" }],
         priceMin: 30,
         priceMax: 40.5,
+        maxParticipants: 12,
       }),
     );
   });

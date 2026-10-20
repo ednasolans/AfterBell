@@ -16,6 +16,7 @@ export interface ActivityForm {
   priceMin: number | null;
   priceMax: number | null;
   pricePeriod: PricePeriod | null;
+  maxParticipants: number | null;
 }
 
 export const EMPTY_ACTIVITY_FORM: ActivityForm = {
@@ -27,6 +28,7 @@ export const EMPTY_ACTIVITY_FORM: ActivityForm = {
   priceMin: null,
   priceMax: null,
   pricePeriod: null,
+  maxParticipants: null,
 };
 
 // A saved activity, as the app uses it after reading it from the database
@@ -42,5 +44,6 @@ export interface Activity {
   priceMin: number;
   priceMax: number;
   pricePeriod: PricePeriod;
+  maxParticipants: number;
   createdAt: string;
 }
