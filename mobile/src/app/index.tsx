@@ -11,6 +11,10 @@ export default function Index() {
         Login
       </Link>
 
+      <Link href="/sign-up" style={styles.link}>
+        Sign up
+      </Link>
+
       <Link href="/customer-home" style={styles.link}>
         Customer
       </Link>

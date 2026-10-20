@@ -1,0 +1,12 @@
+{
+  "name": "Escola de Música L'Harmonia",
+  "provider_type": "music_school",
+  "activity_types": ["music"],
+  "facilities": ["waiting_area", "air_conditioning", "wheelchair_access"],
+  "address": "Avinguda Prat de la Riba, 40",
+  "city": "Lleida",
+  "email": "info@harmonia-exemple.cat",
+  "phone_number": "973000001",
+  "website": "https://harmonia-exemple.cat"
+}
+

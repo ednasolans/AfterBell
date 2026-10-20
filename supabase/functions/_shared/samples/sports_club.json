@@ -1,0 +1,11 @@
+{
+  "name": "Club Esportiu Segrià",
+  "provider_type": "sports_club",
+  "activity_types": ["football", "basketball", "swimming"],
+  "facilities": ["changing_rooms", "showers", "parking", "outdoor_field", "indoor_court", "wheelchair_access"],
+  "address": "Avinguda de l'Alcalde Rovira Roure, 120",
+  "city": "Lleida",
+  "email": "info@cesegria-exemple.cat",
+  "phone_number": "973000004",
+  "website": "https://cesegria-exemple.cat"
+}

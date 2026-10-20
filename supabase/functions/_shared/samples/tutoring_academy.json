@@ -1,0 +1,11 @@
+{
+  "name": "Acadèmia d'Estudis Ponent",
+  "provider_type": "tutoring_academy",
+  "activity_types": ["academic_support", "exam_preparation"],
+  "facilities": ["study_room", "air_conditioning", "wifi", "waiting_area"],
+  "address": "Rambla de Ferran, 18",
+  "city": "Lleida",
+  "email": "info@ponent-exemple.cat",
+  "phone_number": "973000005",
+  "website": "https://ponent-exemple.cat"
+}
