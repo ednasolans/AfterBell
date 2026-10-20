@@ -121,7 +121,7 @@ export default function LoginScreen() {
       </Pressable>
 
       <Link href="/sign-up" style={styles.link}>
-        Don't have an account? Sign up
+        Don&apos;t have an account? Sign up
       </Link>
     </KeyboardAvoidingView>
   );
