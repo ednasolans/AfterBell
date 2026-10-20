@@ -1,3 +1,4 @@
+import { type TablesInsert } from "./database.types";
 import { isBlank } from "./validation";
 
 // One address of a provider, as typed in a form.
@@ -40,4 +41,10 @@ export function validateAddress(form: AddressForm): AddressErrors {
 // "C/ Major 1, Lleida"
 export function formatAddress({ address, city }: AddressForm): string {
   return `${address}, ${city}`;
+}
+
+// Converts a validated address into a database row, without surrounding spaces.
+// provider_id is not sent: the database fills it with the logged-in user.
+export function toAddressInsert(form: AddressForm): TablesInsert<"addresses"> {
+  return { address: form.address.trim(), city: form.city.trim() };
 }

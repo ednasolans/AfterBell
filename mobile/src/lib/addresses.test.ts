@@ -3,6 +3,7 @@ import {
   CITY_MAX_LENGTH,
   EMPTY_ADDRESS_FORM,
   formatAddress,
+  toAddressInsert,
   validateAddress,
 } from "./addresses";
 
@@ -52,5 +53,13 @@ describe("formatAddress", () => {
     expect(formatAddress({ address: "C/ Major 1", city: "Lleida" })).toBe(
       "C/ Major 1, Lleida",
     );
+  });
+});
+
+describe("toAddressInsert", () => {
+  it("trims the texts and does not send provider_id", () => {
+    expect(
+      toAddressInsert({ address: " C/ Major 1 ", city: " Lleida " }),
+    ).toEqual({ address: "C/ Major 1", city: "Lleida" });
   });
 });

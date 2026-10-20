@@ -15,7 +15,7 @@ const VALID_SHEET: TechnicalSheetForm = {
   ...EMPTY_TECHNICAL_SHEET_FORM,
   name: "Lleida Swimming Club",
   providerType: "sports_club",
-  city: "Lleida",
+  addresses: [{ address: "C/ Major 1", city: "Lleida" }],
   phoneNumber: "973 000 000",
   activityTypes: ["swimming"],
 };
