@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react-native";
+import { act, renderHook, waitFor } from "@testing-library/react-native";
 
 import {
   createQueryClientWrapper,
@@ -54,13 +54,13 @@ describe("useCreateActivity", () => {
       wrapper: createQueryClientWrapper(queryClient),
     });
 
-    await act(async () => {
-      await expect(result.current.mutateAsync(FORM)).rejects.toThrow(
-        "Network error",
-      );
+    // Run the mutation without awaiting it inside the test: waitFor wraps
+    // every state update in act() until the error is reported
+    await act(() => {
+      result.current.mutate(FORM);
     });
 
-    expect(result.current.isError).toBe(true);
+    await waitFor(() => expect(result.current.isError).toBe(true));
     expect(invalidate).not.toHaveBeenCalled();
   });
 });

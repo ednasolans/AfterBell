@@ -29,3 +29,23 @@ export function parsePrice(text: string): number | null {
   }
   return Number(trimmed.replace(",", "."));
 }
+
+// "30" for whole numbers, "45,50" otherwise (comma as decimal separator, like the input)
+function formatAmount(amount: number): string {
+  return Number.isInteger(amount)
+    ? String(amount)
+    : amount.toFixed(2).replace(".", ",");
+}
+
+// "30 € per month", or "30–40 € per month" when the prices are different
+export function formatPriceRange(
+  min: number,
+  max: number,
+  period: PricePeriod,
+): string {
+  const amount =
+    min === max
+      ? formatAmount(min)
+      : `${formatAmount(min)}–${formatAmount(max)}`;
+  return `${amount} € ${PRICE_PERIOD_LABELS[period].toLowerCase()}`;
+}

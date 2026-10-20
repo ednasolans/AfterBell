@@ -143,12 +143,11 @@ describe("useDeleteActivity", () => {
       useDeleteActivity(),
     );
 
-    await act(async () => {
-      await expect(result.current.mutateAsync("activity-1")).rejects.toThrow(
-        "Network error",
-      );
+    await act(() => {
+      result.current.mutate("activity-1");
     });
 
+    await waitFor(() => expect(result.current.isError).toBe(true));
     expect(invalidate).not.toHaveBeenCalled();
   });
 });

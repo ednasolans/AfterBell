@@ -31,7 +31,8 @@ function validateSchedule(form: ActivityForm, errors: ActivityErrors): void {
   if (form.schedule.length === 0) {
     errors.schedule = "Add at least one time slot";
   } else if (!form.schedule.every(isValidTimeSlot)) {
-    errors.schedule = "Each time slot needs a valid start time before its end time (HH:MM)";
+    errors.schedule =
+      "Each time slot needs a valid start time before its end time (HH:MM)";
   }
 }
 
@@ -49,7 +50,8 @@ function validatePrices(form: ActivityForm, errors: ActivityErrors): void {
   } else if (priceMax < 0) {
     errors.priceMax = "The price cannot be negative";
   } else if (priceMin !== null && priceMin >= 0 && priceMax < priceMin) {
-    errors.priceMax = "The maximum price must be greater than or equal to the minimum";
+    errors.priceMax =
+      "The maximum price must be greater than or equal to the minimum";
   }
 
   if (form.pricePeriod === null) {
