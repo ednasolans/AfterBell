@@ -39,6 +39,8 @@ describe("TechnicalSheetForm", () => {
     expect(
       screen.getByRole("header", { name: "Basic information" }),
     ).toBeOnTheScreen();
+    expect(screen.getByRole("header", { name: "Addresses" })).toBeOnTheScreen();
+    expect(screen.getByRole("header", { name: "Contact" })).toBeOnTheScreen();
     expect(screen.getByRole("header", { name: "Activity" })).toBeOnTheScreen();
     expect(
       screen.getByRole("header", { name: "Facilities" }),
@@ -54,6 +56,7 @@ describe("TechnicalSheetForm", () => {
     expect(
       screen.getByText("Please fix the errors above before saving."),
     ).toBeOnTheScreen();
+    expect(screen.getByText("Address is required")).toBeOnTheScreen();
     expect(mockedSave).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
   });
@@ -69,11 +72,27 @@ describe("TechnicalSheetForm", () => {
       "Lleida Swimming Club",
     );
     await pickFirstOption("Select provider type");
-    await fireEvent.changeText(screen.getByLabelText("City"), "Lleida");
     await fireEvent.changeText(
-      screen.getByLabelText("Address"),
+      screen.getByLabelText("Description"),
+      "Swimming lessons for every age",
+    );
+
+    // Addresses: the main one and a second one
+    await fireEvent.changeText(
+      screen.getByLabelText("Street and number 1"),
       "Carrer Major 1",
     );
+    await fireEvent.changeText(screen.getByLabelText("City 1"), "Lleida");
+    await fireEvent.press(
+      screen.getByRole("button", { name: "Add another address" }),
+    );
+    await fireEvent.changeText(
+      screen.getByLabelText("Street and number 2"),
+      "Av. Catalunya 5",
+    );
+    await fireEvent.changeText(screen.getByLabelText("City 2"), "Balaguer");
+
+    // Contact
     await fireEvent.changeText(
       screen.getByLabelText("Phone number"),
       "973 000 000",
@@ -96,8 +115,11 @@ describe("TechnicalSheetForm", () => {
     expect(mockedSave).toHaveBeenCalledWith(
       expect.objectContaining({
         name: "Lleida Swimming Club",
-        city: "Lleida",
-        address: "Carrer Major 1",
+        description: "Swimming lessons for every age",
+        addresses: [
+          { address: "Carrer Major 1", city: "Lleida" },
+          { address: "Av. Catalunya 5", city: "Balaguer" },
+        ],
         phoneNumber: "973 000 000",
         email: "info@club.cat",
         website: "https://club.cat",
