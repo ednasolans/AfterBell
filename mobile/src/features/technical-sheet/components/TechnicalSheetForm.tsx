@@ -1,10 +1,6 @@
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-} from "react-native";
+import { ScrollView, StyleSheet, Text } from "react-native";
+
+import { FormSubmit } from "@/components/FormSubmit";
 import { TextField } from "@/components/TextField";
 import { useTechnicalSheetForm } from "../hooks/useTechnicalSheetForm";
 import { Select, SelectOption } from "@/components/Select";
@@ -138,27 +134,13 @@ export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
         placeholder="Choose the facilities you offer"
       />
 
-      {hasErrors(errors) ? (
-        <Text style={styles.formError}>
-          Please fix the errors above before saving.
-        </Text>
-      ) : null}
-
-      {saveError ? <Text style={styles.formError}>{saveError}</Text> : null}
-
-      <Pressable
+      <FormSubmit
+        label="Save"
         onPress={handleSave}
-        disabled={isSaving}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: isSaving, busy: isSaving }}
-        style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-      >
-        {isSaving ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.saveButtonText}>Save</Text>
-        )}
-      </Pressable>
+        isSaving={isSaving}
+        hasFieldErrors={hasErrors(errors)}
+        saveError={saveError}
+      />
     </ScrollView>
   );
 }
@@ -166,25 +148,4 @@ export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
 const styles = StyleSheet.create({
   container: { padding: 16 },
   sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
-  formError: {
-    color: "#c00",
-    marginTop: 8,
-    textAlign: "center",
-  },
-  saveButton: {
-    marginTop: 16,
-    marginBottom: 32,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    backgroundColor: "#2563eb",
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
 });

@@ -15,6 +15,8 @@ interface TextFieldProps {
   placeholder?: string;
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: TextInputProps["autoCapitalize"];
+  // Several lines of text, e.g. a description
+  multiline?: boolean;
 }
 
 export function TextField({
@@ -24,16 +26,25 @@ export function TextField({
   error,
   placeholder,
   keyboardType,
+  autoCapitalize,
+  multiline = false,
 }: TextFieldProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[styles.input, error ? styles.inputError : null]}
+        style={[
+          styles.input,
+          multiline && styles.multilineInput,
+          error ? styles.inputError : null,
+        ]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
         keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        multiline={multiline}
+        textAlignVertical={multiline ? "top" : "center"}
         accessibilityLabel={label}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -52,6 +63,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
   },
+  multilineInput: { minHeight: 100 },
   inputError: { borderColor: "red" },
   error: { color: "red", fontSize: 12, marginTop: 4 },
 });
