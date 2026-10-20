@@ -11,7 +11,7 @@ This guide explains what was built so that providers can create and manage their
 
 A provider (`company` account) can:
 
-1. **Create** an activity: title, description, category, target ages, weekly schedule, price range and price period.
+1. **Create** an activity: title, description, category, target ages, maximum number of participants, weekly schedule, price range and price period.
 2. **See its own activities** in a list, newest first.
 3. **Edit** an activity with the same form, filled in with the saved values.
 4. **Delete** an activity, after confirming it. Deleting is permanent.
@@ -37,6 +37,8 @@ Any logged-in user (families included) can read activities, so families will be 
 | **`type`: `whole_year` or `event`**, default `whole_year`, not editable | No type column | Sprint 1 only has whole-year activities; events come later. Changing the type would change the nature of the activity. |
 | **Price range** (`price_min`, `price_max`) **and period** (`per_month`, `per_term`…) as `NUMERIC(8, 2)` | One integer price | A price without a period is ambiguous ("40" per month or per year?), and integers cannot store cents. |
 | **Schedule as a `JSONB` list** of `{ day, startTime, endTime }` | A separate `time_slots` table / a text list | One insert saves the whole activity; it matches the app type `TimeSlot`; it can still be queried by day later. The app validates each slot. |
+| **`max_participants`: required whole number between 1 and 1000**, editable by the owner | Optional / no upper limit | Every activity has a capacity the provider must think about; the upper limit catches typing mistakes (10000 instead of 100). Added with its own migration and its own column-level `GRANT UPDATE` (new columns are not covered by the earlier grant). |
+| **The number of enrolled people is not stored** | An `enrolled_count` column | Enrollments do not exist yet, so nothing would update it, and a stored counter can drift from reality. It will be computed by counting enrollments (view or function) in the enrollments issue, which will also prevent enrolling when an activity is full. |
 | **UUID ids** and `provider_id DEFAULT auth.uid()` | Integer ids (as drawn in the diagram tool, which has no UUID type) | Supabase user ids are UUIDs and every RLS policy compares them with `auth.uid()`. |
 
 ### Security
@@ -69,6 +71,7 @@ Any logged-in user (families included) can read activities, so families will be 
 |---|---|
 | `…_create_activities.sql` | `activities` table with `CHECK` constraints mirroring the app validation and length limits; index on `provider_id`; RLS (read for every logged-in user, create for companies, update/delete for the owner); privileges. |
 | `…_remove_activity_fields_from_technical_sheets.sql` | Removes ages, schedule and prices from `technical_sheets`. |
+| `…_add_max_participants_to_activities.sql` | Adds the required `max_participants` column (1–1000) and lets owners update it. |
 
 `mobile/src/lib/database.types.ts` was regenerated from these migrations.
 
@@ -77,7 +80,7 @@ Any logged-in user (families included) can read activities, so families will be 
 | File | Content |
 |---|---|
 | `types.ts` | `ACTIVITY_TYPES`; `ActivityForm` (form values); `EMPTY_ACTIVITY_FORM`; `Activity` (saved activity). |
-| `validation.ts` | `validateActivity`, split into details, schedule and prices; length limits exported as constants (`TITLE_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`) matching the database. |
+| `validation.ts` | `validateActivity`, split into details, schedule and prices; limits exported as constants (`TITLE_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`, `MAX_PARTICIPANTS`) matching the database. |
 | `api/toActivityInsert.ts` | Form → database row (used to create and to update). Does not send `provider_id` or `type`. |
 | `api/toActivity.ts` | Database row → `Activity`, and `Activity` → form values (to edit). |
 | `api/createActivity.ts` | Inserts an activity. |
@@ -90,7 +93,7 @@ Any logged-in user (families included) can read activities, so families will be 
 | `hooks/useMyActivities.ts`, `useActivity.ts` | Queries (`useQuery`). |
 | `hooks/useCreateActivity.ts`, `useUpdateActivity.ts`, `useDeleteActivity.ts` | Mutations (`useMutation`); refresh the activity queries on success. |
 | `components/ActivityForm.tsx` | The form: details, schedule and prices sections, and `FormSubmit`. |
-| `components/ActivityCard.tsx` | One activity in the list: title, category, schedule, price, Edit and Delete. |
+| `components/ActivityCard.tsx` | One activity in the list: title, category, schedule, price, maximum participants ("Up to 12 people"), Edit and Delete. |
 | `components/MyActivitiesList.tsx` | The list with its four states, the "New activity" button and delete with confirmation. |
 | `components/EditActivity.tsx` | Loads an activity and shows `ActivityForm` filled in. |
 
@@ -111,11 +114,13 @@ Screens only connect a feature component with a hook and decide where to go afte
 |---|---|
 | `lib/schedule.ts` | Week days, `TimeSlot`, time and slot validation, sorting, formatting (moved from the technical sheet). |
 | `lib/price.ts` | Price periods, `parsePrice`, `formatPriceRange` ("30–40 € per month"). |
+| `lib/numbers.ts` | `parseInteger` (whole numbers typed by the user). |
 | `lib/activityCategories.ts` | Activity categories and labels. |
 | `lib/text.ts` | `emptyToNull`. |
 | `lib/validation.ts` | `isBlank` and `hasErrors` (moved here to be shared). |
 | `lib/queryClient.ts` | The TanStack Query client and the foreground refetch. |
 | `components/ScheduleEditor.tsx`, `PriceField.tsx` | Moved from the technical sheet to be shared. |
+| `components/NumberField.tsx` | Number input that keeps the typed text and sends the parsed number; receives the parser as a prop. `PriceField` is a `NumberField` with `parsePrice`; the participants field uses `parseInteger`. |
 | `components/FormSubmit.tsx` | Save button and error messages shared by every form. |
 | `components/LoadingView.tsx`, `ErrorView.tsx` | Loading and error-with-retry screens. |
 | `components/TextField.tsx` | Now supports multiline text (description) and passes `autoCapitalize` (it was ignored before). |
@@ -129,7 +134,7 @@ Screens only connect a feature component with a hook and decide where to go afte
 
 ## 4. How to test it
 
-**Automated:** `npm test` in `mobile/` (173 tests). Every new file with logic is at 100% coverage: validation, mappers, API functions (Supabase mocked), hooks (with a test `QueryClient`) and components (full create flow, edit, list states, delete with confirmation).
+**Automated:** `npm test` in `mobile/` (214 tests in the whole app). Every new file with logic is at 100% coverage: validation, mappers, API functions (Supabase mocked), hooks (with a test `QueryClient`) and components (full create flow, edit, list states, delete with confirmation).
 
 **Database (SQL Editor, impersonating two companies and one family)** — see *Testing RLS* in `mobile/AGENTS.md`:
 
@@ -147,6 +152,9 @@ Screens only connect a feature component with a hook and decide where to go afte
 | 10 | `anon` reads activities | Permission denied | — |
 | 11 | `price_max < price_min` | `activity_price_range_is_valid` violation | — |
 | 12 | A technical sheet without the removed columns | Inserted | — |
+| 13 | Club A creates an activity with `max_participants = 12` | Inserted | 1 |
+| 14 | `max_participants = 0` | `max_participants` check violation | — |
+| 15 | Club A changes `max_participants` of its activity | `UPDATE 1` (column-level grant works) | 2 |
 
 All of them passed.
 
@@ -156,5 +164,6 @@ All of them passed.
 
 - [ ] **End-to-end test on a phone once login works:** a `company` user creates, edits and deletes an activity, and a `customer` user cannot.
 - [ ] The `(provider)` layout must block customers (auth issue).
+- [ ] Enrollments: count enrolled people per activity and block enrolling when `max_participants` is reached (enrollments issue).
 - [ ] Families' activity browsing and filters by category (Sprint 2).
 - [ ] Events (`type = 'event'`) and their own form.
