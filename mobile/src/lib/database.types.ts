@@ -39,18 +39,44 @@ export type Database = {
                   ]
                 },"activities": {
                   Row: {
-                    "category": string,"created_at": string,"description": string | null,"id": string,"max_participants": number,"price_max": number,"price_min": number,"price_period": string,"provider_id": string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"title": string,"type": string
+                    "address_id": string,"category": string,"created_at": string,"description": string | null,"id": string,"max_participants": number,"price_max": number,"price_min": number,"price_period": string,"provider_id": string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"title": string,"type": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": string,"created_at"?: string,"description"?: string | null,"id"?: string,"max_participants": number,"price_max": number,"price_min": number,"price_period": string,"provider_id"?: string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"title": string,"type"?: string
+                    "address_id": string,"category": string,"created_at"?: string,"description"?: string | null,"id"?: string,"max_participants": number,"price_max": number,"price_min": number,"price_period": string,"provider_id"?: string,"schedule": NonNullable<Json>,"target_age_ranges": (string)[],"title": string,"type"?: string
                   }
                   Update: {
-                    "category"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"max_participants"?: number,"price_max"?: number,"price_min"?: number,"price_period"?: string,"provider_id"?: string,"schedule"?: NonNullable<Json>,"target_age_ranges"?: (string)[],"title"?: string,"type"?: string
+                    "address_id"?: string,"category"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"max_participants"?: number,"price_max"?: number,"price_min"?: number,"price_period"?: string,"provider_id"?: string,"schedule"?: NonNullable<Json>,"target_age_ranges"?: (string)[],"title"?: string,"type"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "activities_address_fkey"
+      columns: ["address_id","provider_id"]
+isOneToOne: false
+      referencedRelation: "addresses"
+      referencedColumns: ["id","provider_id"]
+    },{
       foreignKeyName: "activities_provider_id_fkey"
+      columns: ["provider_id"]
+isOneToOne: false
+      referencedRelation: "accounts"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"addresses": {
+                  Row: {
+                    "address": string,"city": string,"created_at": string,"id": string,"provider_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "address": string,"city": string,"created_at"?: string,"id"?: string,"provider_id"?: string
+                  }
+                  Update: {
+                    "address"?: string,"city"?: string,"created_at"?: string,"id"?: string,"provider_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "addresses_provider_id_fkey"
       columns: ["provider_id"]
 isOneToOne: false
       referencedRelation: "accounts"
@@ -59,17 +85,23 @@ isOneToOne: false
                   ]
                 },"technical_sheets": {
                   Row: {
-                    "activity_types": (string)[],"address": string | null,"city": string,"created_at": string,"email": string | null,"facilities": (string)[],"id": string,"name": string,"phone_number": string | null,"provider_id": string,"provider_type": string,"website": string | null
+                    "activity_types": (string)[],"address_id": string,"created_at": string,"description": string | null,"email": string | null,"facilities": (string)[],"id": string,"name": string,"phone_number": string | null,"provider_id": string,"provider_type": string,"website": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "activity_types": (string)[],"address"?: string | null,"city": string,"created_at"?: string,"email"?: string | null,"facilities"?: (string)[],"id"?: string,"name": string,"phone_number"?: string | null,"provider_id"?: string,"provider_type": string,"website"?: string | null
+                    "activity_types": (string)[],"address_id": string,"created_at"?: string,"description"?: string | null,"email"?: string | null,"facilities"?: (string)[],"id"?: string,"name": string,"phone_number"?: string | null,"provider_id"?: string,"provider_type": string,"website"?: string | null
                   }
                   Update: {
-                    "activity_types"?: (string)[],"address"?: string | null,"city"?: string,"created_at"?: string,"email"?: string | null,"facilities"?: (string)[],"id"?: string,"name"?: string,"phone_number"?: string | null,"provider_id"?: string,"provider_type"?: string,"website"?: string | null
+                    "activity_types"?: (string)[],"address_id"?: string,"created_at"?: string,"description"?: string | null,"email"?: string | null,"facilities"?: (string)[],"id"?: string,"name"?: string,"phone_number"?: string | null,"provider_id"?: string,"provider_type"?: string,"website"?: string | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "technical_sheets_address_fkey"
+      columns: ["address_id","provider_id"]
+isOneToOne: false
+      referencedRelation: "addresses"
+      referencedColumns: ["id","provider_id"]
+    },{
       foreignKeyName: "technical_sheets_provider_id_fkey"
       columns: ["provider_id"]
 isOneToOne: false
