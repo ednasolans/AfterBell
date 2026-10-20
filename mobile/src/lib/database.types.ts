@@ -85,6 +85,9 @@ isOneToOne: false
           Functions: {
             "is_company":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"is_valid_schedule":
+{ Args: { "schedule": Json }; Returns: boolean
                            }
           }
           Enums: {
