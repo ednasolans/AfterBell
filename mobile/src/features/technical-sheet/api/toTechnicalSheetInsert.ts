@@ -1,21 +1,18 @@
-import { type TablesInsert } from '../../../lib/database.types';
-import { type TechnicalSheetForm } from '../types';
+import { type TablesInsert } from "../../../lib/database.types";
+import { emptyToNull } from "@/lib/text";
 
+import { type TechnicalSheetForm } from "../types";
 
-export type TechnicalSheetInsert = TablesInsert<'technical_sheets'>;
-
-// Optional text fields are stored as NULL when empty, never as ''
-function emptyToNull(value: string): string | null {
-  const trimmed = value.trim();
-  return trimmed === '' ? null : trimmed;
-}
+export type TechnicalSheetInsert = TablesInsert<"technical_sheets">;
 
 // Converts a validated form into a database row (camelCase -> snake_case).
 // provider_id is not sent: the database fills it with the logged-in user.
-export function toTechnicalSheetInsert(sheet: TechnicalSheetForm): TechnicalSheetInsert {
-  const { providerType, priceMin, priceMax, pricePeriod } = sheet;
-  if (providerType === null || priceMin === null || priceMax === null || pricePeriod === null) {
-    throw new Error('The technical sheet must be validated before saving it');
+export function toTechnicalSheetInsert(
+  sheet: TechnicalSheetForm,
+): TechnicalSheetInsert {
+  const { providerType } = sheet;
+  if (providerType === null) {
+    throw new Error("The technical sheet must be validated before saving it");
   }
 
   return {
@@ -27,12 +24,6 @@ export function toTechnicalSheetInsert(sheet: TechnicalSheetForm): TechnicalShee
     email: emptyToNull(sheet.email),
     website: emptyToNull(sheet.website),
     activity_types: sheet.activityTypes,
-    target_age_ranges: sheet.targetAgeRanges,
-    // Plain objects: an interface is not assignable to the generic Json type
-    schedule: sheet.schedule.map(({ day, startTime, endTime }) => ({ day, startTime, endTime })),
-    price_min: priceMin,
-    price_max: priceMax,
-    price_period: pricePeriod,
     facilities: sheet.facilities,
   };
 }

@@ -1,9 +1,9 @@
-import { AGE_RANGES, AGE_RANGE_LABELS } from './ages';
+import { AGE_RANGES, AGE_RANGE_LABELS } from "./ages";
 
-describe('age ranges', () => {
-  it('has a non-empty label for every range', () => {
+describe("age ranges", () => {
+  it("has a non-empty label for every range", () => {
     AGE_RANGES.forEach((range) => {
-      expect(AGE_RANGE_LABELS[range].trim()).not.toBe('');
+      expect(AGE_RANGE_LABELS[range].trim()).not.toBe("");
     });
   });
 });

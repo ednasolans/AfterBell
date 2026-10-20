@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 interface SelectFieldProps {
   label: string;
@@ -11,8 +11,14 @@ interface SelectFieldProps {
 }
 
 // The closed part of a select: label, field with the current choice and arrow, and error message
-export function SelectField({ label, text, placeholder, onPress, error }: SelectFieldProps) {
-  const hasValue = text !== '';
+export function SelectField({
+  label,
+  text,
+  placeholder,
+  onPress,
+  error,
+}: SelectFieldProps) {
+  const hasValue = text !== "";
 
   return (
     <View style={styles.container}>
@@ -24,7 +30,10 @@ export function SelectField({ label, text, placeholder, onPress, error }: Select
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${hasValue ? text : placeholder}`}
       >
-        <Text style={[styles.text, hasValue ? null : styles.placeholder]} numberOfLines={1}>
+        <Text
+          style={[styles.text, hasValue ? null : styles.placeholder]}
+          numberOfLines={1}
+        >
           {hasValue ? text : placeholder}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#666" />
@@ -37,21 +46,21 @@ export function SelectField({ label, text, placeholder, onPress, error }: Select
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  label: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
   field: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     gap: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
-  fieldError: { borderColor: 'red' },
+  fieldError: { borderColor: "red" },
   text: { flex: 1, fontSize: 16 },
-  placeholder: { color: '#999' },
-  error: { color: 'red', fontSize: 12, marginTop: 4 },
+  placeholder: { color: "#999" },
+  error: { color: "red", fontSize: 12, marginTop: 4 },
 });
