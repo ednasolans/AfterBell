@@ -1,5 +1,5 @@
 import { EMPTY_TECHNICAL_SHEET_FORM, type TechnicalSheetForm } from "./types";
-import { validateTechnicalSheet } from "./validation";
+import { NAME_MAX_LENGTH, CITY_MAX_LENGTH, ADDRESS_MAX_LENGTH, validateTechnicalSheet, EMAIL_MAX_LENGTH } from "./validation";
 import { type ActivityCategory } from "@/lib/activityCategories";
 import { Facility } from "./types";
 
@@ -93,6 +93,36 @@ describe("validateTechnicalSheet", () => {
         activityTypes: [],
       });
       expect(errors.activityTypes).toBeDefined();
+    });
+  });
+  describe("length limits", () => {
+    it.each([
+      ["name", NAME_MAX_LENGTH],
+      ["city", CITY_MAX_LENGTH],
+      ["address", ADDRESS_MAX_LENGTH],
+    ] as const)("accepts %s at its limit and rejects one more character", (field, max) => {
+      const atLimit = "a".repeat(max);
+      expect(validateTechnicalSheet({ ...VALID_SHEET, [field]: atLimit })[field]).toBeUndefined();
+      expect(validateTechnicalSheet({ ...VALID_SHEET, [field]: `${atLimit}a` })[field]).toBeDefined();
+    });
+  });
+
+  describe("contact", () => {
+    it("rejects an invalid phone number", () => {
+      expect(validateTechnicalSheet({ ...VALID_SHEET, phoneNumber: "12345" }).phoneNumber).toBeDefined();
+    });
+
+    it("rejects a website without http:// or https://", () => {
+      expect(validateTechnicalSheet({ ...VALID_SHEET, website: "club.cat" }).website).toBeDefined();
+    });
+
+    it("accepts a website with https://", () => {
+      expect(validateTechnicalSheet({ ...VALID_SHEET, website: "https://club.cat" }).website).toBeUndefined();
+    });
+
+    it("shows only the length error for an email that is too long", () => {
+      const email = `${"a".repeat(EMAIL_MAX_LENGTH)}@club.cat`;
+      expect(validateTechnicalSheet({ ...VALID_SHEET, email }).email).toContain("at most");
     });
   });
 });

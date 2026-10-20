@@ -18,3 +18,15 @@ export function isBlank(value: string): boolean {
 export function hasErrors(errors: object): boolean {
   return Object.keys(errors).length > 0;
 }
+
+// Spanish phone number: 9 digits, optionally with the +34 or 0034 prefix.
+// Spaces, dots and dashes are allowed as separators; anything else is invalid.
+export function isValidPhoneNumber(phoneNumber: string): boolean {
+  const withoutSeparators = phoneNumber.replace(/[\s.-]/g, "");
+  return /^(\+34|0034)?\d{9}$/.test(withoutSeparators);
+}
+
+// Same rule as the database: it must start with http:// or https://
+export function isValidWebsite(url: string): boolean {
+  return /^https?:\/\/[^\s/.]+\.\S+$/i.test(url);
+}
