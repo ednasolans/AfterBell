@@ -1,15 +1,9 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Text, TextInput } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 
+import LoadingButton from '@/components/LoadingButton';
+import { authStyles as styles } from '@/features/auth/authStyles';
 // Adjust the path to wherever your Supabase client lives.
 import { supabase } from '@/lib/supabase';
 
@@ -52,8 +46,6 @@ export default function LoginScreen() {
       }
 
       // Decide the destination area from the account type.
-      // NOTE: if `accounts` links to auth.users through `user_id`
-      // instead of `id`, change the filter to .eq('user_id', data.user.id).
       const { data: account, error: accountError } = await supabase
         .from('accounts')
         .select('account_type')
@@ -61,7 +53,7 @@ export default function LoginScreen() {
         .single();
 
       if (accountError || !account) {
-        // Session exists but we cannot tell the account type: do not leave a half-logged-in user.
+        // Session exists but the account type is unknown: avoid a half-logged-in user.
         await supabase.auth.signOut();
         setError('Could not load your account. Please try again.');
         return;
@@ -107,18 +99,12 @@ export default function LoginScreen() {
 
       {error && <Text style={styles.error}>{error}</Text>}
 
-      <Pressable
-        style={[styles.button, loading && styles.buttonDisabled]}
+      <LoadingButton
+        label="Log in"
         onPress={handleLogin}
-        disabled={loading}
-        accessibilityRole="button"
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Log in</Text>
-        )}
-      </Pressable>
+        loading={loading}
+        style={styles.submit}
+      />
 
       <Link href="/sign-up" style={styles.link}>
         Don&apos;t have an account? Sign up
@@ -126,27 +112,3 @@ export default function LoginScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 8 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  inputError: { borderColor: '#d00' },
-  error: { color: '#d00', fontSize: 13 },
-  button: {
-    backgroundColor: '#111',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  link: { marginTop: 16, textAlign: 'center', color: '#06c' },
-});

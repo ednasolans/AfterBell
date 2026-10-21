@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import LoadingButton from '@/components/LoadingButton';
 // Adjust the path to wherever your Supabase client lives.
 import { supabase } from '@/lib/supabase';
 
@@ -24,30 +25,16 @@ export default function LogoutButton() {
   };
 
   return (
-    <Pressable
-      style={[styles.button, loading && styles.buttonDisabled]}
+    <LoadingButton
+      label="Log out"
+      variant="outline"
       onPress={handleLogout}
-      disabled={loading}
-      accessibilityRole="button"
-    >
-      {loading ? (
-        <ActivityIndicator color="#111" />
-      ) : (
-        <Text style={styles.text}>Log out</Text>
-      )}
-    </Pressable>
+      loading={loading}
+      style={styles.button}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    borderWidth: 1,
-    borderColor: '#111',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  buttonDisabled: { opacity: 0.6 },
-  text: { color: '#111', fontWeight: '600', fontSize: 16 },
+  button: { marginTop: 16 },
 });
