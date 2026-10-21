@@ -22,6 +22,7 @@ import {
 import { hasErrors } from "@/lib/validation";
 
 import { useActivityForm } from "../hooks/useActivityForm";
+import { AddressSelect } from "./AddressSelect";
 import { type ActivityForm as ActivityFormValues } from "../types";
 
 const CATEGORY_OPTIONS: SelectOption<ActivityCategory>[] =
@@ -115,6 +116,16 @@ export function ActivityForm({
         onChange={(value) => updateField("maxParticipants", value)}
         parse={parseInteger}
         error={errors.maxParticipants}
+      />
+
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Place
+      </Text>
+
+      <AddressSelect
+        value={form.addressId}
+        onChange={(addressId) => updateField("addressId", addressId)}
+        error={errors.addressId}
       />
 
       <Text style={styles.sectionTitle} accessibilityRole="header">

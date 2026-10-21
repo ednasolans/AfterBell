@@ -11,6 +11,7 @@ const VALID_FORM: ActivityForm = {
   priceMax: 40.5,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  addressId: "address-1",
 };
 
 describe("toActivityInsert", () => {
@@ -25,6 +26,7 @@ describe("toActivityInsert", () => {
       price_max: 40.5,
       price_period: "per_month",
       max_participants: 12,
+      address_id: "address-1",
     });
   });
 
@@ -48,6 +50,7 @@ describe("toActivityInsert", () => {
     { priceMax: null },
     { pricePeriod: null },
     { maxParticipants: null },
+    { addressId: null },
   ])("throws if the activity was not validated (%o)", (changes) => {
     expect(() => toActivityInsert({ ...VALID_FORM, ...changes })).toThrow();
   });

@@ -8,6 +8,16 @@ import {
 import { type ActivityForm as ActivityFormValues } from "../types";
 import { ActivityForm } from "./ActivityForm";
 
+// The provider has one address. Its loading, error and empty states are
+// tested in AddressSelect.test.tsx; here the form only needs the options.
+jest.mock("../hooks/useMyAddresses", () => ({
+  useMyAddresses: () => ({
+    isPending: false,
+    isError: false,
+    data: [{ id: "address-1", address: "C/ Major 1", city: "Lleida" }],
+  }),
+}));
+
 const SAVED_ACTIVITY: ActivityFormValues = {
   title: "Swimming for kids",
   description: "Small groups",
@@ -18,6 +28,7 @@ const SAVED_ACTIVITY: ActivityFormValues = {
   priceMax: 40,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  addressId: "address-1",
 };
 
 // Opens a Select and picks its first option
@@ -45,6 +56,7 @@ describe("ActivityForm", () => {
     );
 
     expect(screen.getByRole("header", { name: "Details" })).toBeOnTheScreen();
+    expect(screen.getByRole("header", { name: "Place" })).toBeOnTheScreen();
     expect(screen.getByRole("header", { name: "Schedule" })).toBeOnTheScreen();
     expect(screen.getByRole("header", { name: "Prices" })).toBeOnTheScreen();
   });
@@ -100,6 +112,7 @@ describe("ActivityForm", () => {
       screen.getByLabelText("Maximum participants"),
       "12",
     );
+    await pickFirstOption("Choose where it takes place");
     await pickFirstOption("Choose a day");
     const [startInput, endInput] = screen.getAllByPlaceholderText("HH:MM");
     await fireEvent.changeText(startInput, "17:00");
@@ -126,6 +139,7 @@ describe("ActivityForm", () => {
         priceMin: 30,
         priceMax: 40.5,
         maxParticipants: 12,
+        addressId: "address-1",
       }),
     );
   });
@@ -144,6 +158,7 @@ describe("ActivityForm", () => {
     expect(screen.getByDisplayValue("Swimming for kids")).toBeOnTheScreen();
     expect(screen.getByText("Tuesday 17:00–18:00")).toBeOnTheScreen();
     expect(screen.getByDisplayValue("30")).toBeOnTheScreen();
+    expect(screen.getByText("C/ Major 1, Lleida")).toBeOnTheScreen();
     expect(
       screen.getByRole("button", { name: "Save changes" }),
     ).toBeOnTheScreen();

@@ -7,8 +7,11 @@ export type TechnicalSheetInsert = TablesInsert<"technical_sheets">;
 
 // Converts a validated form into a database row (camelCase -> snake_case).
 // provider_id is not sent: the database fills it with the logged-in user.
+// The addresses are saved in their own table first; the sheet only keeps the
+// id of the main one.
 export function toTechnicalSheetInsert(
   sheet: TechnicalSheetForm,
+  mainAddressId: string,
 ): TechnicalSheetInsert {
   const { providerType } = sheet;
   if (providerType === null) {
@@ -18,8 +21,8 @@ export function toTechnicalSheetInsert(
   return {
     name: sheet.name.trim(),
     provider_type: providerType,
-    city: sheet.city.trim(),
-    address: emptyToNull(sheet.address),
+    description: emptyToNull(sheet.description),
+    address_id: mainAddressId,
     phone_number: emptyToNull(sheet.phoneNumber),
     email: emptyToNull(sheet.email),
     website: emptyToNull(sheet.website),

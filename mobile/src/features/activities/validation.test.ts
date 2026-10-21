@@ -18,6 +18,7 @@ const VALID_ACTIVITY: ActivityForm = {
   priceMax: 40,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  addressId: "address-1",
 };
 
 describe("validateActivity", () => {
@@ -29,6 +30,7 @@ describe("validateActivity", () => {
     const errors = validateActivity(EMPTY_ACTIVITY_FORM);
     expect(Object.keys(errors).sort()).toEqual(
       [
+        "addressId",
         "category",
         "maxParticipants",
         "priceMax",
@@ -39,6 +41,12 @@ describe("validateActivity", () => {
         "title",
       ].sort(),
     );
+  });
+
+  it("requires the place of the activity", () => {
+    expect(
+      validateActivity({ ...VALID_ACTIVITY, addressId: null }).addressId,
+    ).toBe("Choose where the activity takes place");
   });
 
   describe("details", () => {

@@ -14,6 +14,7 @@ const ROW: ActivityRow = {
   price_max: 40,
   price_period: "per_month",
   max_participants: 12,
+  address_id: "address-1",
   created_at: "2026-10-20T08:00:00Z",
 };
 
@@ -30,6 +31,7 @@ const ACTIVITY: Activity = {
   priceMax: 40,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  addressId: "address-1",
   createdAt: "2026-10-20T08:00:00Z",
 };
 
@@ -51,6 +53,7 @@ describe("toActivityForm", () => {
       priceMax: 40,
       pricePeriod: "per_month",
       maxParticipants: 12,
+      addressId: "address-1",
     });
   });
 

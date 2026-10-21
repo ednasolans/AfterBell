@@ -9,13 +9,21 @@ export type ActivityInsert = TablesInsert<"activities">;
 // provider_id and type are not sent: the database fills them
 // with the logged-in user and 'whole_year'.
 export function toActivityInsert(form: ActivityForm): ActivityInsert {
-  const { category, priceMin, priceMax, pricePeriod, maxParticipants } = form;
+  const {
+    category,
+    priceMin,
+    priceMax,
+    pricePeriod,
+    maxParticipants,
+    addressId,
+  } = form;
   if (
     category === null ||
     priceMin === null ||
     priceMax === null ||
     pricePeriod === null ||
-    maxParticipants === null
+    maxParticipants === null ||
+    addressId === null
   ) {
     throw new Error("The activity must be validated before saving it");
   }
@@ -35,5 +43,6 @@ export function toActivityInsert(form: ActivityForm): ActivityInsert {
     price_max: priceMax,
     price_period: pricePeriod,
     max_participants: maxParticipants,
+    address_id: addressId,
   };
 }

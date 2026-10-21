@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, Text } from "react-native";
 
+import { AddressesEditor } from "@/components/AddressesEditor";
 import { FormSubmit } from "@/components/FormSubmit";
 import { TextField } from "@/components/TextField";
 import { useTechnicalSheetForm } from "../hooks/useTechnicalSheetForm";
@@ -75,17 +76,28 @@ export function TechnicalSheetForm({ onSaved }: TechnicalSheetFormProps) {
       />
 
       <TextField
-        label="City"
-        value={form.city}
-        onChangeText={(text) => updateField("city", text)}
-        error={errors.city}
+        label="Description"
+        placeholder="What makes your centre special (optional)"
+        value={form.description}
+        multiline
+        onChangeText={(text) => updateField("description", text)}
+        error={errors.description}
       />
-      <TextField
-        label="Address"
-        value={form.address}
-        onChangeText={(text) => updateField("address", text)}
-        error={errors.address}
+
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Addresses
+      </Text>
+
+      <AddressesEditor
+        addresses={form.addresses}
+        onChange={(addresses) => updateField("addresses", addresses)}
+        errors={errors.addresses}
       />
+
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Contact
+      </Text>
+
       <TextField
         label="Phone number"
         value={form.phoneNumber}

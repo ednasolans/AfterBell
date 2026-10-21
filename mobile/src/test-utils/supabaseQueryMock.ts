@@ -6,6 +6,7 @@ const BUILDER_METHODS = [
   "update",
   "delete",
   "eq",
+  "in",
   "order",
   "single",
 ] as const;

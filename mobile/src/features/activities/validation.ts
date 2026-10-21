@@ -37,6 +37,13 @@ function validateDetails(form: ActivityForm, errors: ActivityErrors): void {
   }
 }
 
+// Where the activity takes place
+function validatePlace(form: ActivityForm, errors: ActivityErrors): void {
+  if (form.addressId === null) {
+    errors.addressId = "Choose where the activity takes place";
+  }
+}
+
 function validateSchedule(form: ActivityForm, errors: ActivityErrors): void {
   if (form.schedule.length === 0) {
     errors.schedule = "Add at least one time slot";
@@ -72,6 +79,7 @@ function validatePrices(form: ActivityForm, errors: ActivityErrors): void {
 export function validateActivity(form: ActivityForm): ActivityErrors {
   const errors: ActivityErrors = {};
   validateDetails(form, errors);
+  validatePlace(form, errors);
   validateSchedule(form, errors);
   validatePrices(form, errors);
   return errors;

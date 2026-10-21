@@ -5,10 +5,11 @@ import { ACTIVITY } from "@/test-utils/activityFixtures";
 import { ActivityCard } from "./ActivityCard";
 
 describe("ActivityCard", () => {
-  it("shows the title, category, schedule and price", async () => {
+  it("shows the title, category, place, schedule and price", async () => {
     await render(
       <ActivityCard
         activity={ACTIVITY}
+        address="C/ Major 1, Lleida"
         onEdit={jest.fn()}
         onDelete={jest.fn()}
         isDeleting={false}
@@ -17,6 +18,7 @@ describe("ActivityCard", () => {
 
     expect(screen.getByText("Swimming for kids")).toBeOnTheScreen();
     expect(screen.getByText("Swimming")).toBeOnTheScreen();
+    expect(screen.getByText("C/ Major 1, Lleida")).toBeOnTheScreen();
     expect(screen.getByText("Tuesday 17:00–18:00")).toBeOnTheScreen();
     expect(screen.getByText("30–40 € per month")).toBeOnTheScreen();
     expect(screen.getByText("Up to 12 people")).toBeOnTheScreen();
