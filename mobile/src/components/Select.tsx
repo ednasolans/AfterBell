@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { OptionsModal, type SelectOption } from './OptionsModal';
-import { SelectField } from './SelectField';
+import { useState } from "react";
+import { OptionsModal, type SelectOption } from "./OptionsModal";
+import { SelectField } from "./SelectField";
 
-export type { SelectOption } from './OptionsModal';
+export type { SelectOption } from "./OptionsModal";
 
 interface SelectProps<T extends string> {
   label: string;
@@ -22,7 +22,8 @@ export function Select<T extends string>({
   error,
 }: SelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
-  const selectedLabel = options.find((option) => option.value === value)?.label ?? '';
+  const selectedLabel =
+    options.find((option) => option.value === value)?.label ?? "";
 
   function handleSelect(optionValue: T) {
     onChange(optionValue);

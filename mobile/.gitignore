@@ -44,3 +44,7 @@ example
 /android
 
 coverage/
+
+.claude/
+
+.vscode/

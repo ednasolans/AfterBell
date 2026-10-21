@@ -1,83 +1,82 @@
-import { isValidEmail } from '../../lib/validation';
-import type { TechnicalSheetForm } from './types';
-import { isValidTimeSlot } from './schedule';
+import {
+  isBlank,
+  isValidEmail,
+  isValidPhoneNumber,
+  isValidWebsite,
+} from "@/lib/validation";
+
+import type { TechnicalSheetForm } from "./types";
 
 export type SheetErrors = Partial<Record<keyof TechnicalSheetForm, string>>;
 
-function isBlank(value: string): boolean {
-  return value.trim() === '';
+// Same limits as the CHECK constraints of the technical_sheets table
+export const NAME_MAX_LENGTH = 120;
+export const CITY_MAX_LENGTH = 100;
+export const ADDRESS_MAX_LENGTH = 200;
+export const EMAIL_MAX_LENGTH = 254;
+export const WEBSITE_MAX_LENGTH = 300;
+
+// The text is saved trimmed, so its length is measured without surrounding spaces
+function isTooLong(value: string, maxLength: number): boolean {
+  return value.trim().length > maxLength;
 }
 
-// Section 1: basic information and contact
-function validateBasicInfo(sheet: TechnicalSheetForm, errors: SheetErrors): void {
+// Section 1a: who the provider is and where
+function validateIdentity(sheet: TechnicalSheetForm, errors: SheetErrors): void {
   if (isBlank(sheet.name)) {
-    errors.name = 'Name is required';
+    errors.name = "Name is required";
+  } else if (isTooLong(sheet.name, NAME_MAX_LENGTH)) {
+    errors.name = `Name must be at most ${NAME_MAX_LENGTH} characters`;
   }
   if (sheet.providerType === null) {
-    errors.providerType = 'Select a provider type';
+    errors.providerType = "Select a provider type";
   }
   if (isBlank(sheet.city)) {
-    errors.city = 'City is required';
+    errors.city = "City is required";
+  } else if (isTooLong(sheet.city, CITY_MAX_LENGTH)) {
+    errors.city = `City must be at most ${CITY_MAX_LENGTH} characters`;
+  }
+  // The address is optional
+  if (isTooLong(sheet.address, ADDRESS_MAX_LENGTH)) {
+    errors.address = `Address must be at most ${ADDRESS_MAX_LENGTH} characters`;
+  }
+}
+
+// Section 1b: how to contact the provider (phone or email required, website optional)
+function validateContact(sheet: TechnicalSheetForm, errors: SheetErrors): void {
+  const hasPhone = !isBlank(sheet.phoneNumber);
+  const hasEmail = !isBlank(sheet.email);
+
+  if (!hasPhone && !hasEmail) {
+    errors.phoneNumber = "Enter a phone number or an email";
+  } else if (hasPhone && !isValidPhoneNumber(sheet.phoneNumber.trim())) {
+    errors.phoneNumber = "Enter a valid phone number";
   }
 
-  // At least one way to contact the provider
-  if (isBlank(sheet.phoneNumber) && isBlank(sheet.email)) {
-    errors.phoneNumber = 'Enter a phone number or an email';
+  if (hasEmail && isTooLong(sheet.email, EMAIL_MAX_LENGTH)) {
+    errors.email = `Email must be at most ${EMAIL_MAX_LENGTH} characters`;
+  } else if (hasEmail && !isValidEmail(sheet.email.trim())) {
+    errors.email = "Enter a valid email";
   }
-  // The email is optional, but if there is one it must be valid
-  if (!isBlank(sheet.email) && !isValidEmail(sheet.email)) {
-    errors.email = 'Enter a valid email';
+
+  if (isTooLong(sheet.website, WEBSITE_MAX_LENGTH)) {
+    errors.website = `Website must be at most ${WEBSITE_MAX_LENGTH} characters`;
+  } else if (!isBlank(sheet.website) && !isValidWebsite(sheet.website.trim())) {
+    errors.website = "The website must start with http:// or https://";
   }
 }
 
 // Section 2: activity
 function validateActivity(sheet: TechnicalSheetForm, errors: SheetErrors): void {
-  if (sheet.activityTypes.filter((type) => !isBlank(type)).length === 0) {
-    errors.activityTypes = 'At least one activity type is required';
-  }
-  if (sheet.targetAgeRanges.length === 0) {
-    errors.targetAgeRanges = 'At least one target age range is required';
-  }
-  if (sheet.schedule.length === 0) {
-    errors.schedule = 'Add at least one time slot';
-  } else if (!sheet.schedule.every(isValidTimeSlot)) {
-    errors.schedule = 'Each time slot needs a valid start time before its end time (HH:MM)';
-  }
-}
-
-// Section 3: prices
-function validatePrices(sheet: TechnicalSheetForm, errors: SheetErrors): void {
-  const { priceMin, priceMax } = sheet;
-
-  if (priceMin === null) {
-    errors.priceMin = 'Minimum price is required';
-  } else if (priceMin < 0) {
-    errors.priceMin = 'Price cannot be negative';
-  }
-
-  if (priceMax === null) {
-    errors.priceMax = 'Maximum price is required';
-  } else if (priceMax < 0) {
-    errors.priceMax = 'Price cannot be negative';
-  } else if (priceMin !== null && priceMax < priceMin) {
-    errors.priceMax = 'Maximum price cannot be less than minimum price';
-  }
-
-  if (sheet.pricePeriod === null) {
-    errors.pricePeriod = 'Select how the price is charged (per hour, per month, etc.)';
+  if (sheet.activityTypes.length === 0) {
+    errors.activityTypes = "At least one activity type is required";
   }
 }
 
 export function validateTechnicalSheet(sheet: TechnicalSheetForm): SheetErrors {
   const errors: SheetErrors = {};
-
-  validateBasicInfo(sheet, errors);
+  validateIdentity(sheet, errors);
+  validateContact(sheet, errors);
   validateActivity(sheet, errors);
-  validatePrices(sheet, errors);
-
   return errors;
-}
-
-export function hasErrors(errors: SheetErrors): boolean {
-  return Object.keys(errors).length > 0;
 }

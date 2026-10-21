@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { toggleItemInArray } from '../lib/arrays';
-import { OptionsModal, type SelectOption } from './OptionsModal';
-import { SelectField } from './SelectField';
+import { useState } from "react";
+import { toggleItemInArray } from "../lib/arrays";
+import { OptionsModal, type SelectOption } from "./OptionsModal";
+import { SelectField } from "./SelectField";
 
 interface MultiSelectProps<T extends string> {
   label: string;
@@ -24,7 +24,7 @@ export function MultiSelect<T extends string>({
   const selectedLabels = options
     .filter((option) => values.includes(option.value))
     .map((option) => option.label)
-    .join(', ');
+    .join(", ");
 
   return (
     <>
@@ -40,7 +40,9 @@ export function MultiSelect<T extends string>({
         title={label}
         options={options}
         isSelected={(optionValue) => values.includes(optionValue)}
-        onPressOption={(optionValue) => onChange(toggleItemInArray(values, optionValue))}
+        onPressOption={(optionValue) =>
+          onChange(toggleItemInArray(values, optionValue))
+        }
         onClose={() => setIsOpen(false)}
         multiple
       />
