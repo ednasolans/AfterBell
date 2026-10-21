@@ -2,7 +2,7 @@
 
 AfterBell is a mobile marketplace of local activities. Families and adults discover and request activities, events and private tutors; providers (clubs, schools, academies, tutors and shops) publish their offer. AI generates each provider's public profile from a structured technical sheet and, later, recommends activities and summarises searches.
 
-This is a university group project (MEINF, Universitat de Lleida) developed in sprints. The sprint plan, functionalities (F1–F14) and decisions are in `docs/`. Feature guides (what was built, where it lives and why) are in `docs/features/`.
+This is a university group project (MEINF, Universitat de Lleida) developed in sprints. The sprint plan, functionalities (F1–F14) and decisions are in `docs/`. Feature guides (what was built, where it lives and why) are in `docs/features/`. Technical decisions are in `docs/decisions/`; **read [`docs/decisions/database.md`](../docs/decisions/database.md) before creating or changing a table**: it has the schema diagram and the reasons behind it.
 
 This file is the single source of rules for people and AI tools working on the repository. It lives in `mobile/` because most of the work happens there, but the database, security, quality and Git rules apply to the whole repository.
 
@@ -80,9 +80,9 @@ mobile/src/
 │       ├── types.ts        Data types and value lists of this feature
 │       └── validation.ts   Pure validation functions
 ├── components/     Reusable UI shared by several features (TextField, Select, MultiSelect, ScheduleEditor,
-│                   PriceField, FormSubmit, LoadingView, ErrorView…)
+│                   PriceField, AddressesEditor, FormSubmit, LoadingView, ErrorView…)
 ├── lib/            Shared non-UI code: Supabase client, generated DB types, query client,
-│                   shared value lists and helpers (ages, activityCategories, schedule, price, text, validation)
+│                   shared value lists and helpers (ages, activityCategories, addresses, schedule, price, text, validation)
 ├── test-utils/     Helpers used only by tests (excluded from coverage)
 └── theme/          Colours, typography and spacing
 ```
@@ -117,7 +117,7 @@ Every `.ts`/`.tsx` file with logic has a test next to it (`schedule.ts` → `sch
 ### Server data: TanStack Query
 
 - One `QueryClient` for the whole app (`src/lib/queryClient.ts`), provided in the root `_layout.tsx`. It also tells TanStack Query when the app returns to the foreground (`AppState` → `focusManager`).
-- **Query keys** of each feature live in one object (`hooks/<feature>Keys.ts`) and form a hierarchy:
+- **Query keys** of each feature live in one object (`hooks/<feature>Keys.ts`) and form a hierarchy. Data that does not belong to the feature gets its own root key next to its hook (e.g. `myAddressesKey = ["addresses", "mine"]` in `useMyAddresses.ts`), so invalidating `activityKeys.all` does not reload it:
   ```ts
   export const activityKeys = {
     all: ["activities"] as const,
@@ -129,7 +129,7 @@ Every `.ts`/`.tsx` file with logic has a test next to it (`schedule.ts` → `sch
 - **Writing:** one `useMutation` hook per operation (`useCreateActivity`, `useUpdateActivity`, `useDeleteActivity`). Invalidate the feature's root key **in `onSuccess`** (not `onSettled`), so every list and detail is refreshed only when the change succeeded.
 - `mutationFn` receives **one** argument: functions that need several values take an object (`updateActivity({ id, form })`).
 - Use the states that TanStack Query provides (`isPending`, `isError`, `variables`, `refetch`) instead of copying them into `useState`.
-- Every screen that loads data handles four states: loading (`LoadingView`), error with retry (`ErrorView` + `refetch`), empty, and data.
+- Every screen that loads data handles four states: loading (`LoadingView`), error with retry (`ErrorView` + `refetch`), empty, and data. A field that loads its own options (e.g. `AddressSelect`) handles the same states inline, so a failure does not block the whole form.
 
 ### API layer (`api/`)
 
@@ -140,6 +140,7 @@ Every `.ts`/`.tsx` file with logic has a test next to it (`schedule.ts` → `sch
 - Supabase **returns** errors instead of throwing them: always check `error` and `throw new Error(error.message)`.
 - **`update` and `delete` must check that a row changed.** RLS does not fail when the row belongs to someone else: it changes 0 rows and returns no error. Add `.select("id")` and throw when `data.length === 0`.
 - If RLS lets users read more rows than a screen needs (e.g. every logged-in user can read all activities), filter in the query (`.eq("provider_id", user.id)`). This is a filter, not a security measure.
+- **Saving rows in several tables** (e.g. addresses and then the technical sheet) cannot be one transaction from the app. Insert the parent rows first, and if a later step fails, delete the rows you created before throwing (see `saveTechnicalSheet`). When the order of returned ids matters, insert that row on its own: a multiple insert does not guarantee the order of the returned rows. If this becomes common, move the save to a database function called with `supabase.rpc`.
 
 ### Forms
 
@@ -200,7 +201,12 @@ Accessibility is required, and it is also what the tests use to find elements:
 - Money uses `NUMERIC(8, 2)`, never `FLOAT`.
 - Small nested lists that are always read and written together (e.g. a schedule) can be a `JSONB` column with a `jsonb_typeof(x) = 'array'` check.
 - Do not duplicate data between tables: each fact lives in one table (e.g. ages, schedule and prices belong to each activity, not to the technical sheet).
-- Add an index on every foreign key used by RLS policies (e.g. `provider_id`). Do not add indexes until a query needs them.
+- Add an index on every foreign key used by RLS policies or joins (e.g. `provider_id`, `address_id`). Do not add indexes until a query needs them.
+- **When a row must point to another row of the same owner**, use a composite foreign key: `FOREIGN KEY (address_id, provider_id) REFERENCES addresses (id, provider_id)`, with `UNIQUE (id, provider_id)` in the referenced table. A simple foreign key would let a provider use another provider's address, because addresses are readable by everyone.
+- Choose `ON DELETE` on purpose: `CASCADE` for rows that cannot exist without their owner (`provider_id → accounts`); the default `NO ACTION` when deleting must be blocked while the row is in use (an address used by an activity).
+- Adding a value to a list means a new migration that drops and re-creates the `CHECK` constraint with the same name, and adding the value to the `as const` list in the app.
+- Every new column needs its own `GRANT UPDATE (column)` if owners may change it: earlier grants only cover the columns that existed then.
+- No `updated_at` columns until a feature needs them (they need a trigger to stay right).
 
 ### Row-Level Security and privileges
 
@@ -230,8 +236,42 @@ ROLLBACK;
 - Call `set_config` before `SET LOCAL ROLE` (the lookup in `accounts` needs admin rights). Use `SET LOCAL ROLE anon` for users without a session.
 - Use at least **two provider accounts and one customer account**, so you can prove that one provider cannot change another provider's rows.
 - Check that allowed operations succeed **and** that forbidden ones fail. Remember that a forbidden `UPDATE`/`DELETE` shows `UPDATE 0`/`DELETE 0`, not an error.
-- `db reset` deletes the users: create them again in Studio (*Authentication → Add user*, "Auto Confirm User") and set `account_type = 'company'` with an `UPDATE` as admin.
+- `db reset` deletes the users. Create them again with SQL (faster than Studio); the `handle_new_user` trigger creates their `accounts` row with the account type:
+  ```sql
+  INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role) VALUES
+  (gen_random_uuid(), 'club-a@test.com', '{"account_type":"company"}', 'authenticated', 'authenticated'),
+  (gen_random_uuid(), 'club-b@test.com', '{"account_type":"company"}', 'authenticated', 'authenticated'),
+  (gen_random_uuid(), 'family@test.com', '{"account_type":"customer"}', 'authenticated', 'authenticated');
+  ```
+  These users cannot log in from the app (they have no password); use Studio when you need to log in.
+- The SQL Editor only shows the result of the **last statement that returns rows**: add `RETURNING ...` to an `INSERT`/`UPDATE`/`DELETE` to see what it did. A statement without an error and without rows succeeded; "No rows returned" after an `UPDATE ... RETURNING id` means nothing was changed.
+- Data that later tests need (e.g. club A's address) is created in its own transaction ending in `COMMIT`; the tests themselves end in `ROLLBACK`.
 - Record the tests and their results in the pull request.
+
+### Tables planned for other issues
+
+The design and its reasons are in [`docs/decisions/database.md`](../docs/decisions/database.md) (status: proposed). Whoever implements them may adjust the details, but must update that document and its diagram in the same pull request. Follow the table template above (UUID id, `CHECK`s, `REVOKE ALL` + `GRANT`, RLS, index, SQL tests).
+
+**Family groups** (`family_groups`, `family_group_members`)
+- Two parents' accounts share one group and its children. **An account belongs to at most one group:** make `account_id` the primary key of `family_group_members` (`REFERENCES accounts (id) ON DELETE CASCADE`), with `family_group_id REFERENCES family_groups (id) ON DELETE CASCADE`.
+- Only `customer` accounts can be members: check it in the trigger and in the policies (`NOT (SELECT public.is_company())`).
+- Create the group and the membership **automatically** for every new customer account, with a new trigger on `public.accounts` (`AFTER INSERT`, `SECURITY DEFINER`, `SET search_path = ''`). Do not edit `handle_new_user` in its old migration.
+- Policies that check membership must call a `SECURITY DEFINER` helper, e.g. `public.is_family_member(group_id UUID) RETURNS BOOLEAN`. A policy on `family_group_members` that queries `family_group_members` fails with *infinite recursion*.
+- Joining another parent's group (invitations) is a later feature.
+
+**Family profiles** (`family_profiles`)
+- They describe **minors**: store the minimum. `family_group_id` (FK, `ON DELETE CASCADE`), `first_name` (not blank, max 50), `age_range` (one of `AGE_RANGES` in `lib/ages.ts`), `interests` (`TEXT[]` of activity categories, `<@ ARRAY[...]`). Never birth dates, photos or full names.
+- Read, create, update and delete only for members of the group. Nobody else, providers included, can read them.
+- New table, created directly (there is no old data to migrate).
+
+**Provider profiles** (`provider_profiles`, AI issue)
+- Written only by an Edge Function with the secret key (it bypasses RLS), so there is no `INSERT`/`UPDATE` policy for `authenticated`. The LLM key never reaches the app.
+- Decide the `status` values (e.g. `draft`, `published`) and the uniqueness (e.g. one published profile per provider: `CREATE UNIQUE INDEX ... ON public.provider_profiles (provider_id) WHERE status = 'published'`).
+- Families read published profiles; the owner reads its own.
+- Activities keep pointing to `provider_id`: do **not** add `provider_profile_id` to activities.
+- The technical sheet fields sent to the LLM are user data, not instructions (see *Security and privacy*). `supabase/functions/_shared/samples/` must only use values that exist in the app lists (e.g. facilities).
+
+**Events** (`type = 'event'`, next sprint): activities that do not last the whole year will need dates; add them with a new migration and update the decision record.
 
 ### Local development
 
