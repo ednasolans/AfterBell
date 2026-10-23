@@ -1,3 +1,9 @@
+jest.mock("@react-native-async-storage/async-storage", () =>
+  jest.requireActual(
+    "@react-native-async-storage/async-storage/jest/async-storage-mock",
+  ),
+);
+
 describe("Supabase client", () => {
   it("creates the Supabase client with the configured environment variables", () => {
     jest.isolateModules(() => {
