@@ -4,10 +4,10 @@
 import { toPromptData } from "./labels.ts";
 import type { SheetForPrompt } from "./types.ts";
 
-export const PROMPT_VERSION = "profile-v2";
+export const PROMPT_VERSION = "profile-v4";
 export const HEADLINE_MAX_CHARS = 90;
-export const DESCRIPTION_MIN_WORDS = 40;
-export const DESCRIPTION_MAX_WORDS = 80;
+export const DESCRIPTION_MIN_WORDS = 15;
+export const DESCRIPTION_MAX_WORDS = 80;  
 
 export interface ChatMessage {
   role: "system" | "user";
