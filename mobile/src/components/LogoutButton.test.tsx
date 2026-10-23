@@ -4,9 +4,14 @@ import LogoutButton from './LogoutButton';
 
 const mockReplace = jest.fn();
 const mockSignOut = jest.fn();
+const mockClearCache = jest.fn();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace }),
+}));
+
+jest.mock('@/lib/queryClient', () => ({
+  queryClient: { clear: () => mockClearCache() },
 }));
 
 jest.mock('@/lib/supabase', () => ({
@@ -18,7 +23,7 @@ describe('LogoutButton', () => {
     jest.clearAllMocks();
   });
 
-  it('signs out and redirects to /login', async () => {
+  it('signs out, clears the query cache and redirects to /login', async () => {
     mockSignOut.mockResolvedValue({ error: null });
     const { getByRole } = await render(<LogoutButton />);
 
@@ -26,9 +31,10 @@ describe('LogoutButton', () => {
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'));
     expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockClearCache).toHaveBeenCalledTimes(1);
   });
 
-  it('does not redirect when sign out fails', async () => {
+  it('keeps the cache and does not redirect when sign out fails', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockSignOut.mockResolvedValue({ error: { message: 'boom' } });
     const { getByRole } = await render(<LogoutButton />);
@@ -37,6 +43,7 @@ describe('LogoutButton', () => {
 
     await waitFor(() => expect(consoleError).toHaveBeenCalled());
     expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockClearCache).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
 
