@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import LoadingButton from '@/components/LoadingButton';
+import { queryClient } from '@/lib/queryClient';
 // Adjust the path to wherever your Supabase client lives.
 import { supabase } from '@/lib/supabase';
 
@@ -18,6 +19,8 @@ export default function LogoutButton() {
         console.error('Logout error:', error.message);
         return;
       }
+      // Drop cached data so the next user on this device never sees it.
+      queryClient.clear();
       router.replace('/login');
     } finally {
       setLoading(false);
