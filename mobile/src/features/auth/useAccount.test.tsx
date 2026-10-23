@@ -112,4 +112,57 @@ describe('AuthProvider / useAccount', () => {
 
     expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
   });
+
+  it('continues as signed out when the stored session cannot be read', async () => {
+    mockGetSession.mockRejectedValue(new Error('storage unavailable'));
+
+    const { getByText } = await renderProvider();
+
+    await waitFor(() => expect(getByText('loading:false|type:none|session:no')).toBeTruthy());
+  });
+
+  it('treats a failed account request as a missing account', async () => {
+    mockGetSession.mockResolvedValue({ data: { session } });
+    mockSingle.mockRejectedValue(new Error('network down'));
+
+    const { getByText } = await renderProvider();
+
+    await waitFor(() => expect(getByText('loading:false|type:none|session:yes')).toBeTruthy());
+  });
+
+  it('ignores a session that arrives after unmount', async () => {
+    let resolveSession: (value: { data: { session: null } }) => void = () => {};
+    mockGetSession.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSession = resolve;
+      }),
+    );
+    const { unmount } = await renderProvider();
+
+    await unmount();
+    await act(async () => {
+      resolveSession({ data: { session: null } });
+    });
+
+    expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores an account that arrives after unmount', async () => {
+    let resolveAccount: (value: { data: null; error: null }) => void = () => {};
+    mockGetSession.mockResolvedValue({ data: { session } });
+    mockSingle.mockReturnValue(
+      new Promise((resolve) => {
+        resolveAccount = resolve;
+      }),
+    );
+    const { unmount } = await renderProvider();
+    await waitFor(() => expect(mockSingle).toHaveBeenCalledTimes(1));
+
+    await unmount();
+    await act(async () => {
+      resolveAccount({ data: null, error: null });
+    });
+
+    expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
+  });
 });

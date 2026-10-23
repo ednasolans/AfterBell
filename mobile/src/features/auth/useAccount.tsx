@@ -27,11 +27,19 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   useEffect(() => {
     let active = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      setSession(data.session);
-      setSessionReady(true);
-    });
+    async function loadSession() {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (active) setSession(data.session);
+      } catch {
+        // The stored session could not be read: continue as signed out.
+        if (active) setSession(null);
+      } finally {
+        if (active) setSessionReady(true);
+      }
+    }
+
+    void loadSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
@@ -50,16 +58,21 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   useEffect(() => {
     if (!userId) return;
 
+    const currentUserId = userId; // narrowed to string, usable inside the function below
     let active = true;
 
-    supabase
-      .from('accounts')
-      .select('*')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => {
-        if (active) setAccountResult({ userId, account: data ?? null });
-      });
+    async function loadAccount() {
+      let loaded: Account | null = null;
+      try {
+        const { data } = await supabase.from('accounts').select('*').eq('id', currentUserId).single();
+        loaded = data ?? null;
+      } catch {
+        // Treat a failed request like a missing account, so we never stay loading.
+      }
+      if (active) setAccountResult({ userId: currentUserId, account: loaded });
+    }
+
+    void loadAccount();
 
     return () => {
       active = false;
