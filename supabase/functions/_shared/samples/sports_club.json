@@ -3,7 +3,7 @@
   "provider_type": "sports_club",
   "activity_types": ["football", "basketball", "swimming"],
   "facilities": ["changing_rooms", "showers", "parking", "outdoor_field", "indoor_court", "wheelchair_access"],
-  "address": "Avinguda de l'Alcalde Rovira Roure, 120",
+  "description": "Equips federats de futbol i bàsquet i escola de natació.",
   "city": "Lleida",
   "email": "info@cesegria-exemple.cat",
   "phone_number": "973000004",

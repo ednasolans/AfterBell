@@ -1,9 +1,9 @@
 {
   "name": "Acadèmia d'Idiomes Babel",
   "provider_type": "language_school",
-  "activity_types": ["languages"],
-  "facilities": ["waiting_area", "air_conditioning", "wifi", "wheelchair_access"],
-  "address": "Carrer Major, 25",
+  "activity_types": ["language"],
+  "facilities": [],
+  "description": null,
   "city": "Lleida",
   "email": "info@babel-exemple.cat",
   "phone_number": "973000002",
