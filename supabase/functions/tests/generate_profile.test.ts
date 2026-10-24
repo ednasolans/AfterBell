@@ -5,6 +5,7 @@ import {
   type Deps,
   type ExistingProfile,
   handleRequest,
+  HttpError,
   type ProfileRepository,
   type SavedDraft,
 } from "../generate-profile/handler.ts";
@@ -141,4 +142,11 @@ Deno.test("only POST and OPTIONS are allowed", async () => {
   await options.body?.cancel();
   const { status } = await call(deps(new FakeRepo()), "GET");
   assertEquals(status, 405);
+});
+
+Deno.test("a missing LLM configuration returns a clear 500 error", async () => {
+  const notConfigured = () => Promise.reject(new HttpError(500, "llm_not_configured", "Not configured"));
+  const { status, body } = await call(deps(new FakeRepo(), notConfigured));
+  assertEquals(status, 500);
+  assertEquals(body.error.code, "llm_not_configured");
 });
