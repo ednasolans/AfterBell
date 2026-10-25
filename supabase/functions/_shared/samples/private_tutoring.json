@@ -1,11 +1,11 @@
 {
   "name": "Marta Puig - Classes de reforç",
   "provider_type": "private_tutor",
-  "activity_types": ["academic_support", "mathematics"],
-  "facilities": ["home_visits", "online_classes"],
-  "address": "Carrer de Sant Martí, 12",
+  "activity_types": ["tutoring"],
+  "facilities": [],
+  "description": null,
   "city": "Lleida",
-  "email": "marta.puig@exemple.cat",
+  "email": null,
   "phone_number": "600000003",
   "website": null
 }
