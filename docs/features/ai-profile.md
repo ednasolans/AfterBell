@@ -76,7 +76,7 @@ cd mobile && npx expo start
 2. Generate, edit the headline, save, approve and check **Published**.
 3. In Studio, the `provider_profiles` row has `status = approved` and
    `approved_at` set.
-4. RLS: run `supabase/test/provider_profiles_rls.sql` in the SQL Editor.
+4. RLS: run `supabase/tests/provider_profiles_rls.sql` in the SQL Editor.
 
 Automated tests: `deno test` in `supabase/functions` and
 `npm test -- ai-profile` in `mobile`.
