@@ -1,19 +1,20 @@
-# Feature guide: family groups and profiles (issues #18, #19 and #20)
+# Feature guide: family groups and profiles (issues #18, #19, #20 and #21)
 
 This guide explains the database foundation and mobile implementation of family profiles, where each piece lives and why it was designed this way. It is intended for team members who need to change or extend the feature and for the teaching staff reviewing the sprint.
 
-> **Status:** Issue #18 committed. Issue #19 implemented. Issue #20 implemented in the working branch, with final testing and integration verification pending.
+> **Status:** Issue #18 committed. Issues #19, #20 and #21 implemented, with final automated testing and end-to-end integration verification pending.
 >
 > **Implemented features:**
 > - Issue #18: Family groups, family profiles, database constraints and Row-Level Security.
 > - Issue #19: Family profile list and shared create/edit form, including the Supabase API layer and TanStack Query hooks.
 > - Issue #20: Family profile deletion with confirmation dialog, protection of the main profile through a PostgreSQL trigger, and automatic list refresh using TanStack Query.
+> - Issue #21: Active family profile selection in the customer header, shared application state and device persistence with AsyncStorage.
 >
 > **Later work:**
-> - Issue #21: Active profile selection.
-> - Family invitations and shared parenting: future functionality.
+> - Family invitations and shared parenting.
+> - Activity search, favourites and enrolment requests using the active family profile.
 >
-> This guide describes the implementation of issues #18, #19 and #20. The database design is justified in [`docs/decisions/database.md`](../decisions/database.md), which takes precedence over older issue descriptions when requirements differ.
+> This guide describes the implementation of issues #18, #19, #20 and #21. The database design is justified in [`docs/decisions/database.md`](../decisions/database.md), which takes precedence over older issue descriptions when requirements differ.
 
 ## 1. What the feature does
 
@@ -25,10 +26,13 @@ A customer can:
 - Create a new profile with a first name, age range and interests.
 - Edit an existing profile using the same form, pre-filled with its current values.
 - Create multiple profiles within the same family group.
+- Delete a secondary family profile after confirming the operation.
+- Switch between family profiles using the selector in the customer header.
+- Keep the selected active profile after restarting the application.
 
-When the account has no profiles, the list displays **"Create your first profile"**. Once profiles exist, the list shows each profile's first name and age range, an edit action and a button to add another profile.
+When the account has no profiles, the list displays **"Create your first profile"**. Once profiles exist, the list shows each profile's first name and age range, editing actions, deletion options for secondary profiles and a button to add another profile.
 
-Profile deletion and active profile selection are handled in separate issues.
+The first profile is considered the main profile and cannot be deleted. It is active by default, but the customer can select another profile as active at any time.
 
 ### Database structure
 
@@ -94,11 +98,34 @@ This ensures that a family which already contains at least one profile cannot be
 
 #### Relationship with issue #21
 
-The main profile is different from the **active profile** planned for issue #21.
+The main profile is different from the **active profile** implemented in issue #21.
 
-The main profile is permanently determined by creation order and is protected from deletion. The active profile will represent the profile currently selected for use in the application.
+The main profile is determined by creation order and protected from deletion. The active profile represents the family member currently selected for use in the application.
 
-Changing the active profile will not change which profile is protected from deletion.
+Changing the active profile does not change which profile is protected from deletion. The active profile selection is stored locally on the device rather than in the database.
+
+### Active family profile selection (issue #21)
+
+Customers can select the family profile currently being used in the application.
+
+The customer header displays the active profile's first name. Pressing the selector opens a list of the profiles belonging to the authenticated customer's family group. The selected profile is marked visually.
+
+The active profile is stored in shared React application state through `ActiveProfileProvider` and can be accessed from customer screens using the `useActiveProfile()` hook.
+
+The selected profile ID is persisted locally using `@react-native-async-storage/async-storage`, so the choice is restored after restarting the application. Storage keys include the authenticated user's ID to avoid reusing one customer's selection for another customer.
+
+**Default selection:** If there is no saved selection, the main profile is active. The main profile is the oldest family profile, ordered by `created_at ASC, id ASC`.
+
+If the previously selected profile no longer exists, the application falls back to the main profile. If the family has no profiles, there is no active profile.
+
+The **main profile** and **active profile** are different concepts:
+
+- The main profile is determined by creation order and protected against deletion by issue #20.
+- The active profile is chosen by the customer and can be changed at any time.
+
+No database column or migration is required for issue #21. The active selection is not stored in Supabase.
+
+Future features such as activity search, favourites and enrolment requests will use `activeProfileId` from `useActiveProfile()` to identify the profile currently using the app. Those features must continue to enforce the appropriate server-side authorisation rules independently of the local selection.
 
 ### Mobile flow
 

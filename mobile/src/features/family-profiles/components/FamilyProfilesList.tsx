@@ -36,7 +36,7 @@ export function FamilyProfilesList({
   function confirmDelete(id: string, firstName: string) {
     Alert.alert(
       "Delete profile",
-      `Are you sure you want to delete ${firstName}'s profile? This action cannot be undone.`,
+      `Are you sure you want to delete ${firstName}&apos;s profile? This action cannot be undone.`,
       [
         {
           text: "Cancel",
@@ -93,7 +93,7 @@ export function FamilyProfilesList({
 
       {profiles?.length === 0 ? (
         <View style={styles.empty}>
-          <Text>You don't have any profiles yet.</Text>
+          <Text>You don&apos;t have any profiles yet.</Text>
 
           <Pressable
             accessibilityRole="button"
