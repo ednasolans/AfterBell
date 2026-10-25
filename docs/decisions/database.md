@@ -172,6 +172,32 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **Status values and uniqueness are still to be decided** by the team member who builds it | — | For example `draft`/`published`, and at most one published profile per provider with a partial unique index: `CREATE UNIQUE INDEX ... ON provider_profiles (provider_id) WHERE status = 'published'`. |
 | **Families read only published profiles; the owner reads its own** | Public | Same principle as the other tables: start closed. |
 
+## provider_profiles
+
+AI-generated public profile of a provider (#29). One per provider.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| provider_id | uuid | UNIQUE, default `auth.uid()`, FK `accounts` ON DELETE CASCADE |
+| headline | text | ≤ 120 characters |
+| description | text | ≤ 2000 characters |
+| status | text | `draft` (default) or `approved` |
+| model | text | LLM model used, ≤ 100 |
+| generated_at | timestamptz | Last generation |
+| approved_at | timestamptz | Set by the `set_profile_approved_at` trigger |
+
+- Constraint `approved_at_matches_status`: `approved_at` is set only when
+  approved.
+- RLS:
+  - SELECT: approved profiles, or your own.
+  - INSERT: only the owner, only if it is a company, only as `draft`.
+  - UPDATE: only the owner.
+  - No DELETE.
+- Column grants: only `headline`, `description`, `status`, `model` and
+  `generated_at` can be updated, so `provider_id` and `approved_at` cannot be
+  changed from the app.
+
 ## Consequences
 
 - Every schema change is a new migration. Migrations already in `main` are never edited (see *Database* in `mobile/AGENTS.md`).

@@ -339,3 +339,12 @@ When the CI fails but local checks pass, reproduce the CI with `npm ci` (clean i
 - Do not add new dependencies, native modules or services without the team's agreement. Mention every new dependency in the pull request.
 - Every finished feature gets a guide in `docs/features/` (decisions, files and how to test).
 - Prefer simple, readable code over clever code: this is a learning project, and every team member must be able to understand and explain it.
+
+## Provider profiles
+
+- Table `provider_profiles`, one row per provider, `status` is `draft` or
+  `approved`. Show `approved` as "Published" (`PROFILE_STATUS_LABELS`).
+- The Edge Function `generate-profile` uses the user's session, not the
+  secret key. RLS lets the owner insert drafts and update its profile.
+- AI content is never published automatically: the provider approves it.
+- Details: `docs/features/ai-profile.md`.
