@@ -1,44 +1,29 @@
-import { Link } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
+import LoadingButton from '@/components/LoadingButton';
+import { authStyles } from '@/features/auth/authStyles';
+
+// Cover screen: the entry point for users without a session.
+// Signed-in users never see it: AuthGate sends them to their own area.
 export default function Index() {
+  const router = useRouter();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>AfterBell</Text>
-      <Text>Mobile application</Text>
+    <View style={authStyles.container}>
+      <Text style={authStyles.title}>AfterBell</Text>
+      <Text style={styles.tagline}>Mobile application</Text>
 
-      <Link href="/login" style={styles.link}>
-        Login
-      </Link>
-
-      <Link href="/sign-up" style={styles.link}>
-        Sign up
-      </Link>
-
-      <Link href="/customer-home" style={styles.link}>
-        Customer
-      </Link>
-
-      <Link href="/provider-home" style={styles.link}>
-        Provider
-      </Link>
+      <LoadingButton label="Log in" onPress={() => router.push('/login')} />
+      <LoadingButton
+        label="Sign up"
+        variant="outline"
+        onPress={() => router.push('/sign-up')}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-  },
-  link: {
-    color: "#208AEF",
-    fontSize: 16,
-  },
+  tagline: { marginBottom: 16, color: '#555' },
 });
