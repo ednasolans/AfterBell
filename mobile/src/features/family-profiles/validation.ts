@@ -23,7 +23,7 @@ export function validateFamilyProfile(
 
   if (
     values.ageRange === null ||
-    !AGE_RANGES.some((age) => age === values.ageRange)
+    !AGE_RANGES.includes(values.ageRange)
   ) {
     errors.ageRange = "Select a valid age range";
   }
@@ -31,9 +31,8 @@ export function validateFamilyProfile(
   if (
     values.interests.some(
       (interest) =>
-        !ACTIVITY_CATEGORIES.some(
-          (category) => category === interest,
-        ),
+        !ACTIVITY_CATEGORIES.includes(interest),
+    
     )
   ) {
     errors.interests = "Select valid interests";

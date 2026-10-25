@@ -36,9 +36,9 @@ type ActiveProfileContextValue = {
 const ActiveProfileContext =
   createContext<ActiveProfileContextValue | null>(null);
 
-type Props = {
+type Props = Readonly<{
   children: ReactNode;
-};
+}>;
 
 export function ActiveProfileProvider({ children }: Props) {
   const [userId, setUserId] = useState<string | null>(null);

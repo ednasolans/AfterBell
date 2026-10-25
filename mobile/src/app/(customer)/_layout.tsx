@@ -6,6 +6,10 @@ import AreaGuard from "@/features/auth/AreaGuard";
 import { ActiveProfileProvider } from "../../features/family-profiles/context/ActiveProfileProvider";
 import { ActiveProfileSelector } from "../../features/family-profiles/components/ActiveProfileSelector";
 
+function CustomerHeaderRight() {
+  return <ActiveProfileSelector />;
+}
+
 export default function GroupLayout() {
   return (
     <AreaGuard area="customer">
@@ -13,7 +17,7 @@ export default function GroupLayout() {
         <Stack
           screenOptions={{
             headerShown: true,
-            headerRight: () => <ActiveProfileSelector />,
+            headerRight: CustomerHeaderRight,
           }}
         />
       </ActiveProfileProvider>

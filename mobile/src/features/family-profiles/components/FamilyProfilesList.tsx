@@ -11,13 +11,13 @@ import {
 
 import { useFamilyProfiles } from "../hooks/useFamilyProfiles";
 
-type Props = {
+type Props = Readonly<{
   userId: string;
   onCreate: () => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => Promise<void>;
   isDeleting?: boolean;
-};
+}>;
 
 export function FamilyProfilesList({
   userId,

@@ -25,12 +25,12 @@ import {
   validateFamilyProfile,
 } from "../validation";
 
-type Props = {
+type Props = Readonly<{
   initialValues?: FamilyProfileFormValues;
   onSave: (values: FamilyProfileFormValues) => Promise<void>;
   isSaving: boolean;
   saveError?: string;
-};
+}>;
 
 export function FamilyProfileForm({
   initialValues = EMPTY_FAMILY_PROFILE_FORM,
