@@ -8,7 +8,6 @@ export default function ProviderHomeScreen() {
       <Text>Provider home</Text>
       <LogoutButton />
       <Link href="/activities">My activities</Link>
-      <Link href="/activities">My activities</Link>
       <Link href="/ai-profile">AI profile</Link>
     </View>
   );
