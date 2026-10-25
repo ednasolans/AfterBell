@@ -7,6 +7,7 @@ export type Json =
   | Json[];
 
 export type Database = {
+
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -156,6 +157,92 @@ export type Database = {
           },
         ];
       };
+      family_group_members: {
+        Row: {
+          account_id: string;
+          created_at: string;
+          family_group_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          account_id: string;
+          created_at?: string;
+          family_group_id: string;
+        };
+        Update: {
+          account_id?: string;
+          created_at?: string;
+          family_group_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "family_group_members_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: true;
+            referencedRelation: "accounts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "family_group_members_family_group_id_fkey";
+            columns: ["family_group_id"];
+            isOneToOne: false;
+            referencedRelation: "family_groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      family_groups: {
+        Row: {
+          created_at: string;
+          id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+        };
+        Relationships: [];
+      };
+      family_profiles: {
+        Row: {
+          age_range: string;
+          created_at: string;
+          family_group_id: string;
+          first_name: string;
+          id: string;
+          interests: string[];
+        };
+        ComputedFields: never;
+        Insert: {
+          age_range: string;
+          created_at?: string;
+          family_group_id: string;
+          first_name: string;
+          id?: string;
+          interests?: string[];
+        };
+        Update: {
+          age_range?: string;
+          created_at?: string;
+          family_group_id?: string;
+          first_name?: string;
+          id?: string;
+          interests?: string[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "family_profiles_family_group_id_fkey";
+            columns: ["family_group_id"];
+            isOneToOne: false;
+            referencedRelation: "family_groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       provider_profiles: {
         Row: {
           approved_at: string | null;
@@ -264,8 +351,22 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      is_company: { Args: Record<PropertyKey, never>; Returns: boolean };
-      is_valid_schedule: { Args: { schedule: Json }; Returns: boolean };
+      is_company: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      is_family_member: {
+        Args: {
+          group_id: string;
+        };
+        Returns: boolean;
+      };
+      is_valid_schedule: {
+        Args: {
+          schedule: Json;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -275,6 +376,7 @@ export type Database = {
     };
   };
 };
+
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
