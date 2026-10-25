@@ -223,6 +223,12 @@ RESET ROLE;
 -- CUSTOMER B: allowed access to own group
 -- ============================================================
 
+
+-- ============================================================
+-- CUSTOMER B: allowed access to own group
+-- Issue #20: protect main profile, delete secondary profile
+-- ============================================================
+
 SELECT set_config(
     'request.jwt.claims',
     '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}',
@@ -230,6 +236,9 @@ SELECT set_config(
 );
 
 SET LOCAL ROLE authenticated;
+
+-- Create Customer B's first profile.
+-- This will be the protected main profile.
 
 INSERT INTO public.family_profiles (
     family_group_id,
@@ -246,6 +255,8 @@ FROM public.family_group_members m
 WHERE m.account_id =
     '10000000-0000-4000-8000-000000000002';
 
+-- Verify that Customer B sees exactly one profile.
+
 DO $$
 BEGIN
     IF (
@@ -258,19 +269,134 @@ BEGIN
 END;
 $$;
 
--- Customer B can delete its own profile.
-DELETE FROM public.family_profiles
+-- Issue #20:
+-- The first profile must not be deleted.
+-- The trigger should reject the DELETE with SQLSTATE 23514.
+
+DO $$
+DECLARE
+    deletion_rejected BOOLEAN := FALSE;
+BEGIN
+    BEGIN
+        DELETE FROM public.family_profiles
+        WHERE first_name = 'Biel';
+
+    EXCEPTION
+        WHEN SQLSTATE '23514' THEN
+            deletion_rejected := TRUE;
+    END;
+
+    IF NOT deletion_rejected THEN
+        RAISE EXCEPTION
+            'Main profile deletion was not rejected';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.family_profiles
+        WHERE first_name = 'Biel'
+    ) THEN
+        RAISE EXCEPTION
+            'Main profile Biel should still exist';
+    END IF;
+END;
+$$;
+
+
+-- Ensure Biel is unambiguously the oldest profile.
+-- PostgreSQL now() returns the same timestamp throughout
+-- a transaction, so pg_sleep() does not change created_at.
+--
+-- Temporarily return to the privileged test role to adjust
+-- fixture data. Application users cannot modify created_at.
+
+RESET ROLE;
+
+UPDATE public.family_profiles
+SET created_at = created_at - INTERVAL '1 minute'
 WHERE first_name = 'Biel';
+
+-- Restore Customer B's authenticated role.
+SET LOCAL ROLE authenticated;
+
+
+-- Create a second profile in Customer B's family.
+
+INSERT INTO public.family_profiles (
+    family_group_id,
+    first_name,
+    age_range,
+    interests
+)
+SELECT
+    m.family_group_id,
+    'Nora',
+    '7-9',
+    ARRAY['music']::TEXT[]
+FROM public.family_group_members m
+WHERE m.account_id =
+    '10000000-0000-4000-8000-000000000002';
+
+-- Verify that Customer B now sees two profiles.
+
+DO $$
+BEGIN
+    IF (
+        SELECT COUNT(*)
+        FROM public.family_profiles
+    ) <> 2 THEN
+        RAISE EXCEPTION
+            'Customer B should see exactly two profiles';
+    END IF;
+END;
+$$;
+
+-- Customer B can delete the secondary profile.
+
+DO $$
+DECLARE
+    affected_rows INTEGER;
+BEGIN
+    DELETE FROM public.family_profiles
+    WHERE first_name = 'Nora';
+
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+
+    IF affected_rows <> 1 THEN
+        RAISE EXCEPTION
+            'Customer B should delete exactly one secondary profile';
+    END IF;
+END;
+$$;
+
+-- Verify that Nora disappeared and Biel remains.
 
 DO $$
 BEGIN
     IF EXISTS (
         SELECT 1
         FROM public.family_profiles
+        WHERE first_name = 'Nora'
+    ) THEN
+        RAISE EXCEPTION
+            'Secondary profile Nora was not deleted';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.family_profiles
         WHERE first_name = 'Biel'
     ) THEN
         RAISE EXCEPTION
-            'Customer B could not delete its own profile';
+            'Main profile Biel was deleted';
+    END IF;
+
+    IF (
+        SELECT COUNT(*)
+        FROM public.family_profiles
+    ) <> 1 THEN
+        RAISE EXCEPTION
+            'Customer B should have exactly one remaining profile';
     END IF;
 END;
 $$;

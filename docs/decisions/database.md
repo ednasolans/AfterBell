@@ -172,6 +172,7 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **`family_profiles` store a first name, an age range and interests** | Full name / birth date | The children are minors: store the minimum. An age range is enough for recommendations; a birth date would be personal data with no use. Interests use the activity categories list. |
 | **Family data is visible only to the members of the group** | Visible to providers | Nobody else needs it. When a family signs up for an activity, the enrollment will store what the provider needs. |
 | **Membership checks use a `SECURITY DEFINER` helper** (`is_family_member(group_id)`) | A subquery on `family_group_members` inside its own policy | A policy on `family_group_members` that reads `family_group_members` calls itself and fails with *infinite recursion*. The helper reads the table without RLS and returns only `true` or `false`. |
+| **Protect the first family profile from deletion** | Adding an `is_main` column or allowing every profile to be deleted | The first profile in a family group is considered the main profile, determined by `created_at ASC, id ASC`. The database does not store an `is_main` column. A `BEFORE DELETE` trigger prevents deleting this profile, ensuring that a family with at least one profile cannot become empty through profile deletion. |
 
 ### AI profiles (proposed)
 

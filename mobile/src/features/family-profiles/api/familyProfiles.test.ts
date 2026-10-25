@@ -7,6 +7,7 @@ import {
   fetchFamilyProfile,
   createFamilyProfile,
   updateFamilyProfile,
+  deleteFamilyProfile,
 } from "./familyProfiles";
 
 import type { FamilyProfileFormValues } from "../types";
@@ -47,18 +48,23 @@ function createQueryMock() {
     single: jest.fn(),
     insert: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
+    then: jest.fn(),
   };
 
   query.select.mockReturnValue(query);
   query.eq.mockReturnValue(query);
+  query.order.mockReturnValue(query);
   query.insert.mockReturnValue(query);
   query.update.mockReturnValue(query);
+  query.delete.mockReturnValue(query);
 
   return query;
 }
 
 let membersQuery: ReturnType<typeof createQueryMock>;
 let profilesQuery: ReturnType<typeof createQueryMock>;
+
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -78,11 +84,16 @@ beforeEach(() => {
     error: null,
   });
 
-  profilesQuery.order.mockResolvedValue({
-    data: [PROFILE],
-    error: null,
-  });
+  // Default response for family profile list queries.
+  // The query builder supports multiple .order() calls.
+  profilesQuery.then.mockImplementation((resolve) =>
+    Promise.resolve({
+      data: [PROFILE],
+      error: null,
+    }).then(resolve),
+  );
 
+  // Default response for queries ending with .single().
   profilesQuery.single.mockResolvedValue({
     data: PROFILE,
     error: null,
@@ -90,10 +101,14 @@ beforeEach(() => {
 
   jest.mocked(supabase.from).mockImplementation((table) => {
     if (table === "family_group_members") {
-      return membersQuery as unknown as ReturnType<typeof supabase.from>;
+      return membersQuery as unknown as ReturnType<
+        typeof supabase.from
+      >;
     }
 
-    return profilesQuery as unknown as ReturnType<typeof supabase.from>;
+    return profilesQuery as unknown as ReturnType<
+      typeof supabase.from
+    >;
   });
 });
 
@@ -102,9 +117,11 @@ describe("getFamilyGroupId", () => {
     const result = await getFamilyGroupId();
 
     expect(result).toBe(GROUP_ID);
+
     expect(supabase.from).toHaveBeenCalledWith(
       "family_group_members",
     );
+
     expect(membersQuery.eq).toHaveBeenCalledWith(
       "account_id",
       USER_ID,
@@ -113,9 +130,9 @@ describe("getFamilyGroupId", () => {
 
   it("rejects an unauthenticated user", async () => {
     jest.mocked(supabase.auth.getUser).mockResolvedValue({
-      data: { user: null },
-      error: null,
-    } as Awaited<ReturnType<typeof supabase.auth.getUser>>);
+        data: { user: null },
+        error: null,
+    } as unknown as Awaited<ReturnType<typeof supabase.auth.getUser>>);
 
     await expect(getFamilyGroupId()).rejects.toThrow(
       "You must be logged in",
@@ -139,40 +156,82 @@ describe("fetchFamilyProfiles", () => {
     const result = await fetchFamilyProfiles();
 
     expect(result).toEqual([PROFILE]);
+
     expect(supabase.from).toHaveBeenCalledWith(
       "family_profiles",
     );
+
     expect(profilesQuery.select).toHaveBeenCalledWith("*");
+
     expect(profilesQuery.eq).toHaveBeenCalledWith(
       "family_group_id",
       GROUP_ID,
     );
+
+    // Primary ordering: oldest profile first.
     expect(profilesQuery.order).toHaveBeenCalledWith(
       "created_at",
       { ascending: true },
     );
+
+    // Secondary ordering: stable order when timestamps match.
+    expect(profilesQuery.order).toHaveBeenCalledWith(
+      "id",
+      { ascending: true },
+    );
+
+    expect(profilesQuery.order).toHaveBeenCalledTimes(2);
   });
 
   it("returns an empty array when there are no profiles", async () => {
-    profilesQuery.order.mockResolvedValue({
-      data: [],
-      error: null,
-    });
+    profilesQuery.then.mockImplementation((resolve) =>
+      Promise.resolve({
+        data: [],
+        error: null,
+      }).then(resolve),
+    );
 
     await expect(fetchFamilyProfiles()).resolves.toEqual([]);
   });
 
   it("propagates a database error", async () => {
-    profilesQuery.order.mockResolvedValue({
-      data: null,
-      error: new Error("Database error"),
-    });
+    profilesQuery.then.mockImplementation((resolve) =>
+      Promise.resolve({
+        data: null,
+        error: new Error("Database error"),
+      }).then(resolve),
+    );
 
     await expect(fetchFamilyProfiles()).rejects.toThrow(
       "Database error",
     );
   });
 });
+
+
+  it("returns an empty array when there are no profiles", async () => {
+    profilesQuery.then.mockImplementation((resolve) =>
+        Promise.resolve({
+            data: [],
+            error: null,
+        }).then(resolve),
+    );
+
+    await expect(fetchFamilyProfiles()).resolves.toEqual([]);
+  });
+
+  it("propagates a database error", async () => {
+    profilesQuery.then.mockImplementation((resolve) =>
+        Promise.resolve({
+            data: null,
+            error: new Error("Database error"),
+        }).then(resolve),
+    );
+
+    await expect(fetchFamilyProfiles()).rejects.toThrow(
+      "Database error",
+    );
+  });
 
 describe("fetchFamilyProfile", () => {
   it("fetches a profile by id and family group", async () => {
@@ -286,5 +345,64 @@ describe("updateFamilyProfile", () => {
     await expect(
       updateFamilyProfile(PROFILE_ID, VALUES),
     ).rejects.toThrow("Update failed");
+  });
+});
+
+
+
+describe("deleteFamilyProfile", () => {
+  it("deletes a profile from the authenticated user's group", async () => {
+    profilesQuery.single.mockResolvedValue({
+      data: { id: PROFILE_ID },
+      error: null,
+    });
+
+    await deleteFamilyProfile(PROFILE_ID);
+
+    expect(supabase.from).toHaveBeenCalledWith(
+      "family_profiles",
+    );
+
+    expect(profilesQuery.delete).toHaveBeenCalledTimes(1);
+
+    expect(profilesQuery.eq).toHaveBeenCalledWith(
+      "id",
+      PROFILE_ID,
+    );
+
+    expect(profilesQuery.eq).toHaveBeenCalledWith(
+      "family_group_id",
+      GROUP_ID,
+    );
+
+    expect(profilesQuery.select).toHaveBeenCalledWith("id");
+  });
+
+  it("propagates a database rejection", async () => {
+    profilesQuery.single.mockResolvedValue({
+      data: null,
+      error: new Error(
+        "The main family profile cannot be deleted",
+      ),
+    });
+
+    await expect(
+      deleteFamilyProfile(PROFILE_ID),
+    ).rejects.toThrow(
+      "The main family profile cannot be deleted",
+    );
+  });
+
+  it("does not delete without authentication", async () => {
+    jest.mocked(supabase.auth.getUser).mockResolvedValue({
+        data: { user: null },
+        error: null,
+    } as unknown as Awaited<ReturnType<typeof supabase.auth.getUser>>);
+
+    await expect(
+      deleteFamilyProfile(PROFILE_ID),
+    ).rejects.toThrow("You must be logged in");
+
+    expect(profilesQuery.delete).not.toHaveBeenCalled();
   });
 });

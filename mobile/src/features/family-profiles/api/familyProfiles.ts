@@ -32,7 +32,8 @@ export async function fetchFamilyProfiles(): Promise<FamilyProfile[]> {
     .from("family_profiles")
     .select("*")
     .eq("family_group_id", groupId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
 
   if (error) throw error;
 
@@ -106,4 +107,20 @@ export async function updateFamilyProfile(
   if (error) throw error;
 
   return data;
+}
+
+export async function deleteFamilyProfile(id: string): Promise<void> {
+  const groupId = await getFamilyGroupId();
+
+  const { error } = await supabase
+    .from("family_profiles")
+    .delete()
+    .eq("id", id)
+    .eq("family_group_id", groupId)
+    .select("id")
+    .single();
+
+  if (error) {
+    throw error;
+  }
 }

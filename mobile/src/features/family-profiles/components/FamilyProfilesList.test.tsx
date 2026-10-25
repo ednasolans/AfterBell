@@ -3,7 +3,10 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react-native";
+
+import { Alert } from "react-native";
 
 import { useFamilyProfiles } from "../hooks/useFamilyProfiles";
 import { FamilyProfilesList } from "./FamilyProfilesList";
@@ -27,7 +30,7 @@ function mockQueryResult(
   values: Record<string, unknown>,
 ) {
   mockedUseFamilyProfiles.mockReturnValue(
-    values as ReturnType<typeof useFamilyProfiles>,
+    values as unknown as ReturnType<typeof useFamilyProfiles>,
   );
 }
 
@@ -48,7 +51,8 @@ describe("FamilyProfilesList", () => {
         userId="user-1"
         onCreate={jest.fn()}
         onEdit={jest.fn()}
-      />,
+        onDelete={jest.fn().mockResolvedValue(undefined)}
+    />
     );
 
     expect(
@@ -70,6 +74,7 @@ describe("FamilyProfilesList", () => {
         userId="user-1"
         onCreate={onCreate}
         onEdit={jest.fn()}
+        onDelete={jest.fn().mockResolvedValue(undefined)}
       />,
     );
 
@@ -96,7 +101,8 @@ describe("FamilyProfilesList", () => {
         userId="user-1"
         onCreate={jest.fn()}
         onEdit={jest.fn()}
-      />,
+        onDelete={jest.fn().mockResolvedValue(undefined)}
+/>
     );
 
     expect(screen.getByText("Anna")).toBeTruthy();
@@ -121,6 +127,7 @@ describe("FamilyProfilesList", () => {
         userId="user-1"
         onCreate={jest.fn()}
         onEdit={onEdit}
+        onDelete={jest.fn().mockResolvedValue(undefined)}
       />,
     );
 
@@ -146,6 +153,7 @@ describe("FamilyProfilesList", () => {
         userId="user-1"
         onCreate={jest.fn()}
         onEdit={jest.fn()}
+        onDelete={jest.fn().mockResolvedValue(undefined)}
       />,
     );
 
@@ -156,5 +164,123 @@ describe("FamilyProfilesList", () => {
     await fireEvent.press(screen.getByText("Try again"));
 
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+describe("FamilyProfilesList deletion", () => {
+  const MAIN_PROFILE = {
+    id: "profile-1",
+    family_group_id: "group-1",
+    first_name: "Anna",
+    age_range: "7-9",
+    interests: ["music"],
+    created_at: "2026-10-24T10:00:00Z",
+  };
+
+  const SECOND_PROFILE = {
+    id: "profile-2",
+    family_group_id: "group-1",
+    first_name: "Marc",
+    age_range: "10-12",
+    interests: ["football"],
+    created_at: "2026-10-24T11:00:00Z",
+  };
+
+  it("does not show a delete button for the main profile", async () => {
+    mockQueryResult({
+      data: [MAIN_PROFILE, SECOND_PROFILE],
+      isPending: false,
+      isError: false,
+    });
+
+    await render(
+      <FamilyProfilesList
+        userId="user-1"
+        onCreate={jest.fn()}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByLabelText("Delete Anna"),
+    ).toBeNull();
+
+    expect(
+      screen.getByText("Main profile"),
+    ).toBeTruthy();
+
+    expect(
+      screen.getByLabelText("Delete Marc"),
+    ).toBeTruthy();
+  });
+
+  it("asks for confirmation before deleting", async () => {
+    mockQueryResult({
+      data: [MAIN_PROFILE, SECOND_PROFILE],
+      isPending: false,
+      isError: false,
+    });
+
+    const onDelete = jest.fn().mockResolvedValue(undefined);
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(
+      () => {},
+    );
+
+    try {
+      await render(
+        <FamilyProfilesList
+          userId="user-1"
+          onCreate={jest.fn()}
+          onEdit={jest.fn()}
+          onDelete={onDelete}
+        />,
+      );
+
+      await fireEvent.press(
+        screen.getByLabelText("Delete Marc"),
+      );
+
+      expect(alertSpy).toHaveBeenCalledWith(
+        "Delete profile",
+        expect.stringContaining("Marc"),
+        expect.any(Array),
+      );
+
+      // Opening the dialog must not delete anything.
+      expect(onDelete).not.toHaveBeenCalled();
+
+      // Simulate pressing the destructive confirmation button.
+      const buttons = alertSpy.mock.calls[0][2];
+      buttons?.[1]?.onPress?.();
+
+      await waitFor(() => {
+        expect(onDelete).toHaveBeenCalledWith("profile-2");
+      });
+    } finally {
+      alertSpy.mockRestore();
+    }
+  });
+
+  it("does not delete the last remaining profile", async () => {
+    mockQueryResult({
+      data: [MAIN_PROFILE],
+      isPending: false,
+      isError: false,
+    });
+
+    await render(
+      <FamilyProfilesList
+        userId="user-1"
+        onCreate={jest.fn()}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByLabelText("Delete Anna"),
+    ).toBeNull();
   });
 });

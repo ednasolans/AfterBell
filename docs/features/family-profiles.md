@@ -1,19 +1,19 @@
-# Feature guide: family groups and profiles (issues #18 and #19)
+# Feature guide: family groups and profiles (issues #18, #19 and #20)
 
 This guide explains the database foundation and mobile implementation of family profiles, where each piece lives and why it was designed this way. It is intended for team members who need to change or extend the feature and for the teaching staff reviewing the sprint.
 
-> **Status:** Issue #18 committed. Issue #19 implemented in the working branch, with final testing and integration verification pending.
+> **Status:** Issue #18 committed. Issue #19 implemented. Issue #20 implemented in the working branch, with final testing and integration verification pending.
 >
 > **Implemented features:**
 > - Issue #18: Family groups, family profiles, database constraints and Row-Level Security.
 > - Issue #19: Family profile list and shared create/edit form, including the Supabase API layer and TanStack Query hooks.
+> - Issue #20: Family profile deletion with confirmation dialog, protection of the main profile through a PostgreSQL trigger, and automatic list refresh using TanStack Query.
 >
 > **Later work:**
-> - Issue #20: Profile deletion with confirmation.
 > - Issue #21: Active profile selection.
 > - Family invitations and shared parenting: future functionality.
 >
-> This guide describes the implementation of issues #18 and #19. The database design is justified in [`docs/decisions/database.md`](../decisions/database.md), which takes precedence over older issue descriptions when requirements differ.
+> This guide describes the implementation of issues #18, #19 and #20. The database design is justified in [`docs/decisions/database.md`](../decisions/database.md), which takes precedence over older issue descriptions when requirements differ.
 
 ## 1. What the feature does
 
@@ -62,6 +62,43 @@ Each family profile stores:
 The database does not store full names, exact birth dates or an `is_main` flag.
 
 **Row-Level Security (RLS)** restricts family data to members of the same group. Unrelated customers and company accounts cannot access family profiles.
+
+### Main profile and deletion (issue #20)
+
+Each family group can contain multiple family profiles. The first profile created in the group is considered the **main profile**.
+
+The main profile is identified by ordering the profiles by `created_at ASC, id ASC`. The `family_profiles` table does not include an `is_main` column; main profile status is derived from the existing fields.
+
+**The main profile cannot be deleted.** Its card displays the label **Main profile** and does not show the **Delete profile** option.
+
+Secondary profiles can be deleted by authorised family members. When the customer selects **Delete profile**, the application displays a confirmation dialog with two options:
+
+- **Cancel:** closes the dialog without deleting anything.
+- **Delete:** performs the deletion through Supabase.
+
+The operation is implemented through `deleteFamilyProfile()` in the API layer and `useDeleteFamilyProfile()` in TanStack Query. After a successful deletion, the family profile queries are invalidated, causing the list to refresh and the deleted profile to disappear.
+
+If deletion fails, the application displays an error message and keeps the profile in the list.
+
+#### Database protection
+
+The migration `…_protect_main_family_profile.sql` adds a PostgreSQL `BEFORE DELETE` trigger named `protect_main_family_profile_before_delete`.
+
+Before a profile is deleted, the trigger checks whether it is the oldest profile belonging to its family group. If it is the main profile, the operation is rejected.
+
+This protection is enforced independently of the mobile interface. Even if a client bypasses the hidden Delete button, the database prevents deletion of the main profile.
+
+The existing Row-Level Security policies continue to restrict deletion to authorised members of the profile's family group.
+
+This ensures that a family which already contains at least one profile cannot become empty through deletion. Newly registered customers can still have zero profiles until they create their first one.
+
+#### Relationship with issue #21
+
+The main profile is different from the **active profile** planned for issue #21.
+
+The main profile is permanently determined by creation order and is protected from deletion. The active profile will represent the profile currently selected for use in the application.
+
+Changing the active profile will not change which profile is protected from deletion.
 
 ### Mobile flow
 

@@ -11,6 +11,7 @@ import {
   fetchFamilyProfile,
   fetchFamilyProfiles,
   updateFamilyProfile,
+  deleteFamilyProfile,
 } from "../api/familyProfiles";
 
 import type {
@@ -24,6 +25,7 @@ import {
   useFamilyProfile,
   useFamilyProfiles,
   useUpdateFamilyProfile,
+  useDeleteFamilyProfile,
 } from "./useFamilyProfiles";
 
 // Mock API calls: these tests do not connect to Supabase.
@@ -32,6 +34,7 @@ jest.mock("../api/familyProfiles", () => ({
   fetchFamilyProfile: jest.fn(),
   fetchFamilyProfiles: jest.fn(),
   updateFamilyProfile: jest.fn(),
+  deleteFamilyProfile: jest.fn(),
 }));
 
 const PROFILE: FamilyProfile = {
@@ -248,6 +251,50 @@ describe("useUpdateFamilyProfile", () => {
         id: "profile-1",
         values: FORM,
       });
+    });
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
+
+    expect(invalidate).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("useDeleteFamilyProfile", () => {
+  it("deletes a profile and invalidates family queries", async () => {
+    jest.mocked(deleteFamilyProfile).mockResolvedValue(undefined);
+
+    const { result, invalidate } = await renderWithClient(() =>
+      useDeleteFamilyProfile(),
+    );
+
+    await act(() =>
+      result.current.mutateAsync("profile-2"),
+    );
+
+    expect(deleteFamilyProfile).toHaveBeenCalledWith(
+      "profile-2",
+      expect.anything(),
+    );
+
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: familyProfileKeys.all,
+    });
+  });
+
+  it("does not invalidate queries when deletion fails", async () => {
+    jest.mocked(deleteFamilyProfile).mockRejectedValue(
+      new Error("Deletion not allowed"),
+    );
+
+    const { result, invalidate } = await renderWithClient(() =>
+      useDeleteFamilyProfile(),
+    );
+
+    await act(() => {
+      result.current.mutate("profile-1");
     });
 
     await waitFor(() => {

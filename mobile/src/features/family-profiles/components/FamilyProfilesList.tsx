@@ -1,6 +1,7 @@
 
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,12 +15,16 @@ type Props = {
   userId: string;
   onCreate: () => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
+  isDeleting?: boolean;
 };
 
 export function FamilyProfilesList({
   userId,
   onCreate,
   onEdit,
+  onDelete,
+  isDeleting = false,
 }: Props) {
   const {
     data: profiles,
@@ -27,6 +32,33 @@ export function FamilyProfilesList({
     isError,
     refetch,
   } = useFamilyProfiles(userId);
+
+  function confirmDelete(id: string, firstName: string) {
+    Alert.alert(
+      "Delete profile",
+      `Are you sure you want to delete ${firstName}'s profile? This action cannot be undone.`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            void onDelete(id).catch((error: unknown) => {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : "Could not delete profile.";
+
+              Alert.alert("Delete failed", message);
+            });
+          },
+        },
+      ],
+    );
+  }
 
   if (isPending) {
     return (
@@ -41,12 +73,19 @@ export function FamilyProfilesList({
       <View style={styles.container}>
         <Text>Could not load family profiles.</Text>
 
-        <Pressable onPress={() => void refetch()}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void refetch()}
+        >
           <Text style={styles.link}>Try again</Text>
         </Pressable>
       </View>
     );
   }
+
+  // The API sorts by created_at and id.
+  // The oldest profile is the protected main profile.
+  const mainProfileId = profiles?.[0]?.id;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -68,23 +107,53 @@ export function FamilyProfilesList({
         </View>
       ) : (
         <>
-          {profiles?.map((profile) => (
-            <View key={profile.id} style={styles.card}>
-              <Text style={styles.name}>
-                {profile.first_name}
-              </Text>
+          {profiles?.map((profile) => {
+            const isMain = profile.id === mainProfileId;
 
-              <Text>Age: {profile.age_range}</Text>
+            return (
+              <View key={profile.id} style={styles.card}>
+                <Text style={styles.name}>
+                  {profile.first_name}
+                </Text>
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Edit ${profile.first_name}`}
-                onPress={() => onEdit(profile.id)}
-              >
-                <Text style={styles.link}>Edit profile</Text>
-              </Pressable>
-            </View>
-          ))}
+                {isMain ? (
+                  <Text style={styles.mainLabel}>
+                    Main profile
+                  </Text>
+                ) : null}
+
+                <Text>Age: {profile.age_range}</Text>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${profile.first_name}`}
+                  onPress={() => onEdit(profile.id)}
+                >
+                  <Text style={styles.link}>
+                    Edit profile
+                  </Text>
+                </Pressable>
+
+                {!isMain ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Delete ${profile.first_name}`}
+                    disabled={isDeleting}
+                    onPress={() =>
+                      confirmDelete(
+                        profile.id,
+                        profile.first_name,
+                      )
+                    }
+                  >
+                    <Text style={styles.deleteText}>
+                      Delete profile
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            );
+          })}
 
           <Pressable
             accessibilityRole="button"
@@ -95,6 +164,10 @@ export function FamilyProfilesList({
               Add another profile
             </Text>
           </Pressable>
+
+          {isDeleting ? (
+            <ActivityIndicator accessibilityLabel="Deleting profile" />
+          ) : null}
         </>
       )}
     </ScrollView>
@@ -126,8 +199,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
+  mainLabel: {
+    color: "#2563eb",
+    fontWeight: "600",
+  },
   link: {
     color: "#2563eb",
+    fontWeight: "600",
+  },
+  deleteText: {
+    color: "#b91c1c",
     fontWeight: "600",
   },
   button: {
@@ -137,7 +218,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
-    color: "white",
+    color: "#ffffff",
     fontWeight: "700",
   },
 });

@@ -7,6 +7,7 @@ import {
 
 import {
   createFamilyProfile,
+  deleteFamilyProfile,
   fetchFamilyProfile,
   fetchFamilyProfiles,
   updateFamilyProfile,
@@ -71,6 +72,20 @@ export function useUpdateFamilyProfile() {
       id: string;
       values: FamilyProfileFormValues;
     }) => updateFamilyProfile(id, values),
+
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: familyProfileKeys.all,
+      });
+    },
+  });
+}
+
+export function useDeleteFamilyProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteFamilyProfile,
 
     onSuccess: () => {
       void queryClient.invalidateQueries({
