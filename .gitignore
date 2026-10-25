@@ -22,3 +22,5 @@ test-rls.mjs
 .vscode/
 
 .claude/
+
+.venv/
