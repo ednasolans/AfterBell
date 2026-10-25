@@ -103,3 +103,10 @@ no typos. The cost difference with 3.1 is negligible (1,000 profiles ≈ $0.31).
 - Every profile is a draft that the provider reviews before publishing, which also
   covers occasional wording mistakes.
 - Revisit if quality drops, prices change, or F14/F10 need a different model.
+
+## Spending limit
+
+- Monthly spend cap of <X> € set in Google AI Studio (project <name>) on
+  <date> by <who>. It takes about 10 minutes to apply.
+- App-side limits that keep the cost low: 30 s cooldown per provider,
+  `max_tokens` 600, one retry at most, 20 s timeout.
