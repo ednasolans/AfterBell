@@ -4,6 +4,7 @@ import { buildMessages } from "../_shared/prompts.ts";
 const sheet = {
   name: "Escola de Música L'Harmonia",
   provider_type: "music_school",
+  description: null,
   activity_types: ["music"],
   facilities: ["wifi"],
   city: "Lleida",
@@ -18,7 +19,7 @@ Deno.test("builds a system and a user message", () => {
 
 Deno.test("user message contains translated data", () => {
   const user = buildMessages(sheet)[1].content;
-  assert(user.includes("escola de música"));
+  assert(user.includes("music school"));
   assert(user.includes("Lleida"));
   assert(!user.includes("music_school"));
 });
