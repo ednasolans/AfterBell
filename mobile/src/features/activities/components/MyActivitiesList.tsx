@@ -86,7 +86,7 @@ export function MyActivitiesList({ onCreate, onEdit }: MyActivitiesListProps) {
       renderItem={({ item }) => (
         <ActivityCard
           activity={item}
-          address={addressById.get(item.addressId)}
+          address={item.addressId ? addressById.get(item.addressId) : undefined}
           onEdit={() => onEdit(item.id)}
           onDelete={() => confirmDelete(item)}
           isDeleting={

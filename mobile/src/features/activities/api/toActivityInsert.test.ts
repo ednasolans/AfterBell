@@ -4,14 +4,14 @@ import { toActivityInsert } from "./toActivityInsert";
 const VALID_FORM: ActivityForm = {
   title: "  Swimming for kids ",
   description: "   ",
-  category: "swimming",
-  targetAgeRanges: ["7-9"],
-  schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
-  priceMin: 30,
-  priceMax: 40.5,
-  pricePeriod: "per_month",
-  maxParticipants: 12,
+  minAge: 7,
+  maxAge: 12,
+  schedule: [" Tuesday 17:00-18:00 "],
+  price: 30,
+  startDate: "2026-10-01",
+  endDate: "  ",
   addressId: "address-1",
+  status: "published",
 };
 
 describe("toActivityInsert", () => {
@@ -19,21 +19,20 @@ describe("toActivityInsert", () => {
     expect(toActivityInsert(VALID_FORM)).toEqual({
       title: "Swimming for kids",
       description: null,
-      category: "swimming",
-      target_age_ranges: ["7-9"],
-      schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
-      price_min: 30,
-      price_max: 40.5,
-      price_period: "per_month",
-      max_participants: 12,
+      min_age: 7,
+      max_age: 12,
+      schedule: ["Tuesday 17:00-18:00"],
+      price: 30,
+      start_date: "2026-10-01",
+      end_date: null,
       address_id: "address-1",
+      status: "published",
     });
   });
 
-  it("does not send provider_id or type, so the database fills them", () => {
+  it("does not send account_id, so the database fills it", () => {
     const row = toActivityInsert(VALID_FORM);
-    expect(row).not.toHaveProperty("provider_id");
-    expect(row).not.toHaveProperty("type");
+    expect(row).not.toHaveProperty("account_id");
   });
 
   it("keeps a description that has text, without surrounding spaces", () => {
@@ -44,12 +43,29 @@ describe("toActivityInsert", () => {
     expect(row.description).toBe("Small groups");
   });
 
+  it("drops the empty lines of the schedule", () => {
+    const row = toActivityInsert({
+      ...VALID_FORM,
+      schedule: ["Monday 17:00-18:00", "  ", "", " Friday 10:00-11:30"],
+    });
+    expect(row.schedule).toEqual(["Monday 17:00-18:00", "Friday 10:00-11:30"]);
+  });
+
+  it("sends the status chosen in the form", () => {
+    const row = toActivityInsert({ ...VALID_FORM, status: "draft" });
+    expect(row.status).toBe("draft");
+  });
+
+  it("saves both dates when they are given", () => {
+    const row = toActivityInsert({ ...VALID_FORM, endDate: "2026-12-31" });
+    expect(row.start_date).toBe("2026-10-01");
+    expect(row.end_date).toBe("2026-12-31");
+  });
+
   it.each<Partial<ActivityForm>>([
-    { category: null },
-    { priceMin: null },
-    { priceMax: null },
-    { pricePeriod: null },
-    { maxParticipants: null },
+    { minAge: null },
+    { maxAge: null },
+    { price: null },
     { addressId: null },
   ])("throws if the activity was not validated (%o)", (changes) => {
     expect(() => toActivityInsert({ ...VALID_FORM, ...changes })).toThrow();

@@ -1,8 +1,6 @@
 import { act, fireEvent, waitFor } from "@testing-library/react-native";
 
-import { AGE_RANGE_LABELS } from "@/lib/ages";
-import { formatPriceRange } from "@/lib/price";
-
+import { formatAgeRange, formatPrice } from "../format";
 import {
   makeActivity,
   makeCatalogActivity,
@@ -23,17 +21,14 @@ describe("CatalogList", () => {
   });
 
   it("shows the title, provider, ages and price of each activity", async () => {
-    const item = makeCatalogActivity();
-    mockFetch.mockResolvedValue([item]);
+    mockFetch.mockResolvedValue([makeCatalogActivity()]);
 
     const { getByText } = await renderWithQuery(<CatalogList onOpen={jest.fn()} />);
 
     await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
     expect(getByText("Sports Club")).toBeTruthy();
-    expect(getByText(`Ages: ${AGE_RANGE_LABELS["7-9"]}`)).toBeTruthy();
-    expect(
-      getByText(formatPriceRange(10, 20, item.activity.pricePeriod)),
-    ).toBeTruthy();
+    expect(getByText(`Ages: ${formatAgeRange(7, 12)}`)).toBeTruthy();
+    expect(getByText(formatPrice(15))).toBeTruthy();
   });
 
   it("shows the activity without a provider name when it has no contact details", async () => {

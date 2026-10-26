@@ -1,158 +1,169 @@
-import { EMPTY_ACTIVITY_FORM, type ActivityForm } from "./types";
+import { type ActivityForm } from "./types";
 import {
   DESCRIPTION_MAX_LENGTH,
-  MAX_PARTICIPANTS,
-  MIN_PARTICIPANTS,
   TITLE_MAX_LENGTH,
   validateActivity,
 } from "./validation";
 
-// A complete activity that passes every rule; each test changes only what it checks
 const VALID_ACTIVITY: ActivityForm = {
-  title: "Swimming for kids",
-  description: "Learn to swim in small groups",
-  category: "swimming",
-  targetAgeRanges: ["7-9"],
-  schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
-  priceMin: 30,
-  priceMax: 40,
-  pricePeriod: "per_month",
-  maxParticipants: 12,
+  title: "Saturday workshop",
+  description: "Fun for everyone",
+  minAge: 7,
+  maxAge: 12,
+  schedule: ["Tuesday 17:00-18:00"],
+  price: 15,
+  startDate: "2026-10-01",
+  endDate: "2026-12-31",
   addressId: "address-1",
+  status: "draft",
 };
 
+function errorsOf(changes: Partial<ActivityForm>) {
+  return validateActivity({ ...VALID_ACTIVITY, ...changes });
+}
+
 describe("validateActivity", () => {
-  it("accepts a complete activity", () => {
+  it("accepts a valid activity", () => {
     expect(validateActivity(VALID_ACTIVITY)).toEqual({});
   });
 
-  it("reports every required field of an empty activity", () => {
-    const errors = validateActivity(EMPTY_ACTIVITY_FORM);
-    expect(Object.keys(errors).sort()).toEqual(
-      [
-        "addressId",
-        "category",
-        "maxParticipants",
-        "priceMax",
-        "priceMin",
-        "pricePeriod",
-        "schedule",
-        "targetAgeRanges",
-        "title",
-      ].sort(),
-    );
-  });
-
-  it("requires the place of the activity", () => {
-    expect(
-      validateActivity({ ...VALID_ACTIVITY, addressId: null }).addressId,
-    ).toBe("Choose where the activity takes place");
-  });
-
-  describe("details", () => {
-    it("treats a title with only spaces as empty", () => {
-      expect(
-        validateActivity({ ...VALID_ACTIVITY, title: "   " }).title,
-      ).toBeDefined();
+  describe("title", () => {
+    it.each(["", "   "])("is required (%j)", (title) => {
+      expect(errorsOf({ title }).title).toBeDefined();
     });
 
-    it("accepts a title at the length limit and rejects a longer one", () => {
-      const atLimit = "a".repeat(TITLE_MAX_LENGTH);
-      expect(
-        validateActivity({ ...VALID_ACTIVITY, title: atLimit }).title,
-      ).toBeUndefined();
-      expect(
-        validateActivity({ ...VALID_ACTIVITY, title: `${atLimit}a` }).title,
-      ).toBeDefined();
+    it("can have the maximum length", () => {
+      expect(errorsOf({ title: "a".repeat(TITLE_MAX_LENGTH) }).title).toBeUndefined();
     });
 
-    it("accepts an empty description and rejects one that is too long", () => {
-      expect(validateActivity({ ...VALID_ACTIVITY, description: "" })).toEqual(
-        {},
-      );
-      const tooLong = "a".repeat(DESCRIPTION_MAX_LENGTH + 1);
-      expect(
-        validateActivity({ ...VALID_ACTIVITY, description: tooLong })
-          .description,
-      ).toBeDefined();
+    it("cannot be longer than the maximum", () => {
+      expect(errorsOf({ title: "a".repeat(TITLE_MAX_LENGTH + 1) }).title).toBeDefined();
     });
   });
 
-  describe("maximum participants", () => {
-    it("accepts the limits of the range", () => {
-      expect(
-        validateActivity({
-          ...VALID_ACTIVITY,
-          maxParticipants: MIN_PARTICIPANTS,
-        }),
-      ).toEqual({});
-      expect(
-        validateActivity({
-          ...VALID_ACTIVITY,
-          maxParticipants: MAX_PARTICIPANTS,
-        }),
-      ).toEqual({});
+  describe("description", () => {
+    it("is optional", () => {
+      expect(errorsOf({ description: "" }).description).toBeUndefined();
     });
 
-    it.each([MIN_PARTICIPANTS - 1, MAX_PARTICIPANTS + 1])(
-      "rejects %d",
-      (maxParticipants) => {
-        expect(
-          validateActivity({ ...VALID_ACTIVITY, maxParticipants })
-            .maxParticipants,
-        ).toBeDefined();
-      },
-    );
+    it("cannot be longer than the maximum", () => {
+      const description = "a".repeat(DESCRIPTION_MAX_LENGTH + 1);
+      expect(errorsOf({ description }).description).toBeDefined();
+    });
+  });
+
+  describe("place", () => {
+    it("requires an address", () => {
+      expect(errorsOf({ addressId: null }).addressId).toBeDefined();
+    });
   });
 
   describe("schedule", () => {
-    it("rejects a schedule with an invalid time slot", () => {
-      const schedule: ActivityForm["schedule"] = [
-        { day: "monday", startTime: "17:00", endTime: "18:00" },
-        { day: "friday", startTime: "19:00", endTime: "18:00" },
-      ];
-      expect(
-        validateActivity({ ...VALID_ACTIVITY, schedule }).schedule,
-      ).toBeDefined();
+    it("requires at least one time slot", () => {
+      expect(errorsOf({ schedule: [] }).schedule).toBeDefined();
     });
 
-    it("accepts several valid time slots", () => {
-      const schedule: ActivityForm["schedule"] = [
-        { day: "monday", startTime: "17:00", endTime: "18:00" },
-        { day: "friday", startTime: "10:00", endTime: "11:30" },
-      ];
-      expect(validateActivity({ ...VALID_ACTIVITY, schedule })).toEqual({});
+    it("does not accept a schedule with only empty lines", () => {
+      expect(errorsOf({ schedule: ["", "  "] }).schedule).toBeDefined();
+    });
+
+    it("ignores the empty lines between time slots", () => {
+      const schedule = ["Monday 17:00-18:00", "  ", ""];
+      expect(errorsOf({ schedule }).schedule).toBeUndefined();
+    });
+
+    it("accepts several time slots", () => {
+      const schedule = ["Monday 17:00-18:00", "Friday 10:00-11:30"];
+      expect(errorsOf({ schedule }).schedule).toBeUndefined();
     });
   });
 
-  describe("prices", () => {
-    it("accepts free activities and equal prices", () => {
-      expect(
-        validateActivity({ ...VALID_ACTIVITY, priceMin: 0, priceMax: 0 }),
-      ).toEqual({});
-      expect(
-        validateActivity({ ...VALID_ACTIVITY, priceMin: 40, priceMax: 40 }),
-      ).toEqual({});
+  describe("ages", () => {
+    it("requires both ages", () => {
+      const errors = errorsOf({ minAge: null, maxAge: null });
+      expect(errors.minAge).toBeDefined();
+      expect(errors.maxAge).toBeDefined();
     });
 
-    it("rejects a maximum price lower than the minimum, on the maximum only", () => {
-      const errors = validateActivity({
-        ...VALID_ACTIVITY,
-        priceMin: 50,
-        priceMax: 20,
-      });
-      expect(errors.priceMax).toBeDefined();
-      expect(errors.priceMin).toBeUndefined();
+    it.each([-1, 1.5])("does not accept %p as the minimum age", (minAge) => {
+      expect(errorsOf({ minAge }).minAge).toBeDefined();
     });
 
-    it("rejects negative prices", () => {
-      const errors = validateActivity({
-        ...VALID_ACTIVITY,
-        priceMin: -5,
-        priceMax: -1,
-      });
-      expect(errors.priceMax).toBeDefined();
-      expect(errors.priceMin).toBeDefined();
+    it.each([-1, 1.5])("does not accept %p as the maximum age", (maxAge) => {
+      expect(errorsOf({ maxAge }).maxAge).toBeDefined();
+    });
+
+    it("does not accept a maximum age below the minimum", () => {
+      expect(errorsOf({ minAge: 10, maxAge: 5 }).maxAge).toBeDefined();
+    });
+
+    it("accepts the same minimum and maximum age", () => {
+      expect(errorsOf({ minAge: 8, maxAge: 8 })).toEqual({});
+    });
+
+    it("accepts 0 as the minimum age", () => {
+      expect(errorsOf({ minAge: 0 }).minAge).toBeUndefined();
+    });
+
+    it("does not compare with an invalid minimum age", () => {
+      const errors = errorsOf({ minAge: -1, maxAge: -5 });
+      expect(errors.minAge).toBeDefined();
+      expect(errors.maxAge).toBeDefined();
+    });
+  });
+
+  describe("price", () => {
+    it("is required", () => {
+      expect(errorsOf({ price: null }).price).toBeDefined();
+    });
+
+    it.each([-5, 9.99])("does not accept %p", (price) => {
+      expect(errorsOf({ price }).price).toBeDefined();
+    });
+
+    it("accepts 0 for a free activity", () => {
+      expect(errorsOf({ price: 0 }).price).toBeUndefined();
+    });
+  });
+
+  describe("dates", () => {
+    it("are optional", () => {
+      expect(errorsOf({ startDate: "", endDate: "" })).toEqual({});
+    });
+
+    it("accepts only a start date or only an end date", () => {
+      expect(errorsOf({ endDate: "" })).toEqual({});
+      expect(errorsOf({ startDate: "" })).toEqual({});
+    });
+
+    it.each(["01/10/2026", "2026-1-1", "tomorrow", "2026-02-31"])(
+      "does not accept %j as the start date",
+      (startDate) => {
+        expect(errorsOf({ startDate }).startDate).toBeDefined();
+      },
+    );
+
+    it.each(["01/10/2026", "tomorrow", "2026-13-01"])(
+      "does not accept %j as the end date",
+      (endDate) => {
+        expect(errorsOf({ endDate }).endDate).toBeDefined();
+      },
+    );
+
+    it("does not accept an end date before the start date", () => {
+      const errors = errorsOf({ startDate: "2026-12-31", endDate: "2026-10-01" });
+      expect(errors.endDate).toBeDefined();
+      expect(errors.startDate).toBeUndefined();
+    });
+
+    it("accepts an activity that starts and ends the same day", () => {
+      expect(errorsOf({ startDate: "2026-10-01", endDate: "2026-10-01" })).toEqual({});
+    });
+
+    it("does not compare with an invalid start date", () => {
+      const errors = errorsOf({ startDate: "tomorrow", endDate: "2026-10-01" });
+      expect(errors.startDate).toBeDefined();
+      expect(errors.endDate).toBeUndefined();
     });
   });
 });

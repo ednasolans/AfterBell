@@ -3,8 +3,7 @@ import { type AgeRange } from "@/lib/ages";
 import { type Tables } from "@/lib/database.types";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
-
-import { type Activity, type ActivityForm, type ActivityType } from "../types";
+import { type Activity, type ActivityForm, type ActivityStatus } from "../types";
 
 export type ActivityRow = Tables<"activities">;
 
@@ -14,19 +13,20 @@ export type ActivityRow = Tables<"activities">;
 export function toActivity(row: ActivityRow): Activity {
   return {
     id: row.id,
-    providerId: row.provider_id,
+    accountId: row.account_id,
+    providerProfileId: row.provider_profile_id,
+    addressId: row.address_id,
     title: row.title,
     description: row.description,
-    category: row.category as ActivityCategory,
-    type: row.type as ActivityType,
-    targetAgeRanges: row.target_age_ranges as AgeRange[],
-    schedule: row.schedule as unknown as TimeSlot[],
-    priceMin: row.price_min,
-    priceMax: row.price_max,
-    pricePeriod: row.price_period as PricePeriod,
-    maxParticipants: row.max_participants,
-    addressId: row.address_id,
+    minAge: row.min_age,
+    maxAge: row.max_age,
+    schedule: row.schedule,
+    price: row.price,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    status: row.status as ActivityStatus,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -35,13 +35,13 @@ export function toActivityForm(activity: Activity): ActivityForm {
   return {
     title: activity.title,
     description: activity.description ?? "",
-    category: activity.category,
-    targetAgeRanges: activity.targetAgeRanges,
+    minAge: activity.minAge,
+    maxAge: activity.maxAge,
     schedule: activity.schedule,
-    priceMin: activity.priceMin,
-    priceMax: activity.priceMax,
-    pricePeriod: activity.pricePeriod,
-    maxParticipants: activity.maxParticipants,
+    price: activity.price,
+    startDate: activity.startDate ?? "",
+    endDate: activity.endDate ?? "",
     addressId: activity.addressId,
+    status: activity.status,
   };
 }

@@ -1,3 +1,4 @@
+import { PUBLISHED_ACTIVITY_STATUS } from "@/features/activities/types";
 import { formatAddress } from "@/lib/addresses";
 import { type Tables } from "@/lib/database.types";
 
@@ -39,19 +40,20 @@ function mockTables(tables: Record<string, QueryResult>) {
 
 const activityRow = {
   id: "a1",
-  provider_id: "p1",
-  title: "Football",
-  description: "Fun for everyone",
-  category: "sports",
-  type: "whole_year",
-  target_age_ranges: ["7-9"],
-  schedule: [],
-  price_min: 10,
-  price_max: 20,
-  price_period: "month",
-  max_participants: 12,
+  account_id: "p1",
+  provider_profile_id: "pp1",
   address_id: "ad1",
+  title: "Saturday workshop",
+  description: "Fun for everyone",
+  min_age: 7,
+  max_age: 12,
+  schedule: ["Monday 17:00-18:00"],
+  price: 15,
+  start_date: "2026-10-01",
+  end_date: "2026-12-31",
+  status: "published",
   created_at: "2026-10-01T10:00:00Z",
+  updated_at: "2026-10-01T10:00:00Z",
 };
 
 const profileRow = {
@@ -76,18 +78,16 @@ const addressRow: Tables<"addresses"> = {
   created_at: "2026-10-01T10:00:00Z",
 };
 
-const contact = {
-  name: "Sports Club",
-  email: "club@example.com",
-  phoneNumber: "600000000",
-  website: "https://club.example.com",
-};
-
 const provider = {
   id: "p1",
   headline: "Football for all ages",
   description: "A friendly club",
-  contact,
+  contact: {
+    name: "Sports Club",
+    email: "club@example.com",
+    phoneNumber: "600000000",
+    website: "https://club.example.com",
+  },
 };
 
 describe("fetchCatalogActivities", () => {
@@ -95,7 +95,7 @@ describe("fetchCatalogActivities", () => {
     mockFrom.mockReset();
   });
 
-  it("returns the activities of providers with an approved profile", async () => {
+  it("returns the published activities of providers with an approved profile", async () => {
     const queries = mockTables({
       provider_profiles: { data: [profileRow], error: null },
       activities: { data: [activityRow], error: null },
@@ -107,8 +107,12 @@ describe("fetchCatalogActivities", () => {
     expect(result).toHaveLength(1);
     expect(result[0].activity).toMatchObject({
       id: "a1",
-      providerId: "p1",
-      title: "Football",
+      accountId: "p1",
+      title: "Saturday workshop",
+      minAge: 7,
+      maxAge: 12,
+      price: 15,
+      status: "published",
     });
     expect(result[0].provider).toEqual(provider);
     expect(queries.provider_profiles.calls).toContainEqual([
@@ -117,7 +121,11 @@ describe("fetchCatalogActivities", () => {
     ]);
     expect(queries.activities.calls).toContainEqual([
       "in",
-      ["provider_id", ["p1"]],
+      ["account_id", ["p1"]],
+    ]);
+    expect(queries.activities.calls).toContainEqual([
+      "eq",
+      ["status", PUBLISHED_ACTIVITY_STATUS],
     ]);
   });
 
@@ -143,11 +151,23 @@ describe("fetchCatalogActivities", () => {
     expect(mockFrom).toHaveBeenCalledTimes(1);
   });
 
+  it("returns nothing, without reading contact details, when there are no published activities", async () => {
+    mockTables({
+      provider_profiles: { data: [profileRow], error: null },
+      activities: { data: [], error: null },
+    });
+
+    const result = await fetchCatalogActivities();
+
+    expect(result).toEqual([]);
+    expect(mockFrom).not.toHaveBeenCalledWith("technical_sheets");
+  });
+
   it("never returns an activity whose provider has no approved profile", async () => {
     mockTables({
       provider_profiles: { data: [profileRow], error: null },
       activities: {
-        data: [activityRow, { ...activityRow, id: "a2", provider_id: "p2" }],
+        data: [activityRow, { ...activityRow, id: "a2", account_id: "p2" }],
         error: null,
       },
       technical_sheets: { data: [sheetRow], error: null },
@@ -191,7 +211,7 @@ describe("fetchCatalogActivity", () => {
     mockFrom.mockReset();
   });
 
-  it("returns the activity with its profile, contact details and address", async () => {
+  it("returns the published activity with its profile, contact details and address", async () => {
     const queries = mockTables({
       activities: { data: activityRow, error: null },
       provider_profiles: { data: [profileRow], error: null },
@@ -204,13 +224,17 @@ describe("fetchCatalogActivity", () => {
     expect(result?.activity.id).toBe("a1");
     expect(result?.provider).toEqual(provider);
     expect(result?.address).toBe(formatAddress(addressRow));
+    expect(queries.activities.calls).toContainEqual([
+      "eq",
+      ["status", PUBLISHED_ACTIVITY_STATUS],
+    ]);
     expect(queries.provider_profiles.calls).toContainEqual([
       "eq",
       ["status", APPROVED_PROFILE_STATUS],
     ]);
   });
 
-  it("returns null when the activity does not exist", async () => {
+  it("returns null when the activity does not exist or is not published", async () => {
     mockTables({ activities: { data: null, error: null } });
 
     expect(await fetchCatalogActivity("missing")).toBeNull();
@@ -240,6 +264,19 @@ describe("fetchCatalogActivity", () => {
 
     expect(result?.provider.contact).toBeNull();
     expect(result?.address).toBeNull();
+  });
+
+  it("does not look for an address when the activity has none", async () => {
+    mockTables({
+      activities: { data: { ...activityRow, address_id: null }, error: null },
+      provider_profiles: { data: [profileRow], error: null },
+      technical_sheets: { data: [sheetRow], error: null },
+    });
+
+    const result = await fetchCatalogActivity("a1");
+
+    expect(result?.address).toBeNull();
+    expect(mockFrom).not.toHaveBeenCalledWith("addresses");
   });
 
   it("fails when the activity cannot be read", async () => {

@@ -6,23 +6,13 @@ import { type ActivityForm } from "../types";
 export type ActivityInsert = TablesInsert<"activities">;
 
 // Converts a validated form into a database row (camelCase -> snake_case).
-// provider_id and type are not sent: the database fills them
-// with the logged-in user and 'whole_year'.
+// account_id is not sent: the database fills it with the logged-in user.
 export function toActivityInsert(form: ActivityForm): ActivityInsert {
-  const {
-    category,
-    priceMin,
-    priceMax,
-    pricePeriod,
-    maxParticipants,
-    addressId,
-  } = form;
+  const { minAge, maxAge, price, addressId } = form;
   if (
-    category === null ||
-    priceMin === null ||
-    priceMax === null ||
-    pricePeriod === null ||
-    maxParticipants === null ||
+    minAge === null ||
+    maxAge === null ||
+    price === null ||
     addressId === null
   ) {
     throw new Error("The activity must be validated before saving it");
@@ -31,18 +21,15 @@ export function toActivityInsert(form: ActivityForm): ActivityInsert {
   return {
     title: form.title.trim(),
     description: emptyToNull(form.description),
-    category,
-    target_age_ranges: form.targetAgeRanges,
-    // Plain objects: an interface is not assignable to the generic Json type
-    schedule: form.schedule.map(({ day, startTime, endTime }) => ({
-      day,
-      startTime,
-      endTime,
-    })),
-    price_min: priceMin,
-    price_max: priceMax,
-    price_period: pricePeriod,
-    max_participants: maxParticipants,
+    min_age: minAge,
+    max_age: maxAge,
+    // One time slot per line: empty lines are dropped
+    schedule: form.schedule.map((slot) => slot.trim()).filter(Boolean),
+    price,
+    // Dates are optional: an empty field is saved as null
+    start_date: emptyToNull(form.startDate),
+    end_date: emptyToNull(form.endDate),
     address_id: addressId,
+    status: form.status,
   };
 }

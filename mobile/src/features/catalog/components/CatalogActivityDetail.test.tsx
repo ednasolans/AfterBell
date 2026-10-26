@@ -1,9 +1,6 @@
 import { waitFor } from "@testing-library/react-native";
 
-import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
-import { AGE_RANGE_LABELS } from "@/lib/ages";
-import { formatPriceRange } from "@/lib/price";
-
+import { formatAgeRange, formatDateRange, formatPrice } from "../format";
 import {
   makeActivity,
   makeCatalogActivity,
@@ -28,7 +25,7 @@ describe("CatalogActivityDetail", () => {
     mockFetch.mockReset();
   });
 
-  it("shows all the fields of the activity and the provider contact details", async () => {
+  it("shows all the fields of the activity and the provider profile", async () => {
     const detail = makeDetail();
     mockFetch.mockResolvedValue(detail);
 
@@ -37,13 +34,10 @@ describe("CatalogActivityDetail", () => {
     await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
     expect(mockFetch).toHaveBeenCalledWith("a1");
     expect(getByText("Fun for everyone")).toBeTruthy();
-    expect(getByText(ACTIVITY_CATEGORY_LABELS[detail.activity.category])).toBeTruthy();
-    expect(getByText("Whole year")).toBeTruthy();
-    expect(getByText(AGE_RANGE_LABELS["7-9"])).toBeTruthy();
-    expect(
-      getByText(formatPriceRange(10, 20, detail.activity.pricePeriod)),
-    ).toBeTruthy();
-    expect(getByText("Up to 12 people")).toBeTruthy();
+    expect(getByText(formatAgeRange(7, 12))).toBeTruthy();
+    expect(getByText("Monday 17:00-18:00")).toBeTruthy();
+    expect(getByText(formatPrice(15))).toBeTruthy();
+    expect(getByText(formatDateRange("2026-10-01", "2026-12-31") as string)).toBeTruthy();
     expect(getByText("Main Street 1, Lleida")).toBeTruthy();
     expect(getByText("Sports Club")).toBeTruthy();
     expect(getByText(detail.provider.headline)).toBeTruthy();
@@ -56,7 +50,12 @@ describe("CatalogActivityDetail", () => {
   it("leaves out the parts that are not available", async () => {
     mockFetch.mockResolvedValue(
       makeDetail({
-        activity: makeActivity({ description: null }),
+        activity: makeActivity({
+          description: null,
+          schedule: [],
+          startDate: null,
+          endDate: null,
+        }),
         address: null,
         provider: makeProvider({
           contact: {
@@ -75,6 +74,8 @@ describe("CatalogActivityDetail", () => {
 
     await waitFor(() => expect(getByText("Sports Club")).toBeTruthy());
     expect(queryByText("Fun for everyone")).toBeNull();
+    expect(queryByText("Schedule")).toBeNull();
+    expect(queryByText("Dates")).toBeNull();
     expect(queryByText("Address")).toBeNull();
     expect(queryByText("Email")).toBeNull();
     expect(queryByText("Phone")).toBeNull();

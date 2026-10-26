@@ -2,11 +2,8 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
-import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
-import { formatPriceRange } from "@/lib/price";
-import { formatTimeSlot } from "@/lib/schedule";
 
-import { ACTIVITY_TYPE_LABELS, formatAgeRanges } from "../format";
+import { formatAgeRange, formatDateRange, formatPrice } from "../format";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
 
 type DetailRowProps = { label: string; value: string };
@@ -47,6 +44,7 @@ export function CatalogActivityDetail({
   }
 
   const { activity, provider, address } = query.data;
+  const dates = formatDateRange(activity.startDate, activity.endDate);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -56,30 +54,14 @@ export function CatalogActivityDetail({
       ) : null}
 
       <DetailRow
-        label="Category"
-        value={ACTIVITY_CATEGORY_LABELS[activity.category]}
-      />
-      <DetailRow label="Type" value={ACTIVITY_TYPE_LABELS[activity.type]} />
-      <DetailRow
         label="Ages"
-        value={formatAgeRanges(activity.targetAgeRanges)}
+        value={formatAgeRange(activity.minAge, activity.maxAge)}
       />
-      <DetailRow
-        label="Schedule"
-        value={activity.schedule.map(formatTimeSlot).join(", ")}
-      />
-      <DetailRow
-        label="Price"
-        value={formatPriceRange(
-          activity.priceMin,
-          activity.priceMax,
-          activity.pricePeriod,
-        )}
-      />
-      <DetailRow
-        label="Capacity"
-        value={`Up to ${activity.maxParticipants} people`}
-      />
+      {activity.schedule.length > 0 ? (
+        <DetailRow label="Schedule" value={activity.schedule.join(", ")} />
+      ) : null}
+      <DetailRow label="Price" value={formatPrice(activity.price)} />
+      {dates ? <DetailRow label="Dates" value={dates} /> : null}
       {address ? <DetailRow label="Address" value={address} /> : null}
 
       <Text style={styles.sectionTitle}>Provider</Text>

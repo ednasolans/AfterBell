@@ -3,11 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react-native";
 
 import { type Activity } from "@/features/activities/types";
-import {
-  ACTIVITY_CATEGORY_LABELS,
-  type ActivityCategory,
-} from "@/lib/activityCategories";
-import { PRICE_PERIOD_LABELS, type PricePeriod } from "@/lib/price";
 
 import { type CatalogActivity, type CatalogProvider } from "./types";
 
@@ -16,21 +11,20 @@ import { type CatalogActivity, type CatalogProvider } from "./types";
 export function makeActivity(overrides: Partial<Activity> = {}): Activity {
   return {
     id: "a1",
-    providerId: "p1",
+    accountId: "p1",
+    providerProfileId: "pp1",
+    addressId: "ad1",
     title: "Saturday workshop",
     description: "Fun for everyone",
-    // Any valid category: the tests do not depend on which one
-    category: Object.keys(ACTIVITY_CATEGORY_LABELS)[0] as ActivityCategory,
-    type: "whole_year",
-    targetAgeRanges: ["7-9"],
-    schedule: [],
-    priceMin: 10,
-    priceMax: 20,
-    // Any valid period: formatPriceRange looks its label up
-    pricePeriod: Object.keys(PRICE_PERIOD_LABELS)[0] as PricePeriod,
-    maxParticipants: 12,
-    addressId: "ad1",
+    minAge: 7,
+    maxAge: 12,
+    schedule: ["Monday 17:00-18:00"],
+    price: 15,
+    startDate: "2026-10-01",
+    endDate: "2026-12-31",
+    status: "published",
     createdAt: "2026-10-01T10:00:00Z",
+    updatedAt: "2026-10-01T10:00:00Z",
     ...overrides,
   };
 }

@@ -1,4 +1,5 @@
 import { toActivity } from "@/features/activities/api/toActivity";
+import { PUBLISHED_ACTIVITY_STATUS } from "@/features/activities/types";
 import { formatAddress } from "@/lib/addresses";
 import { supabase } from "@/lib/supabase";
 
@@ -17,8 +18,8 @@ async function fetchAddress(addressId: string): Promise<string | null> {
   return data ? formatAddress(data) : null;
 }
 
-// One activity with its provider and address. It is null when the activity
-// does not exist or its provider has no approved profile.
+// One published activity with its provider and address. It is null when the
+// activity does not exist, is not published, or its provider has no approved profile.
 export async function fetchCatalogActivity(
   id: string,
 ): Promise<CatalogActivityDetail | null> {
@@ -26,6 +27,7 @@ export async function fetchCatalogActivity(
     .from("activities")
     .select("*")
     .eq("id", id)
+    .eq("status", PUBLISHED_ACTIVITY_STATUS)
     .maybeSingle();
   if (error) {
     throw new Error(error.message);
@@ -36,12 +38,12 @@ export async function fetchCatalogActivity(
 
   const activity = toActivity(data);
   const [profiles, contacts, address] = await Promise.all([
-    fetchApprovedProfiles([activity.providerId]),
-    fetchContacts([activity.providerId]),
-    fetchAddress(activity.addressId),
+    fetchApprovedProfiles([activity.accountId]),
+    fetchContacts([activity.accountId]),
+    activity.addressId ? fetchAddress(activity.addressId) : Promise.resolve(null),
   ]);
 
-  const profile = profiles.get(activity.providerId);
+  const profile = profiles.get(activity.accountId);
   if (!profile) {
     return null;
   }
@@ -50,7 +52,7 @@ export async function fetchCatalogActivity(
     activity,
     provider: toCatalogProvider(
       profile,
-      contacts.get(activity.providerId) ?? null,
+      contacts.get(activity.accountId) ?? null,
     ),
     address,
   };

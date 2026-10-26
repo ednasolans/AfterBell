@@ -1,11 +1,24 @@
-import { type ActivityType } from "@/features/activities/types";
-import { AGE_RANGE_LABELS, type AgeRange } from "@/lib/ages";
+export function formatAgeRange(minAge: number, maxAge: number): string {
+  return `${minAge}–${maxAge} years`;
+}
 
-export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
-  whole_year: "Whole year",
-  event: "Event",
-};
+export function formatPrice(price: number): string {
+  return price === 0 ? "Free" : `${price} €`;
+}
 
-export function formatAgeRanges(ranges: AgeRange[]): string {
-  return ranges.map((range) => AGE_RANGE_LABELS[range]).join(", ");
+// Dates come as "YYYY-MM-DD". Null when the activity has no dates.
+export function formatDateRange(
+  startDate: string | null,
+  endDate: string | null,
+): string | null {
+  if (startDate && endDate) {
+    return `${startDate} – ${endDate}`;
+  }
+  if (startDate) {
+    return `From ${startDate}`;
+  }
+  if (endDate) {
+    return `Until ${endDate}`;
+  }
+  return null;
 }

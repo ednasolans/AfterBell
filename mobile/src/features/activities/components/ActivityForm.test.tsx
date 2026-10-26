@@ -21,27 +21,20 @@ jest.mock("../hooks/useMyAddresses", () => ({
 const SAVED_ACTIVITY: ActivityFormValues = {
   title: "Swimming for kids",
   description: "Small groups",
-  category: "swimming",
-  targetAgeRanges: ["7-9"],
-  schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
-  priceMin: 30,
-  priceMax: 40,
-  pricePeriod: "per_month",
-  maxParticipants: 12,
+  minAge: 7,
+  maxAge: 12,
+  schedule: ["Tuesday 17:00-18:00"],
+  price: 30,
+  startDate: "2026-10-01",
+  endDate: "",
   addressId: "address-1",
+  status: "draft",
 };
 
 // Opens a Select and picks its first option
 async function pickFirstOption(placeholder: string) {
   await fireEvent.press(screen.getByText(placeholder));
   await fireEvent.press(screen.getAllByRole("radio")[0]);
-}
-
-// Opens a MultiSelect, ticks its first option and closes it
-async function tickFirstOption(placeholder: string) {
-  await fireEvent.press(screen.getByText(placeholder));
-  await fireEvent.press(screen.getAllByRole("checkbox")[0]);
-  await fireEvent.press(screen.getByRole("button", { name: "Done" }));
 }
 
 describe("ActivityForm", () => {
@@ -58,7 +51,10 @@ describe("ActivityForm", () => {
     expect(screen.getByRole("header", { name: "Details" })).toBeOnTheScreen();
     expect(screen.getByRole("header", { name: "Place" })).toBeOnTheScreen();
     expect(screen.getByRole("header", { name: "Schedule" })).toBeOnTheScreen();
-    expect(screen.getByRole("header", { name: "Prices" })).toBeOnTheScreen();
+    expect(screen.getByRole("header", { name: "Price" })).toBeOnTheScreen();
+    expect(
+      screen.getByRole("header", { name: "Visibility" }),
+    ).toBeOnTheScreen();
   });
 
   it("does not submit an empty activity and asks to fix the errors", async () => {
@@ -106,25 +102,25 @@ describe("ActivityForm", () => {
       screen.getByLabelText("Description"),
       "Small groups",
     );
-    await pickFirstOption("Choose a category");
-    await tickFirstOption("Choose the age ranges");
-    await fireEvent.changeText(
-      screen.getByLabelText("Maximum participants"),
-      "12",
-    );
+    await fireEvent.changeText(screen.getByLabelText("Minimum age"), "7");
+    await fireEvent.changeText(screen.getByLabelText("Maximum age"), "12");
     await pickFirstOption("Choose where it takes place");
-    await pickFirstOption("Choose a day");
-    const [startInput, endInput] = screen.getAllByPlaceholderText("HH:MM");
-    await fireEvent.changeText(startInput, "17:00");
-    await fireEvent.changeText(endInput, "18:00");
-    await fireEvent.press(
-      screen.getByRole("button", { name: "Add time slot" }),
+    await fireEvent.changeText(
+      screen.getByLabelText("Time slots (one per line)"),
+      "Tuesday 17:00-18:00",
     );
-    const [minPriceInput, maxPriceInput] =
-      screen.getAllByPlaceholderText("0,00");
-    await fireEvent.changeText(minPriceInput, "30");
-    await fireEvent.changeText(maxPriceInput, "40,50");
-    await pickFirstOption("Choose a period");
+    await fireEvent.changeText(
+      screen.getByLabelText("Start date (YYYY-MM-DD)"),
+      "2026-10-01",
+    );
+    await fireEvent.changeText(
+      screen.getByLabelText("End date (YYYY-MM-DD)"),
+      "2026-12-31",
+    );
+    await fireEvent.changeText(screen.getByLabelText("Price (€)"), "30");
+    // The status starts as a draft: publish it
+    await fireEvent.press(screen.getByText("Draft (only you can see it)"));
+    await fireEvent.press(screen.getAllByRole("radio")[1]);
 
     await fireEvent.press(
       screen.getByRole("button", { name: "Create activity" }),
@@ -135,11 +131,14 @@ describe("ActivityForm", () => {
       expect.objectContaining({
         title: "Swimming for kids",
         description: "Small groups",
-        schedule: [{ day: "monday", startTime: "17:00", endTime: "18:00" }],
-        priceMin: 30,
-        priceMax: 40.5,
-        maxParticipants: 12,
+        minAge: 7,
+        maxAge: 12,
+        schedule: ["Tuesday 17:00-18:00"],
+        price: 30,
+        startDate: "2026-10-01",
+        endDate: "2026-12-31",
         addressId: "address-1",
+        status: "published",
       }),
     );
   });
@@ -156,8 +155,9 @@ describe("ActivityForm", () => {
     );
 
     expect(screen.getByDisplayValue("Swimming for kids")).toBeOnTheScreen();
-    expect(screen.getByText("Tuesday 17:00–18:00")).toBeOnTheScreen();
+    expect(screen.getByDisplayValue("Tuesday 17:00-18:00")).toBeOnTheScreen();
     expect(screen.getByDisplayValue("30")).toBeOnTheScreen();
+    expect(screen.getByDisplayValue("2026-10-01")).toBeOnTheScreen();
     expect(screen.getByText("C/ Major 1, Lleida")).toBeOnTheScreen();
     expect(
       screen.getByRole("button", { name: "Save changes" }),

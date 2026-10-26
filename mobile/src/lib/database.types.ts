@@ -58,67 +58,77 @@ export type Database = {
       };
       activities: {
         Row: {
-          address_id: string;
-          category: string;
+          account_id: string;
+          address_id: string | null;
           created_at: string;
           description: string | null;
+          end_date: string | null;
           id: string;
-          max_participants: number;
-          price_max: number;
-          price_min: number;
-          price_period: string;
-          provider_id: string;
-          schedule: NonNullable<Json>;
-          target_age_ranges: string[];
+          max_age: number;
+          min_age: number;
+          price: number;
+          provider_profile_id: string | null;
+          schedule: string[];
+          start_date: string | null;
+          status: string;
           title: string;
-          type: string;
+          updated_at: string;
         };
         ComputedFields: never;
         Insert: {
-          address_id: string;
-          category: string;
+          account_id?: string;
+          address_id?: string | null;
           created_at?: string;
           description?: string | null;
+          end_date?: string | null;
           id?: string;
-          max_participants: number;
-          price_max: number;
-          price_min: number;
-          price_period: string;
-          provider_id?: string;
-          schedule: NonNullable<Json>;
-          target_age_ranges: string[];
+          max_age: number;
+          min_age: number;
+          price?: number;
+          provider_profile_id?: string | null;
+          schedule?: string[];
+          start_date?: string | null;
+          status?: string;
           title: string;
-          type?: string;
+          updated_at?: string;
         };
         Update: {
-          address_id?: string;
-          category?: string;
+          account_id?: string;
+          address_id?: string | null;
           created_at?: string;
           description?: string | null;
+          end_date?: string | null;
           id?: string;
-          max_participants?: number;
-          price_max?: number;
-          price_min?: number;
-          price_period?: string;
-          provider_id?: string;
-          schedule?: NonNullable<Json>;
-          target_age_ranges?: string[];
+          max_age?: number;
+          min_age?: number;
+          price?: number;
+          provider_profile_id?: string | null;
+          schedule?: string[];
+          start_date?: string | null;
+          status?: string;
           title?: string;
-          type?: string;
+          updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "activities_address_fkey";
-            columns: ["address_id", "provider_id"];
+            foreignKeyName: "activities_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "accounts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "activities_address_id_account_id_fkey";
+            columns: ["address_id", "account_id"];
             isOneToOne: false;
             referencedRelation: "addresses";
             referencedColumns: ["id", "provider_id"];
           },
           {
-            foreignKeyName: "activities_provider_id_fkey";
-            columns: ["provider_id"];
+            foreignKeyName: "activities_provider_profile_id_fkey";
+            columns: ["provider_profile_id"];
             isOneToOne: false;
-            referencedRelation: "accounts";
+            referencedRelation: "provider_profiles";
             referencedColumns: ["id"];
           },
         ];

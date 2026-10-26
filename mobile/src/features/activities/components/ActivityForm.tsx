@@ -1,45 +1,29 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { FormSubmit } from "@/components/FormSubmit";
-import { MultiSelect } from "@/components/MultiSelect";
 import { NumberField } from "@/components/NumberField";
-import { PriceField } from "@/components/PriceField";
-import { ScheduleEditor } from "@/components/ScheduleEditor";
 import { Select, type SelectOption } from "@/components/Select";
 import { TextField } from "@/components/TextField";
-import {
-  ACTIVITY_CATEGORIES,
-  ACTIVITY_CATEGORY_LABELS,
-  type ActivityCategory,
-} from "@/lib/activityCategories";
-import { AGE_RANGES, AGE_RANGE_LABELS, type AgeRange } from "@/lib/ages";
 import { parseInteger } from "@/lib/numbers";
-import {
-  PRICE_PERIODS,
-  PRICE_PERIOD_LABELS,
-  type PricePeriod,
-} from "@/lib/price";
 import { hasErrors } from "@/lib/validation";
 
 import { useActivityForm } from "../hooks/useActivityForm";
+import {
+  ACTIVITY_STATUSES,
+  type ActivityForm as ActivityFormValues,
+  type ActivityStatus,
+} from "../types";
 import { AddressSelect } from "./AddressSelect";
-import { type ActivityForm as ActivityFormValues } from "../types";
 
-const CATEGORY_OPTIONS: SelectOption<ActivityCategory>[] =
-  ACTIVITY_CATEGORIES.map((category) => ({
-    value: category,
-    label: ACTIVITY_CATEGORY_LABELS[category],
-  }));
+const STATUS_LABELS: Record<ActivityStatus, string> = {
+  draft: "Draft (only you can see it)",
+  published: "Published (customers can see it)",
+};
 
-const AGE_RANGE_OPTIONS: SelectOption<AgeRange>[] = AGE_RANGES.map((range) => ({
-  value: range,
-  label: AGE_RANGE_LABELS[range],
-}));
-
-const PRICE_PERIOD_OPTIONS: SelectOption<PricePeriod>[] = PRICE_PERIODS.map(
-  (period) => ({
-    value: period,
-    label: PRICE_PERIOD_LABELS[period],
+const STATUS_OPTIONS: SelectOption<ActivityStatus>[] = ACTIVITY_STATUSES.map(
+  (status) => ({
+    value: status,
+    label: STATUS_LABELS[status],
   }),
 );
 
@@ -93,30 +77,29 @@ export function ActivityForm({
         error={errors.description}
         multiline
       />
-      <Select
-        label="Category"
-        placeholder="Choose a category"
-        options={CATEGORY_OPTIONS}
-        value={form.category}
-        onChange={(category) => updateField("category", category)}
-        error={errors.category}
-      />
-      <MultiSelect
-        label="Target ages"
-        placeholder="Choose the age ranges"
-        options={AGE_RANGE_OPTIONS}
-        values={form.targetAgeRanges}
-        onChange={(ranges) => updateField("targetAgeRanges", ranges)}
-        error={errors.targetAgeRanges}
-      />
-      <NumberField
-        label="Maximum participants"
-        placeholder="e.g. 12"
-        value={form.maxParticipants}
-        onChange={(value) => updateField("maxParticipants", value)}
-        parse={parseInteger}
-        error={errors.maxParticipants}
-      />
+
+      <View style={styles.row}>
+        <View style={styles.rowItem}>
+          <NumberField
+            label="Minimum age"
+            placeholder="e.g. 7"
+            value={form.minAge}
+            onChange={(value) => updateField("minAge", value)}
+            parse={parseInteger}
+            error={errors.minAge}
+          />
+        </View>
+        <View style={styles.rowItem}>
+          <NumberField
+            label="Maximum age"
+            placeholder="e.g. 12"
+            value={form.maxAge}
+            onChange={(value) => updateField("maxAge", value)}
+            parse={parseInteger}
+            error={errors.maxAge}
+          />
+        </View>
+      </View>
 
       <Text style={styles.sectionTitle} accessibilityRole="header">
         Place
@@ -132,42 +115,56 @@ export function ActivityForm({
         Schedule
       </Text>
 
-      <ScheduleEditor
-        schedule={form.schedule}
-        onChange={(schedule) => updateField("schedule", schedule)}
+      <TextField
+        label="Time slots (one per line)"
+        value={form.schedule.join("\n")}
+        onChangeText={(text) => updateField("schedule", text.split("\n"))}
         error={errors.schedule}
+        multiline
       />
-
-      <Text style={styles.sectionTitle} accessibilityRole="header">
-        Prices
-      </Text>
-
       <View style={styles.row}>
         <View style={styles.rowItem}>
-          <PriceField
-            label="Minimum price (€)"
-            value={form.priceMin}
-            onChange={(value) => updateField("priceMin", value)}
-            error={errors.priceMin}
+          <TextField
+            label="Start date (YYYY-MM-DD)"
+            value={form.startDate}
+            onChangeText={(text) => updateField("startDate", text)}
+            error={errors.startDate}
           />
         </View>
         <View style={styles.rowItem}>
-          <PriceField
-            label="Maximum price (€)"
-            value={form.priceMax}
-            onChange={(value) => updateField("priceMax", value)}
-            error={errors.priceMax}
+          <TextField
+            label="End date (YYYY-MM-DD)"
+            value={form.endDate}
+            onChangeText={(text) => updateField("endDate", text)}
+            error={errors.endDate}
           />
         </View>
       </View>
 
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Price
+      </Text>
+
+      <NumberField
+        label="Price (€)"
+        placeholder="0 if it is free"
+        value={form.price}
+        onChange={(value) => updateField("price", value)}
+        parse={parseInteger}
+        error={errors.price}
+      />
+
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Visibility
+      </Text>
+
       <Select
-        label="Price period"
-        placeholder="Choose a period"
-        options={PRICE_PERIOD_OPTIONS}
-        value={form.pricePeriod}
-        onChange={(period) => updateField("pricePeriod", period)}
-        error={errors.pricePeriod}
+        label="Status"
+        placeholder="Choose a status"
+        options={STATUS_OPTIONS}
+        value={form.status}
+        onChange={(status) => updateField("status", status)}
+        error={errors.status}
       />
 
       <FormSubmit
