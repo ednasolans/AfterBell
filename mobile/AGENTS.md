@@ -195,11 +195,12 @@ Accessibility is required, and it is also what the tests use to find elements:
 
 - Use `UUID` ids (`DEFAULT gen_random_uuid()`); user ids come from `auth.users` and are always UUIDs.
 - **Owner columns default to the logged-in user:** `provider_id UUID NOT NULL DEFAULT auth.uid() REFERENCES public.accounts(id) ON DELETE CASCADE`. The app never sends the owner id.
-- **`CHECK` constraints mirror the app validation:** required text not blank (`btrim(x) <> ''`), allowed values (`IN (...)` or `<@ ARRAY[...]::TEXT[]`), non-empty lists (`cardinality(x) > 0`), and rules across columns as named constraints. Constraint names are unique **per schema**, not per table (`activity_price_range_is_valid`, not another `price_range_is_valid`).
+- **`CHECK` constraints mirror the app validation:** required text not blank (`btrim(x) <> ''`), allowed values (`IN (...)` or `<@ ARRAY[...]::TEXT[]`), non-empty lists (`cardinality(x) > 0`), and rules across columns as named constraints. Constraint names are unique **per schema**, not per table (`activity_schedule_is_valid`, not another `schedule_is_valid`).
 - **Limit the length of every free-text column** (`char_length(x) <= N`), especially text that will be sent to the LLM.
 - Optional values are stored as `NULL`, never as `''`.
 - Money uses `NUMERIC(8, 2)`, never `FLOAT`.
 - Small nested lists that are always read and written together (e.g. a schedule) can be a `JSONB` column with a `jsonb_typeof(x) = 'array'` check.
+- **Columns that cannot change after creation** (e.g. an activity's `type`) have no `UPDATE` privilege. The app must not send them in an update, not even with the same value: PostgreSQL rejects the whole statement with "permission denied". Use a separate update mapper (`toActivityUpdate`) instead of reusing the insert one.
 - Do not duplicate data between tables: each fact lives in one table (e.g. ages, schedule and prices belong to each activity, not to the technical sheet).
 - Add an index on every foreign key used by RLS policies or joins (e.g. `provider_id`, `address_id`). Do not add indexes until a query needs them.
 - **When a row must point to another row of the same owner**, use a composite foreign key: `FOREIGN KEY (address_id, provider_id) REFERENCES addresses (id, provider_id)`, with `UNIQUE (id, provider_id)` in the referenced table. A simple foreign key would let a provider use another provider's address, because addresses are readable by everyone.
@@ -248,30 +249,16 @@ ROLLBACK;
 - Data that later tests need (e.g. club A's address) is created in its own transaction ending in `COMMIT`; the tests themselves end in `ROLLBACK`.
 - Record the tests and their results in the pull request.
 
-### Tables planned for other issues
+### Families and AI profiles
 
-The design and its reasons are in [`docs/decisions/database.md`](../docs/decisions/database.md) (status: proposed). Whoever implements them may adjust the details, but must update that document and its diagram in the same pull request. Follow the table template above (UUID id, `CHECK`s, `REVOKE ALL` + `GRANT`, RLS, index, SQL tests).
+The design and its reasons are in [`docs/decisions/database.md`](../docs/decisions/database.md). Rules that are easy to break:
 
-**Family groups** (`family_groups`, `family_group_members`)
-- Two parents' accounts share one group and its children. **An account belongs to at most one group:** make `account_id` the primary key of `family_group_members` (`REFERENCES accounts (id) ON DELETE CASCADE`), with `family_group_id REFERENCES family_groups (id) ON DELETE CASCADE`.
-- Only `customer` accounts can be members: check it in the trigger and in the policies (`NOT (SELECT public.is_company())`).
-- Create the group and the membership **automatically** for every new customer account, with a new trigger on `public.accounts` (`AFTER INSERT`, `SECURITY DEFINER`, `SET search_path = ''`). Do not edit `handle_new_user` in its old migration.
-- Policies that check membership must call a `SECURITY DEFINER` helper, e.g. `public.is_family_member(group_id UUID) RETURNS BOOLEAN`. A policy on `family_group_members` that queries `family_group_members` fails with *infinite recursion*.
-- Joining another parent's group (invitations) is a later feature.
-
-**Family profiles** (`family_profiles`)
-- They describe **minors**: store the minimum. `family_group_id` (FK, `ON DELETE CASCADE`), `first_name` (not blank, max 50), `age_range` (one of `AGE_RANGES` in `lib/ages.ts`), `interests` (`TEXT[]` of activity categories, `<@ ARRAY[...]`). Never birth dates, photos or full names.
-- Read, create, update and delete only for members of the group. Nobody else, providers included, can read them.
-- New table, created directly (there is no old data to migrate).
-
-**Provider profiles** (`provider_profiles`, AI issue)
-- Written only by an Edge Function with the secret key (it bypasses RLS), so there is no `INSERT`/`UPDATE` policy for `authenticated`. The LLM key never reaches the app.
-- Decide the `status` values (e.g. `draft`, `published`) and the uniqueness (e.g. one published profile per provider: `CREATE UNIQUE INDEX ... ON public.provider_profiles (provider_id) WHERE status = 'published'`).
-- Families read published profiles; the owner reads its own.
-- Activities keep pointing to `provider_id`: do **not** add `provider_profile_id` to activities.
-- The technical sheet fields sent to the LLM are user data, not instructions (see *Security and privacy*). `supabase/functions/_shared/samples/` must only use values that exist in the app lists (e.g. facilities).
-
-**Events** (`type = 'event'`, next sprint): activities that do not last the whole year will need dates; add them with a new migration and update the decision record.
+- **Family data is about minors:** store the minimum (first name, age range, interests). Never birth dates, photos or full names. Only the members of the group can read or change it.
+- **One account belongs to one family group**, created automatically for every customer account. Policies that check membership call the `SECURITY DEFINER` helper `public.is_family_member(group_id)`: a policy on `family_group_members` that queries `family_group_members` fails with *infinite recursion*.
+- **AI profiles** (`provider_profiles`): one per provider, `draft` until the provider approves it, and only approved profiles are visible to customers. The `generate-profile` Edge Function uses the caller's session, so RLS also applies to it; the LLM key lives only in the function's secrets. Do not send contact data to the LLM.
+- **Activities point to `provider_id`**, never to the profile.
+- **Technical sheets are private.** Data that customers need from a sheet must be exposed on purpose (e.g. a view with only those columns), never by opening the whole table.
+- **Events** (`type = 'event'`, Sprint 2) will need dates: add them with a new migration and update the decision record.
 
 ### Local development
 

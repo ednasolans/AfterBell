@@ -13,7 +13,7 @@ This guide explains what was built so that providers can create and manage their
 
 A provider (`company` account) can:
 
-1. **Create** an activity: title, description, category, target ages, maximum number of participants, place (one of its addresses), weekly schedule, price range and price period.
+1. **Create** an activity: title, description, category, target ages, maximum number of participants, place (one of its addresses), weekly schedule, price and price period.
 2. **See its own activities** in a list, newest first, with the address where each one takes place.
 3. **Edit** an activity with the same form, filled in with the saved values.
 4. **Delete** an activity, after confirming it. Deleting is permanent.
@@ -61,7 +61,7 @@ Any logged-in user (families included) can read activities, so families will be 
 |---|---|
 | **TanStack Query** for server data (team decision) | First feature that reads lists. It gives loading/error states, caching, retries, refetch when the app returns to the foreground, and refreshes every list after a change with one `invalidateQueries`. |
 | **Form state separated from saving** (`useActivityForm` + `useCreateActivity` / `useUpdateActivity`) | The same `ActivityForm` component serves **create and edit**; editing needed no new form code. |
-| **Shared code moved to `lib/` and `components/`** (schedule, prices, categories, `ScheduleEditor`, `PriceField`, `FormSubmit`…) | Features must not import from each other, and duplicated code breaks the SonarQube duplication limit (3%). |
+| **Shared code moved to `lib/` and `components/`** (the `Activity` type and its mapper, schedule, prices, categories, `ScheduleEditor`, `NumberField`, `FormSubmit`…) | Features must not import from each other, and duplicated code breaks the SonarQube duplication limit (3%). |
 | **Two types:** `ActivityForm` (being filled in, with `null` for "not chosen") and `Activity` (saved, always complete) | TypeScript knows in each place what is guaranteed; the list never has to check for missing values. |
 | **Every data screen handles four states:** loading, error with retry, empty and data | New providers have no activities, and mobile networks fail often. |
 | **The address selector handles its own states** (loading, error with retry, no addresses) | A provider without a technical sheet has no addresses: the selector tells it to add them there, and the rest of the form can still be filled in. |
@@ -89,10 +89,10 @@ Any logged-in user (families included) can read activities, so families will be 
 
 | File | Content |
 |---|---|
-| `types.ts` | `ACTIVITY_TYPES`; `ActivityForm` (form values, with `addressId`); `EMPTY_ACTIVITY_FORM`; `Activity` (saved activity). |
+| `types.ts` | `ACTIVITY_TYPES`; `ActivityForm` (form values, with `addressId`); `EMPTY_ACTIVITY_FORM`; re-exports `Activity` from `lib/activity.ts`. |
 | `validation.ts` | `validateActivity`, split into details, place, schedule and prices; limits exported as constants (`TITLE_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`, `MAX_PARTICIPANTS`) matching the database. |
-| `api/toActivityInsert.ts` | Form → database row (used to create and to update). Does not send `provider_id` or `type`. |
-| `api/toActivity.ts` | Database row → `Activity`, and `Activity` → form values (to edit). |
+| `api/toActivityInsert.ts` | Form → database row. `toActivityInsert` creates (sends `type`, `whole_year` for now); `toActivityUpdate` edits and does **not** send `type`: it cannot be changed, so there is no `UPDATE` privilege on it, and sending it would make the whole update fail. Neither sends `provider_id`. |
+| `api/toActivityForm.ts` | `Activity` → form values (to edit). |
 | `api/createActivity.ts` | Inserts an activity. |
 | `api/fetchMyActivities.ts` | Activities of the logged-in provider, newest first (filters by `provider_id`, because RLS lets everyone read all activities). |
 | `api/fetchMyAddresses.ts` | Addresses of the logged-in provider, main address first (filters by `provider_id`, because RLS lets everyone read all addresses). |
@@ -127,14 +127,15 @@ Screens only connect a feature component with a hook and decide where to go afte
 |---|---|
 | `lib/schedule.ts` | Week days, `TimeSlot`, time and slot validation, sorting, formatting (moved from the technical sheet). |
 | `lib/price.ts` | Price periods, `parsePrice`, and `formatPrice` ("30 € per month"). |
+| `lib/activity.ts` | `Activity` (saved activity) and `toActivity` (database row → `Activity`). Shared with the customer catalog. |
 | `lib/numbers.ts` | `parseInteger` (whole numbers typed by the user). |
 | `lib/activityCategories.ts` | Activity categories and labels. |
 | `lib/text.ts` | `emptyToNull`. |
 | `lib/addresses.ts` | `Address` type and `formatAddress` (shared with the technical sheet). |
 | `lib/validation.ts` | `isBlank` and `hasErrors` (moved here to be shared). |
 | `lib/queryClient.ts` | The TanStack Query client and the foreground refetch. |
-| `components/ScheduleEditor.tsx`, `PriceField.tsx` | Moved from the technical sheet to be shared. |
-| `components/NumberField.tsx` | Number input that keeps the typed text and sends the parsed number; receives the parser as a prop. `PriceField` is a `NumberField` with `parsePrice`; the participants field uses `parseInteger`. |
+| `components/ScheduleEditor.tsx` | Moved from the technical sheet to be shared. |
+| `components/NumberField.tsx` | Number input that keeps the typed text and sends the parsed number; receives the parser as a prop. The price field uses it with `parsePrice` (decimals with a comma) and the participants field with `parseInteger`. |
 | `components/FormSubmit.tsx` | Save button and error messages shared by every form. |
 | `components/LoadingView.tsx`, `ErrorView.tsx` | Loading and error-with-retry screens. |
 | `components/TextField.tsx` | Now supports multiline text (description) and passes `autoCapitalize` (it was ignored before). |
