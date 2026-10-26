@@ -37,10 +37,6 @@ const AGE_OPTIONS: SelectOption<AgeRange>[] = AGE_RANGES.map((age) => ({
 const PRICE_PERIOD_OPTIONS: SelectOption<PricePeriod>[] = PRICE_PERIODS.map(
   (period) => ({ value: period, label: PRICE_PERIOD_LABELS[period] }),
 );
-const TYPE_OPTIONS: SelectOption<ActivityFormValues["type"]>[] = [
-  { value: "whole_year", label: "Whole year" },
-  { value: "event", label: "Event" },
-];
 
 type ActivityFormProps = {
   // Starting values: empty to create, the saved activity to edit
@@ -100,13 +96,6 @@ export function ActivityForm({
         value={form.category}
         onChange={(value) => updateField("category", value)}
         error={errors.category}
-      />
-      <Select
-        label="Activity type"
-        placeholder="Choose a type"
-        options={TYPE_OPTIONS}
-        value={form.type}
-        onChange={(value) => updateField("type", value)}
       />
       <MultiSelect
         label="Age ranges"

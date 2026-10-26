@@ -1,5 +1,8 @@
 import { type ActivityForm } from "../types";
-import { toActivityInsert } from "./toActivityInsert";
+import { type TablesInsert, type TablesUpdate } from "@/lib/database.types";
+import { toActivityUpdate, toActivityInsert } from "./toActivityInsert";
+export type ActivityInsert = TablesInsert<"activities">;
+export type ActivityUpdate = TablesUpdate<"activities">;
 
 const VALID_FORM: ActivityForm = {
   title: "  Swimming for kids ",
@@ -65,5 +68,24 @@ describe("toActivityInsert", () => {
     { addressId: null },
   ])("throws if the activity was not validated (%o)", (changes) => {
     expect(() => toActivityInsert({ ...VALID_FORM, ...changes })).toThrow();
+  });
+});
+
+describe("toActivityUpdate", () => {
+  it("sends the editable fields but not the type, which cannot be changed", () => {
+    const row = toActivityUpdate(VALID_FORM);
+
+    expect(row).not.toHaveProperty("type");
+    expect(row).toEqual({
+      title: "Swimming for kids",
+      description: null,
+      category: "swimming",
+      target_age_ranges: ["7-9", "10-12"],
+      schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
+      price: 30,
+      price_period: "per_month",
+      max_participants: 12,
+      address_id: "address-1",
+    });
   });
 });

@@ -9,8 +9,8 @@ import { deleteActivity } from "./deleteActivity";
 import { fetchActivity } from "./fetchActivity";
 import { fetchMyActivities } from "./fetchMyActivities";
 import { toActivity, type ActivityRow } from "@/lib/activity";
-import { toActivityInsert } from "./toActivityInsert";
 import { updateActivity } from "./updateActivity";
+import { toActivityUpdate } from "./toActivityInsert";
 
 // Replace the real client: tests must not need a database
 jest.mock("@/lib/supabase", () => ({
@@ -122,8 +122,8 @@ describe("updateActivity", () => {
 
     await updateActivity({ id: "activity-1", form: FORM });
 
-    expect(query.update).toHaveBeenCalledWith(toActivityInsert(FORM));
-    expect(query.eq).toHaveBeenCalledWith("id", "activity-1");
+    expect(query.update).toHaveBeenCalledWith(toActivityUpdate(FORM));
+    expect(query.update.mock.calls[0][0]).not.toHaveProperty("type");
   });
 
   it("throws when no row was updated (another provider's activity)", async () => {
