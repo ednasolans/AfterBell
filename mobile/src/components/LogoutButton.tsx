@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useState } from "react";
+import { StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 
-import LoadingButton from '@/components/LoadingButton';
-import { queryClient } from '@/lib/queryClient';
+import LoadingButton from "@/components/LoadingButton";
+import { queryClient } from "@/lib/queryClient";
 // Adjust the path to wherever your Supabase client lives.
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -16,12 +16,12 @@ export default function LogoutButton() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Logout error:', error.message);
+        console.error("Logout error:", error.message);
         return;
       }
       // Drop cached data so the next user on this device never sees it.
       queryClient.clear();
-      router.replace('/login');
+      router.replace("/login");
     } finally {
       setLoading(false);
     }
@@ -39,5 +39,5 @@ export default function LogoutButton() {
 }
 
 const styles = StyleSheet.create({
-  button: { marginTop: 16 },
+  button: { marginTop: 0, paddingHorizontal: 10, borderWidth: 0 },
 });

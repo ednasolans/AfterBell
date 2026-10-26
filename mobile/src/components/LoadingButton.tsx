@@ -5,13 +5,14 @@ import {
   StyleSheet,
   Text,
   ViewStyle,
-} from 'react-native';
+} from "react-native";
+import { colors } from "@/theme/colors";
 
 type Props = {
   label: string;
   onPress: () => void;
   loading?: boolean;
-  variant?: 'primary' | 'outline';
+  variant?: "primary" | "outline";
   style?: StyleProp<ViewStyle>;
 };
 
@@ -19,10 +20,10 @@ export default function LoadingButton({
   label,
   onPress,
   loading = false,
-  variant = 'primary',
+  variant = "primary",
   style,
 }: Readonly<Props>) {
-  const isPrimary = variant === 'primary';
+  const isPrimary = variant === "primary";
 
   return (
     <Pressable
@@ -37,9 +38,16 @@ export default function LoadingButton({
       accessibilityRole="button"
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? '#fff' : '#111'} />
+        <ActivityIndicator
+          color={isPrimary ? colors.white : colors.primaryDark}
+        />
       ) : (
-        <Text style={[styles.text, isPrimary ? styles.textPrimary : styles.textOutline]}>
+        <Text
+          style={[
+            styles.text,
+            isPrimary ? styles.textPrimary : styles.textOutline,
+          ]}
+        >
           {label}
         </Text>
       )}
@@ -48,11 +56,11 @@ export default function LoadingButton({
 }
 
 const styles = StyleSheet.create({
-  base: { padding: 14, borderRadius: 8, alignItems: 'center' },
-  primary: { backgroundColor: '#111' },
-  outline: { borderWidth: 1, borderColor: '#111' },
+  base: { padding: 15, borderRadius: 14, alignItems: "center" },
+  primary: { backgroundColor: colors.primary },
+  outline: { borderWidth: 1, borderColor: colors.primary },
   disabled: { opacity: 0.6 },
-  text: { fontWeight: '600', fontSize: 16 },
-  textPrimary: { color: '#fff' },
-  textOutline: { color: '#111' },
+  text: { fontWeight: "600", fontSize: 16 },
+  textPrimary: { color: colors.white },
+  textOutline: { color: colors.primaryDark },
 });

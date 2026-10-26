@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 
 import {
@@ -10,9 +9,11 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { AGE_RANGES } from "@/lib/ages";
 import { ACTIVITY_CATEGORIES } from "@/lib/activityCategories";
+import { colors } from "@/theme/colors";
 
 import {
   EMPTY_FAMILY_PROFILE_FORM,
@@ -20,10 +21,7 @@ import {
   type FamilyProfileFormValues,
 } from "../types";
 
-import {
-  hasFamilyProfileErrors,
-  validateFamilyProfile,
-} from "../validation";
+import { hasFamilyProfileErrors, validateFamilyProfile } from "../validation";
 
 type Props = Readonly<{
   initialValues?: FamilyProfileFormValues;
@@ -38,14 +36,11 @@ export function FamilyProfileForm({
   isSaving,
   saveError,
 }: Props) {
-  const [values, setValues] =
-    useState<FamilyProfileFormValues>(initialValues);
+  const [values, setValues] = useState<FamilyProfileFormValues>(initialValues);
 
   const [submitted, setSubmitted] = useState(false);
 
-  const errors = submitted
-    ? validateFamilyProfile(values)
-    : {};
+  const errors = submitted ? validateFamilyProfile(values) : {};
 
   function toggleInterest(interest: ActivityCategory) {
     setValues((previous) => {
@@ -54,9 +49,7 @@ export function FamilyProfileForm({
       return {
         ...previous,
         interests: selected
-          ? previous.interests.filter(
-              (item) => item !== interest,
-            )
+          ? previous.interests.filter((item) => item !== interest)
           : [...previous.interests, interest],
       };
     });
@@ -78,7 +71,11 @@ export function FamilyProfileForm({
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Family profile</Text>
+      <Text style={styles.eyebrow}>FAMILY PROFILE</Text>
+      <Text style={styles.title}>Tell us about them</Text>
+      <Text style={styles.subtitle}>
+        We&apos;ll use this to suggest activities that feel right.
+      </Text>
 
       <Text style={styles.label}>First name</Text>
 
@@ -115,12 +112,24 @@ export function FamilyProfileForm({
                 ageRange: age,
               }))
             }
-            style={[
-              styles.option,
-              values.ageRange === age && styles.selected,
-            ]}
+            style={[styles.option, values.ageRange === age && styles.selected]}
           >
-            <Text>{age}</Text>
+            <Ionicons
+              name="calendar-outline"
+              size={15}
+              color={
+                values.ageRange === age ? colors.primaryDark : colors.textMuted
+              }
+            />
+            <Text
+              style={
+                values.ageRange === age
+                  ? styles.selectedText
+                  : styles.optionText
+              }
+            >
+              {age}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -129,9 +138,7 @@ export function FamilyProfileForm({
         <Text style={styles.error}>{errors.ageRange}</Text>
       ) : null}
 
-      <Text style={styles.label}>
-        Interests (optional)
-      </Text>
+      <Text style={styles.label}>Interests (optional)</Text>
 
       <View style={styles.options}>
         {ACTIVITY_CATEGORIES.map((interest) => {
@@ -143,12 +150,16 @@ export function FamilyProfileForm({
               accessibilityRole="checkbox"
               accessibilityState={{ checked: selected }}
               onPress={() => toggleInterest(interest)}
-              style={[
-                styles.option,
-                selected && styles.selected,
-              ]}
+              style={[styles.option, selected && styles.selected]}
             >
-              <Text>{interest}</Text>
+              <Ionicons
+                name="star-outline"
+                size={15}
+                color={selected ? colors.primaryDark : colors.textMuted}
+              />
+              <Text style={selected ? styles.selectedText : styles.optionText}>
+                {interest}
+              </Text>
             </Pressable>
           );
         })}
@@ -158,9 +169,7 @@ export function FamilyProfileForm({
         <Text style={styles.error}>{errors.interests}</Text>
       ) : null}
 
-      {saveError ? (
-        <Text style={styles.error}>{saveError}</Text>
-      ) : null}
+      {saveError ? <Text style={styles.error}>{saveError}</Text> : null}
 
       <Pressable
         accessibilityLabel="Save profile"
@@ -172,9 +181,7 @@ export function FamilyProfileForm({
         {isSaving ? (
           <ActivityIndicator color="white" />
         ) : (
-          <Text style={styles.buttonText}>
-            Save profile
-          </Text>
+          <Text style={styles.buttonText}>Save profile</Text>
         )}
       </Pressable>
     </ScrollView>
@@ -185,20 +192,32 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     gap: 12,
+    backgroundColor: colors.background,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 28,
+    fontWeight: "800",
+    color: colors.text,
   },
+  eyebrow: {
+    color: colors.primaryDark,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  subtitle: { color: colors.textMuted, lineHeight: 21, marginBottom: 8 },
   label: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
+    color: colors.text,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#cccccc",
-    borderRadius: 8,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
     padding: 12,
+    color: colors.text,
   },
   options: {
     flexDirection: "row",
@@ -208,25 +227,31 @@ const styles = StyleSheet.create({
   option: {
     padding: 10,
     borderWidth: 1,
-    borderColor: "#cccccc",
-    borderRadius: 8,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
   },
   selected: {
-    borderColor: "#2563eb",
-    backgroundColor: "#dbeafe",
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
   },
+  optionText: { color: colors.textMuted },
+  selectedText: { color: colors.primaryDark, fontWeight: "700" },
   error: {
-    color: "#b91c1c",
+    color: colors.danger,
   },
   button: {
     marginTop: 16,
-    backgroundColor: "#2563eb",
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
     padding: 15,
     alignItems: "center",
   },
   buttonText: {
-    color: "white",
+    color: colors.white,
     fontWeight: "700",
   },
 });

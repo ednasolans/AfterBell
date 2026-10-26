@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
@@ -11,6 +12,7 @@ import { useMyProfile } from "../hooks/useMyProfile";
 import { useSaveProfile } from "../hooks/useSaveProfile";
 import { ProfileDraftEditor } from "./ProfileDraftEditor";
 import { PublishedProfile } from "./PublishedProfile";
+import { colors } from "@/theme/colors";
 
 type GenerateSectionProps = {
   hasSheet: boolean;
@@ -26,9 +28,16 @@ function GenerateSection({
 }: GenerateSectionProps) {
   if (!hasSheet) {
     return (
-      <Text style={styles.hint}>
-        Save your technical sheet first. The AI writes your profile from it.
-      </Text>
+      <View style={styles.infoCard}>
+        <Ionicons
+          name="document-text-outline"
+          size={22}
+          color={colors.primaryDark}
+        />
+        <Text style={styles.hint}>
+          Save your technical sheet first. The AI writes your profile from it.
+        </Text>
+      </View>
     );
   }
   return (
@@ -76,9 +85,13 @@ export function AiProfile() {
   }
 
   return (
-    <View>
+    <View style={styles.container}>
+      <Text style={styles.eyebrow}>AI PROFILE</Text>
       <Text style={styles.title} accessibilityRole="header">
         Your public profile
+      </Text>
+      <Text style={styles.subtitle}>
+        Let AI help you tell families what makes your organisation special.
       </Text>
       {profile.data ? (
         <ProfileDraftEditor
@@ -93,10 +106,17 @@ export function AiProfile() {
           approveFailed={approve.isError}
         />
       ) : (
-        <Text style={styles.hint}>
-          The AI writes a short presentation of your organisation from your
-          technical sheet. You will review it before families can see it.
-        </Text>
+        <View style={styles.infoCard}>
+          <Ionicons
+            name="sparkles-outline"
+            size={24}
+            color={colors.primaryDark}
+          />
+          <Text style={styles.hint}>
+            The AI writes a short presentation of your organisation from your
+            technical sheet. You will review it before families can see it.
+          </Text>
+        </View>
       )}
       <GenerateSection
         hasSheet={sheet.data}
@@ -108,8 +128,24 @@ export function AiProfile() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 12 },
-  hint: { color: "#555", marginBottom: 16 },
+  container: { gap: 8 },
+  eyebrow: {
+    color: colors.primaryDark,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  title: { fontSize: 28, fontWeight: "800", color: colors.text },
+  subtitle: { color: colors.textMuted, lineHeight: 21, marginBottom: 10 },
+  hint: { flex: 1, color: colors.textMuted, lineHeight: 20 },
+  infoCard: {
+    flexDirection: "row",
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: colors.primarySoft,
+    marginBottom: 12,
+  },
   generate: { marginTop: 8 },
-  error: { color: "#c00", textAlign: "center", marginBottom: 8 },
+  error: { color: colors.danger, textAlign: "center", marginBottom: 8 },
 });

@@ -1,4 +1,3 @@
-
 import {
   ActivityIndicator,
   Alert,
@@ -8,8 +7,10 @@ import {
   Text,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { useFamilyProfiles } from "../hooks/useFamilyProfiles";
+import { colors } from "@/theme/colors";
 
 type Props = Readonly<{
   userId: string;
@@ -73,10 +74,7 @@ export function FamilyProfilesList({
       <View style={styles.container}>
         <Text>Could not load family profiles.</Text>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void refetch()}
-        >
+        <Pressable accessibilityRole="button" onPress={() => void refetch()}>
           <Text style={styles.link}>Try again</Text>
         </Pressable>
       </View>
@@ -89,20 +87,32 @@ export function FamilyProfilesList({
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>My family</Text>
+      <Text style={styles.eyebrow}>YOUR FAMILY</Text>
+      <Text style={styles.title}>Family profiles</Text>
+      <Text style={styles.subtitle}>
+        Add profiles to discover activities that fit everyone.
+      </Text>
 
       {profiles?.length === 0 ? (
         <View style={styles.empty}>
-          <Text>You don&apos;t have any profiles yet.</Text>
+          <View style={styles.emptyIcon}>
+            <Ionicons
+              name="people-outline"
+              size={34}
+              color={colors.primaryDark}
+            />
+          </View>
+          <Text style={styles.emptyTitle}>Build your family</Text>
+          <Text style={styles.emptyText}>
+            You don&apos;t have any profiles yet.
+          </Text>
 
           <Pressable
             accessibilityRole="button"
             onPress={onCreate}
             style={styles.button}
           >
-            <Text style={styles.buttonText}>
-              Create your first profile
-            </Text>
+            <Text style={styles.buttonText}>Create your first profile</Text>
           </Pressable>
         </View>
       ) : (
@@ -112,45 +122,64 @@ export function FamilyProfilesList({
 
             return (
               <View key={profile.id} style={styles.card}>
-                <Text style={styles.name}>
-                  {profile.first_name}
-                </Text>
+                <View style={styles.cardHeader}>
+                  <View style={styles.avatar}>
+                    <Ionicons
+                      name="person-outline"
+                      size={25}
+                      color={colors.primaryDark}
+                    />
+                  </View>
+                  <View style={styles.nameBlock}>
+                    <Text style={styles.name}>{profile.first_name}</Text>
+                    {isMain ? (
+                      <Text style={styles.mainLabel}>Main profile</Text>
+                    ) : null}
+                  </View>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={colors.textMuted}
+                  />
+                </View>
 
-                {isMain ? (
-                  <Text style={styles.mainLabel}>
-                    Main profile
-                  </Text>
-                ) : null}
+                <View style={styles.ageRow}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color={colors.primaryDark}
+                  />
+                  <Text style={styles.age}>Age: {profile.age_range}</Text>
+                </View>
 
-                <Text>Age: {profile.age_range}</Text>
-
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Edit ${profile.first_name}`}
-                  onPress={() => onEdit(profile.id)}
-                >
-                  <Text style={styles.link}>
-                    Edit profile
-                  </Text>
-                </Pressable>
-
-                {!isMain ? (
+                <View style={styles.actions}>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Delete ${profile.first_name}`}
-                    disabled={isDeleting}
-                    onPress={() =>
-                      confirmDelete(
-                        profile.id,
-                        profile.first_name,
-                      )
-                    }
+                    accessibilityLabel={`Edit ${profile.first_name}`}
+                    onPress={() => onEdit(profile.id)}
+                    style={styles.editButton}
                   >
-                    <Text style={styles.deleteText}>
-                      Delete profile
-                    </Text>
+                    <Ionicons
+                      name="create-outline"
+                      size={16}
+                      color={colors.primaryDark}
+                    />
+                    <Text style={styles.link}>Edit profile</Text>
                   </Pressable>
-                ) : null}
+
+                  {!isMain ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete ${profile.first_name}`}
+                      disabled={isDeleting}
+                      onPress={() =>
+                        confirmDelete(profile.id, profile.first_name)
+                      }
+                    >
+                      <Text style={styles.deleteText}>Delete</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
             );
           })}
@@ -160,9 +189,7 @@ export function FamilyProfilesList({
             onPress={onCreate}
             style={styles.button}
           >
-            <Text style={styles.buttonText}>
-              Add another profile
-            </Text>
+            <Text style={styles.buttonText}>Add another profile</Text>
           </Pressable>
 
           {isDeleting ? (
@@ -178,47 +205,92 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    gap: 16,
+    gap: 10,
+    backgroundColor: colors.background,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 28,
+    fontWeight: "800",
+    color: colors.text,
   },
+  eyebrow: {
+    color: colors.primaryDark,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  subtitle: { color: colors.textMuted, lineHeight: 21, marginBottom: 10 },
   empty: {
     gap: 16,
     paddingVertical: 24,
+    alignItems: "center",
   },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyTitle: { color: colors.text, fontSize: 18, fontWeight: "800" },
+  emptyText: { color: colors.textMuted },
   card: {
     padding: 16,
     borderWidth: 1,
-    borderColor: "#dddddd",
-    borderRadius: 10,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: 20,
     gap: 10,
+    marginBottom: 4,
   },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 18,
+    backgroundColor: colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nameBlock: { flex: 1, gap: 3 },
   name: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "800",
+    color: colors.text,
   },
   mainLabel: {
-    color: "#2563eb",
-    fontWeight: "600",
+    color: colors.primaryDark,
+    fontWeight: "700",
+    fontSize: 12,
   },
-  link: {
-    color: "#2563eb",
-    fontWeight: "600",
+  ageRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingTop: 4 },
+  age: { color: colors.textMuted },
+  actions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 3,
   },
-  deleteText: {
-    color: "#b91c1c",
-    fontWeight: "600",
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: colors.primarySoft,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
+  link: { color: colors.primaryDark, fontWeight: "700" },
+  deleteText: { color: colors.danger, fontWeight: "700", padding: 8 },
   button: {
-    backgroundColor: "#2563eb",
+    backgroundColor: colors.primary,
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 14,
     alignItems: "center",
   },
   buttonText: {
-    color: "#ffffff",
+    color: colors.white,
     fontWeight: "700",
   },
 });

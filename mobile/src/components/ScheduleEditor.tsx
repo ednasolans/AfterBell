@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Select, type SelectOption } from "@/components/Select";
@@ -13,6 +14,7 @@ import {
   type TimeSlot,
   type WeekDay,
 } from "@/lib/schedule";
+import { colors } from "@/theme/colors";
 
 // NEW: built once, outside the component, like the other option lists
 const DAY_OPTIONS: SelectOption<WeekDay>[] = WEEK_DAYS.map((day) => ({
@@ -51,10 +53,11 @@ export function ScheduleEditor({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Schedule</Text>
-
       {schedule.length === 0 ? (
-        <Text style={styles.empty}>No time slots yet</Text>
+        <View style={styles.emptyBox}>
+          <Ionicons name="time-outline" size={20} color={colors.textMuted} />
+          <Text style={styles.empty}>No time slots yet</Text>
+        </View>
       ) : (
         schedule.map((slot, index) => (
           <View
@@ -68,7 +71,11 @@ export function ScheduleEditor({
               accessibilityLabel={`Remove ${formatTimeSlot(slot)}`}
               hitSlop={8}
             >
-              <Text style={styles.removeText}>✕</Text>
+              <Ionicons
+                name="close-circle-outline"
+                size={21}
+                color={colors.danger}
+              />
             </Pressable>
           </View>
         ))
@@ -125,15 +132,16 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 6,
+  emptyBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceMuted,
+    marginBottom: 10,
   },
-  empty: {
-    color: "#888",
-    fontStyle: "italic",
-  },
+  empty: { color: colors.textMuted },
   slotRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -141,19 +149,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
     marginBottom: 6,
   },
   slotText: {
     fontSize: 15,
   },
-  removeText: {
-    fontSize: 16,
-    color: "#c00",
-  },
   error: {
-    color: "#c00",
+    color: colors.danger,
     fontSize: 12,
     marginTop: 4,
   },
@@ -161,8 +166,8 @@ const styles = StyleSheet.create({
   editor: {
     marginTop: 12,
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#f5f5f5",
+    borderRadius: 16,
+    backgroundColor: colors.surfaceMuted,
   },
   timeRow: {
     flexDirection: "row",
@@ -174,15 +179,15 @@ const styles = StyleSheet.create({
   addButton: {
     marginTop: 4,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: "center",
-    backgroundColor: "#2563eb",
+    backgroundColor: colors.primary,
   },
   addButtonDisabled: {
     opacity: 0.4,
   },
   addButtonText: {
-    color: "#fff",
-    fontWeight: "600",
+    color: colors.white,
+    fontWeight: "700",
   },
 });
