@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { FormSubmit } from "@/components/FormSubmit";
 import { MultiSelect } from "@/components/MultiSelect";
@@ -24,6 +25,7 @@ import { hasErrors } from "@/lib/validation";
 import { useActivityForm } from "../hooks/useActivityForm";
 import { type ActivityForm as ActivityFormValues } from "../types";
 import { AddressSelect } from "./AddressSelect";
+import { colors } from "@/theme/colors";
 
 const CATEGORY_OPTIONS: SelectOption<ActivityCategory>[] =
   ACTIVITY_CATEGORIES.map((category) => ({
@@ -70,10 +72,30 @@ export function ActivityForm({
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.sectionTitle} accessibilityRole="header">
-        Details
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={styles.eyebrow}>ACTIVITY SETUP</Text>
+      <Text style={styles.title} accessibilityRole="header">
+        Create an activity
       </Text>
+      <Text style={styles.subtitle}>
+        Share the details families need to find and choose your activity.
+      </Text>
+
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionIcon}>
+          <Ionicons
+            name="information-circle-outline"
+            size={20}
+            color={colors.primaryDark}
+          />
+        </View>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          Details
+        </Text>
+      </View>
 
       <TextField
         label="Title"
@@ -106,9 +128,18 @@ export function ActivityForm({
         error={errors.targetAgeRanges}
       />
 
-      <Text style={styles.sectionTitle} accessibilityRole="header">
-        Place
-      </Text>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionIcon}>
+          <Ionicons
+            name="location-outline"
+            size={20}
+            color={colors.primaryDark}
+          />
+        </View>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          Place
+        </Text>
+      </View>
 
       <AddressSelect
         value={form.addressId}
@@ -116,9 +147,18 @@ export function ActivityForm({
         error={errors.addressId}
       />
 
-      <Text style={styles.sectionTitle} accessibilityRole="header">
-        Schedule
-      </Text>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionIcon}>
+          <Ionicons
+            name="calendar-outline"
+            size={20}
+            color={colors.primaryDark}
+          />
+        </View>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          Schedule
+        </Text>
+      </View>
 
       <ScheduleEditor
         schedule={form.schedule}
@@ -126,9 +166,18 @@ export function ActivityForm({
         error={errors.schedule}
       />
 
-      <Text style={styles.sectionTitle} accessibilityRole="header">
-        Price
-      </Text>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionIcon}>
+          <Ionicons
+            name="pricetag-outline"
+            size={20}
+            color={colors.primaryDark}
+          />
+        </View>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          Price
+        </Text>
+      </View>
 
       <NumberField
         label="Price (€)"
@@ -169,6 +218,38 @@ export function ActivityForm({
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
+  container: {
+    padding: 20,
+    paddingBottom: 8,
+    backgroundColor: colors.background,
+  },
+  eyebrow: {
+    color: colors.primaryDark,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  title: { color: colors.text, fontSize: 28, fontWeight: "800", marginTop: 4 },
+  subtitle: {
+    color: colors.textMuted,
+    lineHeight: 21,
+    marginTop: 6,
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    marginTop: 8,
+    marginBottom: 13,
+  },
+  sectionIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primarySoft,
+  },
+  sectionTitle: { color: colors.text, fontSize: 19, fontWeight: "800" },
 });

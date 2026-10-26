@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TextInputProps,
 } from "react-native";
+import { colors } from "@/theme/colors";
 
 interface TextFieldProps {
   label: string;
@@ -54,16 +55,23 @@ export function TextField({
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
+  label: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: 6,
+  },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
+    color: colors.text,
   },
   multilineInput: { minHeight: 100 },
-  inputError: { borderColor: "red" },
-  error: { color: "red", fontSize: 12, marginTop: 4 },
+  inputError: { borderColor: colors.danger },
+  error: { color: colors.danger, fontSize: 12, marginTop: 4 },
 });

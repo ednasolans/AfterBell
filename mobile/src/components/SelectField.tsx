@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { colors } from "@/theme/colors";
 
 interface SelectFieldProps {
   label: string;
@@ -46,21 +47,26 @@ export function SelectField({
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
+  label: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: 6,
+  },
   field: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     gap: 8,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    borderColor: colors.border,
+    borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
   },
-  fieldError: { borderColor: "red" },
-  text: { flex: 1, fontSize: 16 },
-  placeholder: { color: "#999" },
-  error: { color: "red", fontSize: 12, marginTop: 4 },
+  fieldError: { borderColor: colors.danger },
+  text: { flex: 1, fontSize: 16, color: colors.text },
+  placeholder: { color: colors.textMuted },
+  error: { color: colors.danger, fontSize: 12, marginTop: 4 },
 });

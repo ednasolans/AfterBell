@@ -2,6 +2,7 @@ import { FlatList, StyleSheet, Text } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
+import { colors } from "@/theme/colors";
 
 import { useCatalogActivities } from "../hooks/useCatalogActivities";
 import { CatalogActivityCard } from "./CatalogActivityCard";
@@ -31,6 +32,7 @@ export function CatalogList({ onOpen }: Readonly<CatalogListProps>) {
     <FlatList
       testID="catalog-list"
       contentContainerStyle={styles.container}
+      style={styles.list}
       data={activities.data}
       keyExtractor={(item) => item.activity.id}
       refreshing={activities.isRefetching}
@@ -49,6 +51,7 @@ export function CatalogList({ onOpen }: Readonly<CatalogListProps>) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  empty: { textAlign: "center", color: "#888", marginTop: 24 },
+  list: { backgroundColor: colors.background },
+  container: { padding: 16, paddingTop: 8 },
+  empty: { textAlign: "center", color: colors.textMuted, marginTop: 24 },
 });

@@ -1,4 +1,5 @@
 import { Alert, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { FormSubmit } from "@/components/FormSubmit";
 import LoadingButton from "@/components/LoadingButton";
@@ -8,6 +9,7 @@ import { hasErrors } from "@/lib/validation";
 import { useProfileForm } from "../hooks/useProfileForm";
 import { type ProfileForm, type ProviderProfile } from "../types";
 import { ProfileStatusBadge } from "./ProfileStatusBadge";
+import { colors } from "@/theme/colors";
 
 type ProfileDraftEditorProps = {
   profile: ProviderProfile;
@@ -57,8 +59,15 @@ export function ProfileDraftEditor({
   }
 
   return (
-    <View>
-      <ProfileStatusBadge status="draft" />
+    <View style={styles.card}>
+      <View style={styles.statusRow}>
+        <Ionicons
+          name="sparkles-outline"
+          size={22}
+          color={colors.primaryDark}
+        />
+        <ProfileStatusBadge status="draft" />
+      </View>
       <Text style={styles.hint}>
         Review the text written by the AI. You can change it before publishing.
       </Text>
@@ -107,6 +116,21 @@ export function ProfileDraftEditor({
 }
 
 const styles = StyleSheet.create({
-  hint: { color: "#555", marginBottom: 16 },
-  error: { color: "#c00", textAlign: "center", marginBottom: 8 },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  hint: { color: colors.textMuted, lineHeight: 20, marginBottom: 16 },
+  error: { color: colors.danger, textAlign: "center", marginBottom: 8 },
 });

@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
+import { colors } from "@/theme/colors";
 
 import { formatAgeRanges, formatActivityPrice } from "../format";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
@@ -90,14 +91,25 @@ export function CatalogActivityDetail({
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 8 },
-  title: { fontSize: 22, fontWeight: "700" },
-  description: { color: "#444", marginBottom: 8 },
-  row: { flexDirection: "row", gap: 8 },
-  label: { width: 90, fontWeight: "600" },
-  value: { flex: 1, color: "#444" },
-  sectionTitle: { fontSize: 18, fontWeight: "700", marginTop: 16 },
-  providerName: { fontSize: 16, fontWeight: "600" },
-  headline: { fontWeight: "600", color: "#2563eb" },
-  notFound: { textAlign: "center", color: "#888", marginTop: 24 },
+  container: { padding: 16, gap: 8, backgroundColor: colors.background },
+  title: { fontSize: 26, fontWeight: "800", color: colors.text },
+  description: { color: colors.textMuted, marginBottom: 8, lineHeight: 22 },
+  row: {
+    flexDirection: "row",
+    gap: 8,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  label: { width: 90, fontWeight: "700", color: colors.text },
+  value: { flex: 1, color: colors.textMuted },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: colors.text,
+    marginTop: 16,
+  },
+  providerName: { fontSize: 16, fontWeight: "700", color: colors.primaryDark },
+  headline: { fontWeight: "700", color: colors.primaryDark },
+  notFound: { textAlign: "center", color: colors.textMuted, marginTop: 24 },
 });

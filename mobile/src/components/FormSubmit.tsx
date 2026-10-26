@@ -1,4 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { colors } from "@/theme/colors";
 
 type FormSubmitProps = {
   label: string;
@@ -48,7 +49,7 @@ export function FormSubmit({
 
 const styles = StyleSheet.create({
   formError: {
-    color: "#c00",
+    color: colors.danger,
     marginTop: 8,
     textAlign: "center",
   },
@@ -56,15 +57,15 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 32,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 14,
     alignItems: "center",
-    backgroundColor: "#2563eb",
+    backgroundColor: colors.primary,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: "#fff",
+    color: colors.white,
     fontSize: 16,
     fontWeight: "600",
   },

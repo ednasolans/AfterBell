@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -8,19 +8,20 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { Link, useRouter } from 'expo-router';
+} from "react-native";
+import { Link, useRouter } from "expo-router";
 
 // Adjust the path to wherever your Supabase client lives.
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
+import { colors } from "@/theme/colors";
 
 // These values must match what the trigger from Issue 2 expects
 // in raw_user_meta_data->>'account_type' (and the DB enum/check constraint).
-type AccountType = 'customer' | 'company';
+type AccountType = "customer" | "company";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
-  { value: 'customer', label: 'Customer' },
-  { value: 'company', label: 'Company' },
+  { value: "customer", label: "Customer" },
+  { value: "company", label: "Company" },
 ];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,17 +33,21 @@ type FieldErrors = {
   confirmPassword?: string;
 };
 
-function validate(email: string, password: string, confirmPassword: string): FieldErrors {
+function validate(
+  email: string,
+  password: string,
+  confirmPassword: string,
+): FieldErrors {
   const errors: FieldErrors = {};
 
   if (!EMAIL_REGEX.test(email.trim())) {
-    errors.email = 'Enter a valid email address.';
+    errors.email = "Enter a valid email address.";
   }
   if (password.length < MIN_PASSWORD_LENGTH) {
     errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
   }
   if (confirmPassword !== password) {
-    errors.confirmPassword = 'Passwords do not match.';
+    errors.confirmPassword = "Passwords do not match.";
   }
 
   return errors;
@@ -51,10 +56,10 @@ function validate(email: string, password: string, confirmPassword: string): Fie
 export default function SignUpScreen() {
   const router = useRouter();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [accountType, setAccountType] = useState<AccountType>('customer');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [accountType, setAccountType] = useState<AccountType>("customer");
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -86,13 +91,17 @@ export default function SignUpScreen() {
 
       if (data.session) {
         // Email confirmation disabled: the user is already signed in.
-        router.replace('/');
+        router.replace("/");
       } else {
         // Email confirmation enabled: no session until the user confirms.
-        router.replace('/(auth)/login');
+        router.replace("/(auth)/login");
       }
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      setSubmitError(
+        e instanceof Error
+          ? e.message
+          : "Something went wrong. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -101,7 +110,7 @@ export default function SignUpScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <Text style={styles.title}>Create account</Text>
 
@@ -116,7 +125,12 @@ export default function SignUpScreen() {
               accessibilityRole="radio"
               accessibilityState={{ selected }}
             >
-              <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
+              <Text
+                style={[
+                  styles.optionText,
+                  selected && styles.optionTextSelected,
+                ]}
+              >
                 {label}
               </Text>
             </Pressable>
@@ -134,7 +148,9 @@ export default function SignUpScreen() {
         keyboardType="email-address"
         textContentType="emailAddress"
       />
-      {fieldErrors.email && <Text style={styles.error}>{fieldErrors.email}</Text>}
+      {fieldErrors.email && (
+        <Text style={styles.error}>{fieldErrors.email}</Text>
+      )}
 
       <TextInput
         style={[styles.input, fieldErrors.password && styles.inputError]}
@@ -145,7 +161,9 @@ export default function SignUpScreen() {
         autoCapitalize="none"
         textContentType="newPassword"
       />
-      {fieldErrors.password && <Text style={styles.error}>{fieldErrors.password}</Text>}
+      {fieldErrors.password && (
+        <Text style={styles.error}>{fieldErrors.password}</Text>
+      )}
 
       <TextInput
         style={[styles.input, fieldErrors.confirmPassword && styles.inputError]}
@@ -183,37 +201,43 @@ export default function SignUpScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 8 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
-  selector: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  container: { flex: 1, justifyContent: "center", padding: 24, gap: 8 },
+  title: { fontSize: 28, fontWeight: "700", marginBottom: 16 },
+  selector: { flexDirection: "row", gap: 8, marginBottom: 8 },
   option: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#ccc',
-    alignItems: 'center',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: "center",
   },
-  optionSelected: { backgroundColor: '#111', borderColor: '#111' },
-  optionText: { fontWeight: '600', color: '#111' },
-  optionTextSelected: { color: '#fff' },
+  optionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  optionText: { fontWeight: "600", color: colors.text },
+  optionTextSelected: { color: colors.white },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
     padding: 12,
     fontSize: 16,
+    color: colors.text,
   },
-  inputError: { borderColor: '#d00' },
-  error: { color: '#d00', fontSize: 13 },
+  inputError: { borderColor: colors.danger },
+  error: { color: colors.danger, fontSize: 13 },
   button: {
-    backgroundColor: '#111',
+    backgroundColor: colors.primary,
     padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
+    borderRadius: 14,
+    alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  link: { marginTop: 16, textAlign: 'center', color: '#06c' },
+  buttonText: { color: colors.white, fontWeight: "600", fontSize: 16 },
+  link: { marginTop: 16, textAlign: "center", color: colors.primaryDark },
 });
