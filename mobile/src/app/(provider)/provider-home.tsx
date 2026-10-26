@@ -28,6 +28,14 @@ export default function ProviderHomeScreen() {
           Turn your technical sheet into a profile.
         </Text>
       </View>
+      <View style={styles.card}>
+        <Link href="/technical-sheet" style={styles.link}>
+          Technical sheet
+        </Link>
+        <Text style={styles.cardText}>
+          Describe your centre: addresses, contact and facilities.
+        </Text>
+      </View>
     </View>
   );
 }

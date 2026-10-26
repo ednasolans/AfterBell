@@ -87,7 +87,7 @@ Errors are shown under each field after the first attempt to save, and update wh
 
 | File | Content |
 |---|---|
-| `app/technical-sheet-preview.tsx` | **Temporary** screen to try the form until it is linked from the provider area. |
+| `app/(provider)/technical-sheet.tsx` | Technical sheet form, linked from the provider home. |
 
 Every file with logic has a test next to it (`*.test.ts` / `*.test.tsx`).
 
@@ -124,4 +124,4 @@ Every file with logic has a test next to it (`*.test.ts` / `*.test.tsx`).
 - [ ] Saving the sheet and its addresses is **not atomic**: move it to a database function if it causes problems.
 - [ ] Self-registration as `company` is open (the account type comes from the sign-up data): confirm this is intended.
 - [ ] The Figma 3-step wizard is not included.
-- [ ] Replace the temporary preview route with a screen in the `(provider)` area.
+- [ ] **Replace the temporary preview route with a screen in the `(provider)` area.
