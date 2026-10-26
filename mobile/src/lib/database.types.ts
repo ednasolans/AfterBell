@@ -7,31 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       accounts: {
@@ -58,64 +33,65 @@ export type Database = {
       };
       activities: {
         Row: {
-          id: string;
-          provider_id: string;
-          address_id: string | null;
-          title: string;
-          description: string | null;
+          address_id: string;
           category: string;
-          type: string;
-          target_age_ranges: string[];
-          schedule: Json[];
+          created_at: string;
+          description: string | null;
+          id: string;
+          max_participants: number;
           price: number;
           price_period: string;
-          max_participants: number;
-          created_at: string;
+          provider_id: string;
+          schedule: NonNullable<Json>;
+          target_age_ranges: string[];
+          title: string;
+          type: string;
         };
         ComputedFields: never;
         Insert: {
-          id?: string;
-          address_id?: string | null;
+          address_id: string;
+          category: string;
           created_at?: string;
           description?: string | null;
-          category: string;
-          type?: string;
-          target_age_ranges: string[];
-          schedule: Json;
+          id?: string;
+          max_participants: number;
           price: number;
           price_period: string;
-          max_participants: number;
           provider_id?: string;
+          schedule: NonNullable<Json>;
+          target_age_ranges: string[];
           title: string;
+          type?: string;
         };
         Update: {
-          id?: string;
-          address_id?: string | null;
+          address_id?: string;
+          category?: string;
           created_at?: string;
           description?: string | null;
-          category?: string;
-          target_age_ranges?: string[];
-          schedule?: Json;
+          id?: string;
+          max_participants?: number;
           price?: number;
           price_period?: string;
-          max_participants?: number;
           provider_id?: string;
+          schedule?: NonNullable<Json>;
+          target_age_ranges?: string[];
           title?: string;
+          type?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "activities_address_fkey";
+            columns: ["address_id", "provider_id"];
+            isOneToOne: false;
+            referencedRelation: "addresses";
+            referencedColumns: ["id", "provider_id"];
+          },
           {
             foreignKeyName: "activities_provider_id_fkey";
             columns: ["provider_id"];
             isOneToOne: false;
             referencedRelation: "accounts";
             referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "activities_address_id_provider_id_fkey";
-            columns: ["address_id", "provider_id"];
-            isOneToOne: false;
-            referencedRelation: "addresses";
-            referencedColumns: ["id", "provider_id"];
           },
         ];
       };
@@ -477,9 +453,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
