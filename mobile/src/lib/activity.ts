@@ -7,7 +7,7 @@ import { type TimeSlot } from "@/lib/schedule";
 export interface Activity {
   id: string;
   providerId: string;
-  addressId: string | null;
+  addressId: string;
   title: string;
   description: string | null;
   category: ActivityCategory;

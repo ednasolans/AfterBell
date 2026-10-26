@@ -38,9 +38,7 @@ export async function fetchCatalogActivity(
   const [profiles, contacts, address] = await Promise.all([
     fetchApprovedProfiles([activity.providerId]),
     fetchContacts([activity.providerId]),
-    activity.addressId
-      ? fetchAddress(activity.addressId)
-      : Promise.resolve(null),
+    fetchAddress(activity.addressId),
   ]);
 
   const profile = profiles.get(activity.providerId);

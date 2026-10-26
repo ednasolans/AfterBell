@@ -254,19 +254,6 @@ describe("fetchCatalogActivity", () => {
     expect(result?.address).toBeNull();
   });
 
-  it("does not look for an address when the activity has none", async () => {
-    mockTables({
-      activities: { data: { ...activityRow, address_id: null }, error: null },
-      provider_profiles: { data: [profileRow], error: null },
-      technical_sheets: { data: [sheetRow], error: null },
-    });
-
-    const result = await fetchCatalogActivity("a1");
-
-    expect(result?.address).toBeNull();
-    expect(mockFrom).not.toHaveBeenCalledWith("addresses");
-  });
-
   it("fails when the activity cannot be read", async () => {
     mockTables({ activities: { data: null, error: { message: "boom" } } });
 
