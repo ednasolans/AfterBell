@@ -1,7 +1,7 @@
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
 
-import { toActivityForm } from "../api/toActivity";
+import { toActivityForm } from "../api/toActivityForm";
 import { useActivity } from "../hooks/useActivity";
 import { useUpdateActivity } from "../hooks/useUpdateActivity";
 import { ActivityForm } from "./ActivityForm";

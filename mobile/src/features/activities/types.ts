@@ -1,3 +1,4 @@
+import { type Activity } from "@/lib/activity";
 import { type ActivityCategory } from "@/lib/activityCategories";
 import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
@@ -11,10 +12,10 @@ export interface ActivityForm {
   title: string;
   description: string;
   category: ActivityCategory | null;
+  type: ActivityType;
   targetAgeRanges: AgeRange[];
   schedule: TimeSlot[];
-  priceMin: number | null;
-  priceMax: number | null;
+  price: number | null;
   pricePeriod: PricePeriod | null;
   maxParticipants: number | null;
   // One of the addresses of the provider, entered in its technical sheet
@@ -25,29 +26,14 @@ export const EMPTY_ACTIVITY_FORM: ActivityForm = {
   title: "",
   description: "",
   category: null,
+  type: "whole_year",
   targetAgeRanges: [],
   schedule: [],
-  priceMin: null,
-  priceMax: null,
+  price: null,
   pricePeriod: null,
   maxParticipants: null,
   addressId: null,
 };
 
 // A saved activity, as the app uses it after reading it from the database
-export interface Activity {
-  id: string;
-  providerId: string;
-  title: string;
-  description: string | null;
-  category: ActivityCategory;
-  type: ActivityType;
-  targetAgeRanges: AgeRange[];
-  schedule: TimeSlot[];
-  priceMin: number;
-  priceMax: number;
-  pricePeriod: PricePeriod;
-  maxParticipants: number;
-  addressId: string;
-  createdAt: string;
-}
+export type { Activity };

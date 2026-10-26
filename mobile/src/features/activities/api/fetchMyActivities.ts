@@ -1,7 +1,5 @@
 import { supabase } from "@/lib/supabase";
-
-import { type Activity } from "../types";
-import { toActivity } from "./toActivity";
+import { type Activity, toActivity } from "@/lib/activity";
 
 // Activities of the logged-in provider, newest first.
 // RLS lets every logged-in user read all activities, so we filter by provider here.

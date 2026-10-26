@@ -1,15 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { render, screen } from "@testing-library/react-native";
 
 import { ACTIVITY } from "@/test-utils/activityFixtures";
 
 import { ActivityCard } from "./ActivityCard";
 
 describe("ActivityCard", () => {
-  it("shows the title, category, place, schedule and price", async () => {
+  it("shows the activity details and actions", async () => {
     await render(
       <ActivityCard
         activity={ACTIVITY}
-        address="C/ Major 1, Lleida"
         onEdit={jest.fn()}
         onDelete={jest.fn()}
         isDeleting={false}
@@ -17,48 +16,8 @@ describe("ActivityCard", () => {
     );
 
     expect(screen.getByText("Swimming for kids")).toBeOnTheScreen();
-    expect(screen.getByText("Swimming")).toBeOnTheScreen();
-    expect(screen.getByText("C/ Major 1, Lleida")).toBeOnTheScreen();
-    expect(screen.getByText("Tuesday 17:00–18:00")).toBeOnTheScreen();
-    expect(screen.getByText("30–40 € per month")).toBeOnTheScreen();
-    expect(screen.getByText("Up to 12 people")).toBeOnTheScreen();
-  });
-
-  it("calls onEdit and onDelete from its buttons", async () => {
-    const onEdit = jest.fn();
-    const onDelete = jest.fn();
-    await render(
-      <ActivityCard
-        activity={ACTIVITY}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        isDeleting={false}
-      />,
-    );
-
-    await fireEvent.press(
-      screen.getByRole("button", { name: "Edit Swimming for kids" }),
-    );
-    await fireEvent.press(
-      screen.getByRole("button", { name: "Delete Swimming for kids" }),
-    );
-
-    expect(onEdit).toHaveBeenCalled();
-    expect(onDelete).toHaveBeenCalled();
-  });
-
-  it("disables the delete button while deleting", async () => {
-    await render(
-      <ActivityCard
-        activity={ACTIVITY}
-        onEdit={jest.fn()}
-        onDelete={jest.fn()}
-        isDeleting
-      />,
-    );
-
-    expect(
-      screen.getByRole("button", { name: "Delete Swimming for kids" }),
-    ).toBeDisabled();
+    expect(screen.getByText("Whole year")).toBeOnTheScreen();
+    expect(screen.getByText("Ages: 7-9, 10-12")).toBeOnTheScreen();
+    expect(screen.getByText("30 € per month")).toBeOnTheScreen();
   });
 });

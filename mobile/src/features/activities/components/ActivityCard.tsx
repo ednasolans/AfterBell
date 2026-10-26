@@ -1,10 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
-import { formatPriceRange } from "@/lib/price";
-import { formatTimeSlot } from "@/lib/schedule";
+import {
+  formatAgeRanges,
+  formatActivityPrice,
+} from "@/features/catalog/format";
 
-import { type Activity } from "../types";
+import { type Activity } from "@/lib/activity";
 
 type ActivityCardProps = {
   activity: Activity;
@@ -26,20 +27,23 @@ export function ActivityCard({
     <View style={styles.card}>
       <Text style={styles.title}>{activity.title}</Text>
       <Text style={styles.detail}>
-        {ACTIVITY_CATEGORY_LABELS[activity.category]}
+        {activity.type === "event" ? "Event" : "Whole year"}
       </Text>
       {address ? <Text style={styles.detail}>{address}</Text> : null}
       <Text style={styles.detail}>
-        {activity.schedule.map(formatTimeSlot).join(", ")}
+        {`Ages: ${formatAgeRanges(activity.targetAgeRanges)}`}
       </Text>
+      {activity.schedule.length > 0 ? (
+        <Text style={styles.detail}>
+          {" "}
+          {activity.schedule
+            .map((slot) => `${slot.day} ${slot.startTime}–${slot.endTime}`)
+            .join(", ")}
+        </Text>
+      ) : null}
       <Text style={styles.detail}>
-        {formatPriceRange(
-          activity.priceMin,
-          activity.priceMax,
-          activity.pricePeriod,
-        )}
+        {formatActivityPrice(activity.price, activity.pricePeriod)}
       </Text>
-      <Text style={styles.detail}>Up to {activity.maxParticipants} people</Text>
 
       <View style={styles.actions}>
         <Pressable

@@ -13,7 +13,7 @@ This guide explains what was built so that providers can create and manage their
 
 A provider (`company` account) can:
 
-1. **Create** an activity: title, description, category, target ages, maximum number of participants, place (one of its addresses), weekly schedule, price range and price period.
+1. **Create** an activity: title, description, category, target ages, maximum number of participants, place (one of its addresses), weekly schedule, price and price period.
 2. **See its own activities** in a list, newest first, with the address where each one takes place.
 3. **Edit** an activity with the same form, filled in with the saved values.
 4. **Delete** an activity, after confirming it. Deleting is permanent.
@@ -37,7 +37,7 @@ Any logged-in user (families included) can read activities, so families will be 
 | **Ages, schedule and prices belong to each activity** and were removed from the technical sheet | Keeping them in both tables | A provider offers activities with different ages, times and prices; keeping them in the sheet would duplicate data. Done with a new migration (`ALTER TABLE … DROP COLUMN`), because the sheet migration was already in `main`. |
 | **`category`: one value** from the shared list of activity categories | Free text / several categories | A specific activity ("Swimming for kids") has one category. Added now, although filters arrive in Sprint 2, to avoid a data migration later. |
 | **`type`: `whole_year` or `event`**, default `whole_year`, not editable | No type column | Sprint 1 only has whole-year activities; events come later. Changing the type would change the nature of the activity. |
-| **Price range** (`price_min`, `price_max`) **and period** (`per_month`, `per_term`…) as `NUMERIC(8, 2)` | One integer price | A price without a period is ambiguous ("40" per month or per year?), and integers cannot store cents. |
+| **One price** (`price`) **and period** (`per_month`, `per_term`…) as `NUMERIC(8, 2)` | A price range | The activity now has one published price; the period keeps its meaning clear and the numeric type stores cents. |
 | **Schedule as a `JSONB` list** of `{ day, startTime, endTime }` | A separate `time_slots` table / a text list | One insert saves the whole activity; it matches the app type `TimeSlot`; it can still be queried by day later. The app validates each slot. |
 | **`max_participants`: required whole number between 1 and 1000**, editable by the owner | Optional / no upper limit | Every activity has a capacity the provider must think about; the upper limit catches typing mistakes (10000 instead of 100). Added with its own migration and its own column-level `GRANT UPDATE` (new columns are not covered by the earlier grant). |
 | **The number of enrolled people is not stored** | An `enrolled_count` column | Enrollments do not exist yet, so nothing would update it, and a stored counter can drift from reality. It will be computed by counting enrollments (view or function) in the enrollments issue, which will also prevent enrolling when an activity is full. |
@@ -61,7 +61,7 @@ Any logged-in user (families included) can read activities, so families will be 
 |---|---|
 | **TanStack Query** for server data (team decision) | First feature that reads lists. It gives loading/error states, caching, retries, refetch when the app returns to the foreground, and refreshes every list after a change with one `invalidateQueries`. |
 | **Form state separated from saving** (`useActivityForm` + `useCreateActivity` / `useUpdateActivity`) | The same `ActivityForm` component serves **create and edit**; editing needed no new form code. |
-| **Shared code moved to `lib/` and `components/`** (schedule, prices, categories, `ScheduleEditor`, `PriceField`, `FormSubmit`…) | Features must not import from each other, and duplicated code breaks the SonarQube duplication limit (3%). |
+| **Shared code moved to `lib/` and `components/`** (the `Activity` type and its mapper, schedule, prices, categories, `ScheduleEditor`, `NumberField`, `FormSubmit`…) | Features must not import from each other, and duplicated code breaks the SonarQube duplication limit (3%). |
 | **Two types:** `ActivityForm` (being filled in, with `null` for "not chosen") and `Activity` (saved, always complete) | TypeScript knows in each place what is guaranteed; the list never has to check for missing values. |
 | **Every data screen handles four states:** loading, error with retry, empty and data | New providers have no activities, and mobile networks fail often. |
 | **The address selector handles its own states** (loading, error with retry, no addresses) | A provider without a technical sheet has no addresses: the selector tells it to add them there, and the rest of the form can still be filled in. |
@@ -81,6 +81,7 @@ Any logged-in user (families included) can read activities, so families will be 
 | `…_validate_activity_schedule_slots.sql` | `is_valid_schedule()`: every slot has a valid day and `HH:MM` times, with the start before the end. |
 | `…_create_addresses.sql` | `addresses` table of the providers (see [`technical-sheet.md`](technical-sheet.md)). |
 | `…_use_addresses_in_technical_sheets_and_activities.sql` | Adds the required `address_id` with the composite foreign key; existing activities take the main address of their provider; lets owners update it. |
+| `…_use_single_activity_price.sql` | Replaces the activity price range with one `price`; existing rows keep the former lower price. |
 
 `mobile/src/lib/database.types.ts` was regenerated from these migrations.
 
@@ -88,10 +89,10 @@ Any logged-in user (families included) can read activities, so families will be 
 
 | File | Content |
 |---|---|
-| `types.ts` | `ACTIVITY_TYPES`; `ActivityForm` (form values, with `addressId`); `EMPTY_ACTIVITY_FORM`; `Activity` (saved activity). |
+| `types.ts` | `ACTIVITY_TYPES`; `ActivityForm` (form values, with `addressId`); `EMPTY_ACTIVITY_FORM`; re-exports `Activity` from `lib/activity.ts`. |
 | `validation.ts` | `validateActivity`, split into details, place, schedule and prices; limits exported as constants (`TITLE_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`, `MAX_PARTICIPANTS`) matching the database. |
-| `api/toActivityInsert.ts` | Form → database row (used to create and to update). Does not send `provider_id` or `type`. |
-| `api/toActivity.ts` | Database row → `Activity`, and `Activity` → form values (to edit). |
+| `api/toActivityInsert.ts` | Form → database row. `toActivityInsert` creates (sends `type`, `whole_year` for now); `toActivityUpdate` edits and does **not** send `type`: it cannot be changed, so there is no `UPDATE` privilege on it, and sending it would make the whole update fail. Neither sends `provider_id`. |
+| `api/toActivityForm.ts` | `Activity` → form values (to edit). |
 | `api/createActivity.ts` | Inserts an activity. |
 | `api/fetchMyActivities.ts` | Activities of the logged-in provider, newest first (filters by `provider_id`, because RLS lets everyone read all activities). |
 | `api/fetchMyAddresses.ts` | Addresses of the logged-in provider, main address first (filters by `provider_id`, because RLS lets everyone read all addresses). |
@@ -125,15 +126,16 @@ Screens only connect a feature component with a hook and decide where to go afte
 | File | Content |
 |---|---|
 | `lib/schedule.ts` | Week days, `TimeSlot`, time and slot validation, sorting, formatting (moved from the technical sheet). |
-| `lib/price.ts` | Price periods, `parsePrice`, `formatPriceRange` ("30–40 € per month"). |
+| `lib/price.ts` | Price periods, `parsePrice`, and `formatPrice` ("30 € per month"). |
+| `lib/activity.ts` | `Activity` (saved activity) and `toActivity` (database row → `Activity`). Shared with the customer catalog. |
 | `lib/numbers.ts` | `parseInteger` (whole numbers typed by the user). |
 | `lib/activityCategories.ts` | Activity categories and labels. |
 | `lib/text.ts` | `emptyToNull`. |
 | `lib/addresses.ts` | `Address` type and `formatAddress` (shared with the technical sheet). |
 | `lib/validation.ts` | `isBlank` and `hasErrors` (moved here to be shared). |
 | `lib/queryClient.ts` | The TanStack Query client and the foreground refetch. |
-| `components/ScheduleEditor.tsx`, `PriceField.tsx` | Moved from the technical sheet to be shared. |
-| `components/NumberField.tsx` | Number input that keeps the typed text and sends the parsed number; receives the parser as a prop. `PriceField` is a `NumberField` with `parsePrice`; the participants field uses `parseInteger`. |
+| `components/ScheduleEditor.tsx` | Moved from the technical sheet to be shared. |
+| `components/NumberField.tsx` | Number input that keeps the typed text and sends the parsed number; receives the parser as a prop. The price field uses it with `parsePrice` (decimals with a comma) and the participants field with `parseInteger`. |
 | `components/FormSubmit.tsx` | Save button and error messages shared by every form. |
 | `components/LoadingView.tsx`, `ErrorView.tsx` | Loading and error-with-retry screens. |
 | `components/TextField.tsx` | Now supports multiline text (description) and passes `autoCapitalize` (it was ignored before). |
@@ -163,7 +165,6 @@ Screens only connect a feature component with a hook and decide where to go afte
 | 8 | Club B deletes club A's activity | `DELETE 0` | 3 |
 | 9 | A family reads activities | The activity appears | — |
 | 10 | `anon` reads activities | Permission denied | — |
-| 11 | `price_max < price_min` | `activity_price_range_is_valid` violation | — |
 | 12 | A technical sheet without the removed columns | Inserted | — |
 | 13 | Club A creates an activity with `max_participants = 12` | Inserted | 1 |
 | 14 | `max_participants = 0` | `max_participants` check violation | — |

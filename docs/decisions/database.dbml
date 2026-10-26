@@ -1,0 +1,216 @@
+// AfterBell - database schema
+// Paste this file in https://dbdiagram.io to see the diagram.
+// Source of truth: supabase/migrations/. Decisions: docs/decisions/database.md
+// Every table is implemented. Update this file and database.md in the same pull
+// request as any migration that changes a table.
+
+Project AfterBell {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Supabase (PostgreSQL). Every table has RLS enabled and column-level privileges.
+  Value lists are TEXT + CHECK with the same values as the app lists (mobile/src/lib, features/*/types.ts).
+  '''
+}
+
+// ============================================================
+// Supabase Auth (managed by Supabase, not by our migrations)
+// ============================================================
+
+Table auth.users {
+  id uuid [pk]
+  email text
+  raw_user_meta_data jsonb [note: 'account_type sent at sign-up']
+  Note: 'Managed by Supabase Auth. The trigger handle_new_user creates the matching public.accounts row.'
+}
+
+// ============================================================
+// Implemented
+// ============================================================
+
+Table accounts {
+  id uuid [pk, note: 'Same id as auth.users (ON DELETE CASCADE)']
+  email text [not null]
+  account_type text [not null, default: 'customer', note: 'customer | company']
+  created_at timestamptz [not null, default: `now()`]
+  Note: '''
+  One row per user, created by the trigger handle_new_user.
+  is_company() tells whether the logged-in user is a provider.
+  RLS: each user reads its own account.
+  '''
+}
+
+Table technical_sheets {
+  id uuid [pk, default: `gen_random_uuid()`]
+  provider_id uuid [not null, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE']
+  name text [not null, note: 'not blank, max 120']
+  provider_type text [not null, note: 'sports_club | music_school | language_school | art_school | tutoring_academy | private_tutor']
+  description text [note: 'optional, max 500']
+  address_id uuid [not null, note: 'main address; composite FK (address_id, provider_id)']
+  phone_number text [note: 'max 30; phone or email required']
+  email text [note: 'valid email, max 254']
+  website text [note: 'optional, http(s)://, max 300']
+  activity_types text[] [not null, note: 'at least one activity category']
+  facilities text[] [not null, default: `'{}'`, note: 'parking | changing_rooms | showers | lockers | waiting_area | cafeteria | wifi | air_conditioning | outdoor_space | wheelchair_access | outdoor_field | indoor_court']
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    provider_id
+    address_id
+  }
+  Note: '''
+  Structured input for the AI profile. Private: only the owner reads and updates it.
+  Only company accounts can insert. No delete.
+  CHECK has_phone_or_email: phone_number IS NOT NULL OR email IS NOT NULL.
+  '''
+}
+
+Table addresses {
+  id uuid [pk, default: `gen_random_uuid()`]
+  provider_id uuid [not null, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE']
+  address text [not null, note: 'street and number, not blank, max 200']
+  city text [not null, note: 'not blank, max 100']
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (id, provider_id) [unique, note: 'target of the composite foreign keys']
+    provider_id
+  }
+  Note: '''
+  Places where a provider offers activities, entered in the technical sheet form.
+  RLS: every logged-in user reads; companies create their own; the owner updates and deletes.
+  An address used by a sheet or an activity cannot be deleted (NO ACTION).
+  '''
+}
+
+Table activities {
+  id uuid [pk, default: `gen_random_uuid()`]
+  provider_id uuid [not null, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE']
+  address_id uuid [not null, note: 'where it takes place; composite FK (address_id, provider_id)']
+  title text [not null, note: 'not blank, max 120']
+  description text [note: 'optional, max 1000']
+  category text [not null, note: 'one activity category: football | basketball | tennis | swimming | dance | drama | music | language | art | tutoring | other']
+  type text [not null, default: 'whole_year', note: 'whole_year | event; cannot be changed']
+  target_age_ranges text[] [not null, note: 'at least one: 0-3 | 4-6 | 7-9 | 10-12 | 13-15 | 16-17 | adult']
+  schedule jsonb [not null, note: 'list of { day, startTime, endTime }, checked by is_valid_schedule()']
+  price "numeric(8,2)" [not null, note: '>= 0']
+  price_period text [not null, note: 'per_hour | per_day | per_week | per_month | per_term | per_year']
+  max_participants integer [not null, note: '1 to 1000']
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    provider_id
+    address_id
+  }
+  Note: '''
+  RLS: every logged-in user reads; companies create their own; the owner updates and deletes (permanent).
+  The number of enrolled people is not stored: it will be counted from enrollments.
+  '''
+}
+
+// ============================================================
+// Families
+// ============================================================
+
+Table family_groups {
+  id uuid [pk, default: `gen_random_uuid()`]
+  created_at timestamptz [not null, default: `now()`]
+  Note: '''
+  Created automatically for every new customer account (trigger on accounts).
+  Two parents' accounts can share one group and its children.
+  '''
+}
+
+Table family_group_members {
+  account_id uuid [pk, note: 'FK accounts, ON DELETE CASCADE. PK = one group per account. Customer accounts only']
+  family_group_id uuid [not null, note: 'FK family_groups, ON DELETE CASCADE']
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    family_group_id
+  }
+  Note: '''
+  Membership checks in policies use a SECURITY DEFINER helper
+  (is_family_member(group_id)) to avoid infinite recursion in RLS.
+  '''
+}
+
+Table family_profiles {
+  id uuid [pk, default: `gen_random_uuid()`]
+  family_group_id uuid [not null, note: 'FK family_groups, ON DELETE CASCADE']
+  first_name text [not null, note: 'not blank, max 50']
+  age_range text [not null, note: 'one of AGE_RANGES (lib/ages.ts). Never birth dates']
+  interests text[] [not null, default: `'{}'`, note: 'activity categories']
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    family_group_id
+  }
+  Note: '''
+  Data about minors: store the minimum.
+  RLS: only members of the group read, create, update and delete.
+  The main profile (first created) cannot be deleted (BEFORE DELETE trigger).
+  '''
+}
+
+// ============================================================
+// AI provider profiles
+// ============================================================
+
+Table provider_profiles {
+  id uuid [pk, default: `gen_random_uuid()`]
+  provider_id uuid [not null, unique, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE. One profile per provider']
+  headline text [not null, note: 'not blank, max 120']
+  description text [not null, note: 'not blank, max 2000']
+  status text [not null, default: 'draft', note: 'draft | approved']
+  model text [not null, note: 'LLM that generated the text, max 100']
+  generated_at timestamptz [not null, default: `now()`]
+  approved_at timestamptz [note: 'set by the trigger set_profile_approved_at; only when approved']
+  Note: '''
+  Public profile generated by the AI from the technical sheet (Edge Function generate-profile,
+  which uses the caller's session, so RLS applies).
+  RLS: logged-in users read approved profiles; the owner also reads its draft.
+  Only companies insert their own profile, only as draft. The owner updates it. No delete.
+  Activities point to provider_id, not to this table.
+  '''
+}
+
+// ============================================================
+// Relationships
+// ============================================================
+
+Ref: accounts.id - auth.users.id [delete: cascade]
+
+Ref: technical_sheets.provider_id > accounts.id [delete: cascade]
+Ref: addresses.provider_id > accounts.id [delete: cascade]
+Ref: activities.provider_id > accounts.id [delete: cascade]
+
+// Composite keys: the address must belong to the same provider
+Ref: technical_sheets.(address_id, provider_id) > addresses.(id, provider_id) [delete: no action]
+Ref: activities.(address_id, provider_id) > addresses.(id, provider_id) [delete: no action]
+
+// Families and AI profiles
+Ref: family_group_members.account_id - accounts.id [delete: cascade]
+Ref: family_group_members.family_group_id > family_groups.id [delete: cascade]
+Ref: family_profiles.family_group_id > family_groups.id [delete: cascade]
+Ref: provider_profiles.provider_id - accounts.id [delete: cascade]
+
+// ============================================================
+// Groups
+// ============================================================
+
+TableGroup providers [color: #2563eb] {
+  accounts
+  technical_sheets
+  addresses
+  activities
+}
+
+TableGroup families [color: #16a34a] {
+  family_groups
+  family_group_members
+  family_profiles
+}
+
+TableGroup ai_profiles [color: #7c3aed] {
+  provider_profiles
+}

@@ -3,11 +3,11 @@ import { Alert, FlatList, Pressable, StyleSheet, Text } from "react-native";
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
 import { formatAddress } from "@/lib/addresses";
+import { type Activity } from "@/lib/activity";
 
 import { useDeleteActivity } from "../hooks/useDeleteActivity";
 import { useMyActivities } from "../hooks/useMyActivities";
 import { useMyAddresses } from "../hooks/useMyAddresses";
-import { type Activity } from "../types";
 import { ActivityCard } from "./ActivityCard";
 
 type MyActivitiesListProps = {

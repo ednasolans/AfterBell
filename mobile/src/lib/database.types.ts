@@ -7,32 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       accounts: {
@@ -65,8 +39,7 @@ export type Database = {
           description: string | null;
           id: string;
           max_participants: number;
-          price_max: number;
-          price_min: number;
+          price: number;
           price_period: string;
           provider_id: string;
           schedule: NonNullable<Json>;
@@ -82,8 +55,7 @@ export type Database = {
           description?: string | null;
           id?: string;
           max_participants: number;
-          price_max: number;
-          price_min: number;
+          price: number;
           price_period: string;
           provider_id?: string;
           schedule: NonNullable<Json>;
@@ -98,8 +70,7 @@ export type Database = {
           description?: string | null;
           id?: string;
           max_participants?: number;
-          price_max?: number;
-          price_min?: number;
+          price?: number;
           price_period?: string;
           provider_id?: string;
           schedule?: NonNullable<Json>;
@@ -351,22 +322,9 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      is_company: {
-        Args: Record<PropertyKey, never>;
-        Returns: boolean;
-      };
-      is_family_member: {
-        Args: {
-          group_id: string;
-        };
-        Returns: boolean;
-      };
-      is_valid_schedule: {
-        Args: {
-          schedule: Json;
-        };
-        Returns: boolean;
-      };
+      is_company: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_family_member: { Args: { group_id: string }; Returns: boolean };
+      is_valid_schedule: { Args: { schedule: Json }; Returns: boolean };
     };
     Enums: {
       [_ in never]: never;
@@ -376,7 +334,6 @@ export type Database = {
     };
   };
 };
-
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
@@ -496,9 +453,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

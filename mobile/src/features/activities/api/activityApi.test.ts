@@ -8,9 +8,9 @@ import { type ActivityForm } from "../types";
 import { deleteActivity } from "./deleteActivity";
 import { fetchActivity } from "./fetchActivity";
 import { fetchMyActivities } from "./fetchMyActivities";
-import { toActivity, type ActivityRow } from "./toActivity";
-import { toActivityInsert } from "./toActivityInsert";
+import { toActivity, type ActivityRow } from "@/lib/activity";
 import { updateActivity } from "./updateActivity";
+import { toActivityUpdate } from "./toActivityInsert";
 
 // Replace the real client: tests must not need a database
 jest.mock("@/lib/supabase", () => ({
@@ -20,17 +20,16 @@ jest.mock("@/lib/supabase", () => ({
 const ROW: ActivityRow = {
   id: "activity-1",
   provider_id: "provider-1",
+  address_id: "address-1",
   title: "Swimming for kids",
   description: null,
   category: "swimming",
   type: "whole_year",
-  target_age_ranges: ["7-9"],
+  target_age_ranges: ["7-9", "10-12"],
   schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
-  price_min: 30,
-  price_max: 40,
+  price: 30,
   price_period: "per_month",
   max_participants: 12,
-  address_id: "address-1",
   created_at: "2026-10-20T08:00:00Z",
 };
 
@@ -38,10 +37,10 @@ const FORM: ActivityForm = {
   title: "Swimming for kids",
   description: "",
   category: "swimming",
-  targetAgeRanges: ["7-9"],
+  type: "whole_year",
+  targetAgeRanges: ["7-9", "10-12"],
   schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
-  priceMin: 30,
-  priceMax: 45,
+  price: 30,
   pricePeriod: "per_month",
   maxParticipants: 12,
   addressId: "address-1",
@@ -123,8 +122,8 @@ describe("updateActivity", () => {
 
     await updateActivity({ id: "activity-1", form: FORM });
 
-    expect(query.update).toHaveBeenCalledWith(toActivityInsert(FORM));
-    expect(query.eq).toHaveBeenCalledWith("id", "activity-1");
+    expect(query.update).toHaveBeenCalledWith(toActivityUpdate(FORM));
+    expect(query.update.mock.calls[0][0]).not.toHaveProperty("type");
   });
 
   it("throws when no row was updated (another provider's activity)", async () => {

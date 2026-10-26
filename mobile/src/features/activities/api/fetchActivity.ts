@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import { type Activity } from "@/lib/activity";
 
-import { type Activity } from "../types";
-import { toActivity } from "./toActivity";
+import { toActivity } from "@/lib/activity";
 
 export async function fetchActivity(id: string): Promise<Activity> {
   const { data, error } = await supabase
