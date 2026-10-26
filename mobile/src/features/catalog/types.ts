@@ -1,4 +1,4 @@
-import { type Activity } from "@/features/activities/types";
+import { type Activity } from "@/lib/activity";
 
 // Name and contact details of a provider, taken from its technical sheet
 export interface ProviderContact {

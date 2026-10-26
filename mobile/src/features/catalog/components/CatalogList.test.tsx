@@ -1,6 +1,5 @@
 import { act, fireEvent, waitFor } from "@testing-library/react-native";
 
-import { formatAgeRange, formatPrice } from "../format";
 import {
   makeActivity,
   makeCatalogActivity,
@@ -23,12 +22,14 @@ describe("CatalogList", () => {
   it("shows the title, provider, ages and price of each activity", async () => {
     mockFetch.mockResolvedValue([makeCatalogActivity()]);
 
-    const { getByText } = await renderWithQuery(<CatalogList onOpen={jest.fn()} />);
+    const { getByText } = await renderWithQuery(
+      <CatalogList onOpen={jest.fn()} />,
+    );
 
     await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
     expect(getByText("Sports Club")).toBeTruthy();
-    expect(getByText(`Ages: ${formatAgeRange(7, 12)}`)).toBeTruthy();
-    expect(getByText(formatPrice(15))).toBeTruthy();
+    expect(getByText("Ages: 7-9, 10-12")).toBeTruthy();
+    expect(getByText("15 € per month")).toBeTruthy();
   });
 
   it("shows the activity without a provider name when it has no contact details", async () => {
@@ -47,10 +48,14 @@ describe("CatalogList", () => {
   it("opens the activity that is pressed", async () => {
     const onOpen = jest.fn();
     mockFetch.mockResolvedValue([
-      makeCatalogActivity({ activity: makeActivity({ id: "a2", title: "Chess" }) }),
+      makeCatalogActivity({
+        activity: makeActivity({ id: "a2", title: "Chess" }),
+      }),
     ]);
 
-    const { getByText } = await renderWithQuery(<CatalogList onOpen={onOpen} />);
+    const { getByText } = await renderWithQuery(
+      <CatalogList onOpen={onOpen} />,
+    );
     await waitFor(() => expect(getByText("Chess")).toBeTruthy());
 
     await fireEvent.press(getByText("Chess"));
@@ -61,7 +66,9 @@ describe("CatalogList", () => {
   it("shows a message when there are no activities", async () => {
     mockFetch.mockResolvedValue([]);
 
-    const { getByText } = await renderWithQuery(<CatalogList onOpen={jest.fn()} />);
+    const { getByText } = await renderWithQuery(
+      <CatalogList onOpen={jest.fn()} />,
+    );
 
     await waitFor(() =>
       expect(getByText("There are no activities available yet.")).toBeTruthy(),
@@ -71,7 +78,9 @@ describe("CatalogList", () => {
   it("shows an error message when the activities cannot be loaded", async () => {
     mockFetch.mockRejectedValue(new Error("boom"));
 
-    const { getByText } = await renderWithQuery(<CatalogList onOpen={jest.fn()} />);
+    const { getByText } = await renderWithQuery(
+      <CatalogList onOpen={jest.fn()} />,
+    );
 
     await waitFor(() =>
       expect(getByText("Activities could not be loaded.")).toBeTruthy(),

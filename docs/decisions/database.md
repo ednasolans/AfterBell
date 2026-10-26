@@ -2,8 +2,17 @@
 
 ## Status
 
-Accepted for the tables that exist today (`accounts`, `technical_sheets`, `addresses`, `activities`).
-**Proposed** for the tables that other issues will create (`family_groups`, `family_group_members`, `family_profiles`, `provider_profiles`): the team member who implements each one may change the details, but must update this document in the same pull request.
+Accepted for the implemented tables:
+- accounts
+- technical_sheets
+- addresses
+- activities
+- family_groups
+- family_group_members
+- family_profiles
+
+Proposed for:
+- provider_profiles
 
 ## Context
 
@@ -67,8 +76,7 @@ erDiagram
         text type "whole_year | event"
         text_array target_age_ranges
         jsonb schedule "list of day, startTime, endTime"
-        numeric price_min
-        numeric price_max
+        numeric price
         text price_period
         int max_participants "1 to 1000"
         timestamptz created_at
@@ -152,7 +160,7 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **The number of enrolled people is not stored** | An `enrolled_count` column | Enrollments do not exist yet, and a stored counter can drift from reality. It will be computed from the enrollments table. |
 | **Activities point to the provider (`provider_id`), not to its profile** | `provider_profile_id` in activities | The profile is generated text that can be regenerated or replaced; the provider is the stable owner of the activity. |
 
-### Families (proposed)
+### Families
 
 | Decision | Alternatives considered | Why |
 |---|---|---|
@@ -162,7 +170,8 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **A group is created automatically for every new customer account** (a new trigger on `accounts`) | The app creates it after sign-up | Every family screen can assume the group exists. Joining another parent's group (invitations) is a later feature. |
 | **`family_profiles` store a first name, an age range and interests** | Full name / birth date | The children are minors: store the minimum. An age range is enough for recommendations; a birth date would be personal data with no use. Interests use the activity categories list. |
 | **Family data is visible only to the members of the group** | Visible to providers | Nobody else needs it. When a family signs up for an activity, the enrollment will store what the provider needs. |
-| **Membership checks use a `SECURITY DEFINER` helper** (e.g. `is_family_member(group_id)`) | A subquery on `family_group_members` inside its own policy | A policy on `family_group_members` that reads `family_group_members` calls itself and fails with *infinite recursion*. The helper reads the table without RLS and returns only `true` or `false`. |
+| **Membership checks use a `SECURITY DEFINER` helper** (`is_family_member(group_id)`) | A subquery on `family_group_members` inside its own policy | A policy on `family_group_members` that reads `family_group_members` calls itself and fails with *infinite recursion*. The helper reads the table without RLS and returns only `true` or `false`. |
+| **Protect the first family profile from deletion** | Adding an `is_main` column or allowing every profile to be deleted | The first profile in a family group is considered the main profile, determined by `created_at ASC, id ASC`. The database does not store an `is_main` column. A `BEFORE DELETE` trigger prevents deleting this profile, ensuring that a family with at least one profile cannot become empty through profile deletion. |
 
 ### AI profiles (proposed)
 
@@ -171,6 +180,32 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **`provider_profiles` is written only by an Edge Function** with the secret key | Written by the app | The LLM key and the generation logic must not live in the app. The secret key bypasses RLS, so no `INSERT`/`UPDATE` policy is needed for `authenticated`. |
 | **Status values and uniqueness are still to be decided** by the team member who builds it | — | For example `draft`/`published`, and at most one published profile per provider with a partial unique index: `CREATE UNIQUE INDEX ... ON provider_profiles (provider_id) WHERE status = 'published'`. |
 | **Families read only published profiles; the owner reads its own** | Public | Same principle as the other tables: start closed. |
+
+## provider_profiles
+
+AI-generated public profile of a provider (#29). One per provider.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| provider_id | uuid | UNIQUE, default `auth.uid()`, FK `accounts` ON DELETE CASCADE |
+| headline | text | ≤ 120 characters |
+| description | text | ≤ 2000 characters |
+| status | text | `draft` (default) or `approved` |
+| model | text | LLM model used, ≤ 100 |
+| generated_at | timestamptz | Last generation |
+| approved_at | timestamptz | Set by the `set_profile_approved_at` trigger |
+
+- Constraint `approved_at_matches_status`: `approved_at` is set only when
+  approved.
+- RLS:
+  - SELECT: approved profiles, or your own.
+  - INSERT: only the owner, only if it is a company, only as `draft`.
+  - UPDATE: only the owner.
+  - No DELETE.
+- Column grants: only `headline`, `description`, `status`, `model` and
+  `generated_at` can be updated, so `provider_id` and `approved_at` cannot be
+  changed from the app.
 
 ## Consequences
 

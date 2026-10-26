@@ -1,4 +1,3 @@
-import { PUBLISHED_ACTIVITY_STATUS } from "@/features/activities/types";
 import { formatAddress } from "@/lib/addresses";
 import { type Tables } from "@/lib/database.types";
 
@@ -40,20 +39,18 @@ function mockTables(tables: Record<string, QueryResult>) {
 
 const activityRow = {
   id: "a1",
-  account_id: "p1",
-  provider_profile_id: "pp1",
+  provider_id: "p1",
   address_id: "ad1",
   title: "Saturday workshop",
   description: "Fun for everyone",
-  min_age: 7,
-  max_age: 12,
-  schedule: ["Monday 17:00-18:00"],
+  category: "football",
+  type: "whole_year",
+  target_age_ranges: ["7-9", "10-12"],
+  schedule: [{ day: "monday", startTime: "17:00", endTime: "18:00" }],
   price: 15,
-  start_date: "2026-10-01",
-  end_date: "2026-12-31",
-  status: "published",
+  price_period: "per_month",
+  max_participants: 20,
   created_at: "2026-10-01T10:00:00Z",
-  updated_at: "2026-10-01T10:00:00Z",
 };
 
 const profileRow = {
@@ -107,12 +104,11 @@ describe("fetchCatalogActivities", () => {
     expect(result).toHaveLength(1);
     expect(result[0].activity).toMatchObject({
       id: "a1",
-      accountId: "p1",
+      providerId: "p1",
       title: "Saturday workshop",
-      minAge: 7,
-      maxAge: 12,
+      targetAgeRanges: ["7-9", "10-12"],
       price: 15,
-      status: "published",
+      pricePeriod: "per_month",
     });
     expect(result[0].provider).toEqual(provider);
     expect(queries.provider_profiles.calls).toContainEqual([
@@ -121,11 +117,7 @@ describe("fetchCatalogActivities", () => {
     ]);
     expect(queries.activities.calls).toContainEqual([
       "in",
-      ["account_id", ["p1"]],
-    ]);
-    expect(queries.activities.calls).toContainEqual([
-      "eq",
-      ["status", PUBLISHED_ACTIVITY_STATUS],
+      ["provider_id", ["p1"]],
     ]);
   });
 
@@ -167,7 +159,7 @@ describe("fetchCatalogActivities", () => {
     mockTables({
       provider_profiles: { data: [profileRow], error: null },
       activities: {
-        data: [activityRow, { ...activityRow, id: "a2", account_id: "p2" }],
+        data: [activityRow, { ...activityRow, id: "a2", provider_id: "p2" }],
         error: null,
       },
       technical_sheets: { data: [sheetRow], error: null },
@@ -224,10 +216,6 @@ describe("fetchCatalogActivity", () => {
     expect(result?.activity.id).toBe("a1");
     expect(result?.provider).toEqual(provider);
     expect(result?.address).toBe(formatAddress(addressRow));
-    expect(queries.activities.calls).toContainEqual([
-      "eq",
-      ["status", PUBLISHED_ACTIVITY_STATUS],
-    ]);
     expect(queries.provider_profiles.calls).toContainEqual([
       "eq",
       ["status", APPROVED_PROFILE_STATUS],

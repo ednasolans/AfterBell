@@ -2,7 +2,7 @@ import { type ReactElement } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react-native";
 
-import { type Activity } from "@/features/activities/types";
+import { type Activity } from "@/lib/activity";
 
 import { type CatalogActivity, type CatalogProvider } from "./types";
 
@@ -11,20 +11,18 @@ import { type CatalogActivity, type CatalogProvider } from "./types";
 export function makeActivity(overrides: Partial<Activity> = {}): Activity {
   return {
     id: "a1",
-    accountId: "p1",
-    providerProfileId: "pp1",
+    providerId: "p1",
     addressId: "ad1",
     title: "Saturday workshop",
     description: "Fun for everyone",
-    minAge: 7,
-    maxAge: 12,
-    schedule: ["Monday 17:00-18:00"],
+    category: "football",
+    type: "whole_year",
+    targetAgeRanges: ["7-9", "10-12"],
+    schedule: [{ day: "monday", startTime: "17:00", endTime: "18:00" }],
     price: 15,
-    startDate: "2026-10-01",
-    endDate: "2026-12-31",
-    status: "published",
+    pricePeriod: "per_month",
+    maxParticipants: 20,
     createdAt: "2026-10-01T10:00:00Z",
-    updatedAt: "2026-10-01T10:00:00Z",
     ...overrides,
   };
 }
@@ -61,5 +59,7 @@ export async function renderWithQuery(ui: ReactElement) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+  );
 }

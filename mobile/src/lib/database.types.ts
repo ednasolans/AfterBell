@@ -58,78 +58,64 @@ export type Database = {
       };
       activities: {
         Row: {
-          account_id: string;
-          address_id: string | null;
-          created_at: string;
-          description: string | null;
-          end_date: string | null;
           id: string;
-          max_age: number;
-          min_age: number;
-          price: number;
-          provider_profile_id: string | null;
-          schedule: string[];
-          start_date: string | null;
-          status: string;
+          provider_id: string;
+          address_id: string | null;
           title: string;
-          updated_at: string;
+          description: string | null;
+          category: string;
+          type: string;
+          target_age_ranges: string[];
+          schedule: Json[];
+          price: number;
+          price_period: string;
+          max_participants: number;
+          created_at: string;
         };
         ComputedFields: never;
         Insert: {
-          account_id?: string;
+          id?: string;
           address_id?: string | null;
           created_at?: string;
           description?: string | null;
-          end_date?: string | null;
-          id?: string;
-          max_age: number;
-          min_age: number;
-          price?: number;
-          provider_profile_id?: string | null;
-          schedule?: string[];
-          start_date?: string | null;
-          status?: string;
+          category: string;
+          type?: string;
+          target_age_ranges: string[];
+          schedule: Json;
+          price: number;
+          price_period: string;
+          max_participants: number;
+          provider_id?: string;
           title: string;
-          updated_at?: string;
         };
         Update: {
-          account_id?: string;
+          id?: string;
           address_id?: string | null;
           created_at?: string;
           description?: string | null;
-          end_date?: string | null;
-          id?: string;
-          max_age?: number;
-          min_age?: number;
+          category?: string;
+          target_age_ranges?: string[];
+          schedule?: Json;
           price?: number;
-          provider_profile_id?: string | null;
-          schedule?: string[];
-          start_date?: string | null;
-          status?: string;
+          price_period?: string;
+          max_participants?: number;
+          provider_id?: string;
           title?: string;
-          updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "activities_account_id_fkey";
-            columns: ["account_id"];
+            foreignKeyName: "activities_provider_id_fkey";
+            columns: ["provider_id"];
             isOneToOne: false;
             referencedRelation: "accounts";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "activities_address_id_account_id_fkey";
-            columns: ["address_id", "account_id"];
+            foreignKeyName: "activities_address_id_provider_id_fkey";
+            columns: ["address_id", "provider_id"];
             isOneToOne: false;
             referencedRelation: "addresses";
             referencedColumns: ["id", "provider_id"];
-          },
-          {
-            foreignKeyName: "activities_provider_profile_id_fkey";
-            columns: ["provider_profile_id"];
-            isOneToOne: false;
-            referencedRelation: "provider_profiles";
-            referencedColumns: ["id"];
           },
         ];
       };
@@ -162,6 +148,92 @@ export type Database = {
             columns: ["provider_id"];
             isOneToOne: false;
             referencedRelation: "accounts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      family_group_members: {
+        Row: {
+          account_id: string;
+          created_at: string;
+          family_group_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          account_id: string;
+          created_at?: string;
+          family_group_id: string;
+        };
+        Update: {
+          account_id?: string;
+          created_at?: string;
+          family_group_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "family_group_members_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: true;
+            referencedRelation: "accounts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "family_group_members_family_group_id_fkey";
+            columns: ["family_group_id"];
+            isOneToOne: false;
+            referencedRelation: "family_groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      family_groups: {
+        Row: {
+          created_at: string;
+          id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+        };
+        Relationships: [];
+      };
+      family_profiles: {
+        Row: {
+          age_range: string;
+          created_at: string;
+          family_group_id: string;
+          first_name: string;
+          id: string;
+          interests: string[];
+        };
+        ComputedFields: never;
+        Insert: {
+          age_range: string;
+          created_at?: string;
+          family_group_id: string;
+          first_name: string;
+          id?: string;
+          interests?: string[];
+        };
+        Update: {
+          age_range?: string;
+          created_at?: string;
+          family_group_id?: string;
+          first_name?: string;
+          id?: string;
+          interests?: string[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "family_profiles_family_group_id_fkey";
+            columns: ["family_group_id"];
+            isOneToOne: false;
+            referencedRelation: "family_groups";
             referencedColumns: ["id"];
           },
         ];
@@ -275,6 +347,7 @@ export type Database = {
     };
     Functions: {
       is_company: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_family_member: { Args: { group_id: string }; Returns: boolean };
       is_valid_schedule: { Args: { schedule: Json }; Returns: boolean };
     };
     Enums: {

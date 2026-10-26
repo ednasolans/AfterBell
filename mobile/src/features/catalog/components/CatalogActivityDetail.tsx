@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
 
-import { formatAgeRange, formatDateRange, formatPrice } from "../format";
+import { formatAgeRanges, formatActivityPrice } from "../format";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
 
 type DetailRowProps = { label: string; value: string };
@@ -44,8 +44,6 @@ export function CatalogActivityDetail({
   }
 
   const { activity, provider, address } = query.data;
-  const dates = formatDateRange(activity.startDate, activity.endDate);
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{activity.title}</Text>
@@ -55,13 +53,21 @@ export function CatalogActivityDetail({
 
       <DetailRow
         label="Ages"
-        value={formatAgeRange(activity.minAge, activity.maxAge)}
+        value={formatAgeRanges(activity.targetAgeRanges)}
       />
       {activity.schedule.length > 0 ? (
-        <DetailRow label="Schedule" value={activity.schedule.join(", ")} />
+        <DetailRow
+          label="Schedule"
+          value={activity.schedule
+            .map((slot) => `${slot.day} ${slot.startTime}–${slot.endTime}`)
+            .join(", ")}
+        />
       ) : null}
-      <DetailRow label="Price" value={formatPrice(activity.price)} />
-      {dates ? <DetailRow label="Dates" value={dates} /> : null}
+      <DetailRow
+        label="Price"
+        value={formatActivityPrice(activity.price, activity.pricePeriod)}
+      />
+      <DetailRow label="Category" value={activity.category} />
       {address ? <DetailRow label="Address" value={address} /> : null}
 
       <Text style={styles.sectionTitle}>Provider</Text>

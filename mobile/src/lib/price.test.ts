@@ -1,4 +1,4 @@
-import { formatPriceRange, parsePrice } from "./price";
+import { formatPrice, parsePrice } from "./price";
 
 describe("parsePrice", () => {
   it.each([
@@ -28,18 +28,8 @@ describe("parsePrice", () => {
   });
 });
 
-describe("formatPriceRange", () => {
-  it("shows a single price when the minimum and the maximum are equal", () => {
-    expect(formatPriceRange(30, 30, "per_month")).toBe("30 € per month");
-  });
-
-  it("shows the range when the prices are different", () => {
-    expect(formatPriceRange(30, 40, "per_term")).toBe("30–40 € per term");
-  });
-
+describe("formatPrice", () => {
   it("shows two decimals with a comma when needed", () => {
-    expect(formatPriceRange(9.5, 12.99, "per_hour")).toBe(
-      "9,50–12,99 € per hour",
-    );
+    expect(formatPrice(9.5, "per_hour")).toBe("9,50 € per hour");
   });
 });

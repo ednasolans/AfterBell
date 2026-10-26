@@ -3,7 +3,8 @@ import { type Tables } from "@/lib/database.types";
 import { type CatalogProvider, type ProviderContact } from "../types";
 
 // The columns of the technical sheet that customers can see
-export const CONTACT_COLUMNS = "provider_id, name, email, phone_number, website";
+export const CONTACT_COLUMNS =
+  "provider_id, name, email, phone_number, website";
 
 export type ContactRow = Pick<
   Tables<"technical_sheets">,

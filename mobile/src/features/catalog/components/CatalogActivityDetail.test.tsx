@@ -1,6 +1,5 @@
 import { waitFor } from "@testing-library/react-native";
 
-import { formatAgeRange, formatDateRange, formatPrice } from "../format";
 import {
   makeActivity,
   makeCatalogActivity,
@@ -17,7 +16,11 @@ jest.mock("../api/fetchCatalogActivity", () => ({
 }));
 
 function makeDetail(overrides: Partial<Detail> = {}): Detail {
-  return { ...makeCatalogActivity(), address: "Main Street 1, Lleida", ...overrides };
+  return {
+    ...makeCatalogActivity(),
+    address: "Main Street 1, Lleida",
+    ...overrides,
+  };
 }
 
 describe("CatalogActivityDetail", () => {
@@ -29,15 +32,16 @@ describe("CatalogActivityDetail", () => {
     const detail = makeDetail();
     mockFetch.mockResolvedValue(detail);
 
-    const { getByText } = await renderWithQuery(<CatalogActivityDetail id="a1" />);
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
 
     await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
     expect(mockFetch).toHaveBeenCalledWith("a1");
     expect(getByText("Fun for everyone")).toBeTruthy();
-    expect(getByText(formatAgeRange(7, 12))).toBeTruthy();
-    expect(getByText("Monday 17:00-18:00")).toBeTruthy();
-    expect(getByText(formatPrice(15))).toBeTruthy();
-    expect(getByText(formatDateRange("2026-10-01", "2026-12-31") as string)).toBeTruthy();
+    expect(getByText("7-9, 10-12")).toBeTruthy();
+    expect(getByText("monday 17:00–18:00")).toBeTruthy();
+    expect(getByText("15 € per month")).toBeTruthy();
     expect(getByText("Main Street 1, Lleida")).toBeTruthy();
     expect(getByText("Sports Club")).toBeTruthy();
     expect(getByText(detail.provider.headline)).toBeTruthy();
@@ -53,8 +57,6 @@ describe("CatalogActivityDetail", () => {
         activity: makeActivity({
           description: null,
           schedule: [],
-          startDate: null,
-          endDate: null,
         }),
         address: null,
         provider: makeProvider({
@@ -99,7 +101,9 @@ describe("CatalogActivityDetail", () => {
   it("says so when the activity does not exist anymore", async () => {
     mockFetch.mockResolvedValue(null);
 
-    const { getByText } = await renderWithQuery(<CatalogActivityDetail id="a1" />);
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
 
     await waitFor(() =>
       expect(getByText("This activity is no longer available.")).toBeTruthy(),
@@ -109,7 +113,9 @@ describe("CatalogActivityDetail", () => {
   it("shows an error message when the activity cannot be loaded", async () => {
     mockFetch.mockRejectedValue(new Error("boom"));
 
-    const { getByText } = await renderWithQuery(<CatalogActivityDetail id="a1" />);
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
 
     await waitFor(() =>
       expect(getByText("The activity could not be loaded.")).toBeTruthy(),

@@ -52,4 +52,3 @@ const styles = StyleSheet.create({
   container: { padding: 16 },
   empty: { textAlign: "center", color: "#888", marginTop: 24 },
 });
-

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { type TablesUpdate } from "@/lib/database.types";
 
 import { type ActivityForm } from "../types";
 import { toActivityInsert } from "./toActivityInsert";
@@ -11,7 +12,7 @@ export async function updateActivity({
 }: UpdateActivityInput): Promise<void> {
   const { data, error } = await supabase
     .from("activities")
-    .update(toActivityInsert(form))
+    .update(toActivityInsert(form) as TablesUpdate<"activities">)
     .eq("id", id)
     .select("id");
   if (error) {

@@ -1,5 +1,4 @@
-import { toActivity } from "@/features/activities/api/toActivity";
-import { PUBLISHED_ACTIVITY_STATUS } from "@/features/activities/types";
+import { toActivity } from "@/lib/activity";
 import { supabase } from "@/lib/supabase";
 
 import { type CatalogActivity } from "../types";
@@ -7,7 +6,7 @@ import { fetchApprovedProfiles } from "./fetchApprovedProfiles";
 import { fetchContacts } from "./fetchContacts";
 import { toCatalogProvider } from "./toCatalogProvider";
 
-// The published activities of the providers that have an approved profile,
+// The activities of the providers that have an approved profile,
 // newest first, each with the profile and contact details of its provider.
 export async function fetchCatalogActivities(): Promise<CatalogActivity[]> {
   const profiles = await fetchApprovedProfiles();
@@ -18,8 +17,7 @@ export async function fetchCatalogActivities(): Promise<CatalogActivity[]> {
   const { data, error } = await supabase
     .from("activities")
     .select("*")
-    .in("account_id", Array.from(profiles.keys()))
-    .eq("status", PUBLISHED_ACTIVITY_STATUS)
+    .in("provider_id", Array.from(profiles.keys()))
     .order("created_at", { ascending: false });
   if (error) {
     throw new Error(error.message);
@@ -27,13 +25,13 @@ export async function fetchCatalogActivities(): Promise<CatalogActivity[]> {
 
   const activities = data.map(toActivity);
   const contacts = await fetchContacts(
-    Array.from(new Set(activities.map((activity) => activity.accountId))),
+    Array.from(new Set(activities.map((activity) => activity.providerId))),
   );
 
   // The query already filters by provider, but an activity is never shown
   // without an approved profile, whatever the database returns
   return activities.flatMap((activity) => {
-    const profile = profiles.get(activity.accountId);
+    const profile = profiles.get(activity.providerId);
     if (!profile) {
       return [];
     }
@@ -42,7 +40,7 @@ export async function fetchCatalogActivities(): Promise<CatalogActivity[]> {
         activity,
         provider: toCatalogProvider(
           profile,
-          contacts.get(activity.accountId) ?? null,
+          contacts.get(activity.providerId) ?? null,
         ),
       },
     ];

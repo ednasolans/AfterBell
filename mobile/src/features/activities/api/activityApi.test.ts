@@ -8,7 +8,7 @@ import { type ActivityForm } from "../types";
 import { deleteActivity } from "./deleteActivity";
 import { fetchActivity } from "./fetchActivity";
 import { fetchMyActivities } from "./fetchMyActivities";
-import { toActivity, type ActivityRow } from "./toActivity";
+import { toActivity, type ActivityRow } from "@/lib/activity";
 import { toActivityInsert } from "./toActivityInsert";
 import { updateActivity } from "./updateActivity";
 
@@ -19,33 +19,31 @@ jest.mock("@/lib/supabase", () => ({
 
 const ROW: ActivityRow = {
   id: "activity-1",
-  account_id: "provider-1",
-  provider_profile_id: "profile-1",
+  provider_id: "provider-1",
   address_id: "address-1",
   title: "Swimming for kids",
   description: null,
-  min_age: 7,
-  max_age: 12,
-  schedule: ["Tuesday 17:00-18:00"],
+  category: "swimming",
+  type: "whole_year",
+  target_age_ranges: ["7-9", "10-12"],
+  schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
   price: 30,
-  start_date: "2026-10-01",
-  end_date: null,
-  status: "published",
+  price_period: "per_month",
+  max_participants: 12,
   created_at: "2026-10-20T08:00:00Z",
-  updated_at: "2026-10-20T08:00:00Z",
 };
 
 const FORM: ActivityForm = {
   title: "Swimming for kids",
   description: "",
-  minAge: 7,
-  maxAge: 12,
-  schedule: ["Tuesday 17:00-18:00"],
+  category: "swimming",
+  type: "whole_year",
+  targetAgeRanges: ["7-9", "10-12"],
+  schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
   price: 30,
-  startDate: "",
-  endDate: "",
+  pricePeriod: "per_month",
+  maxParticipants: 12,
   addressId: "address-1",
-  status: "draft",
 };
 
 const DATABASE_ERROR = { message: "database error" };
@@ -79,7 +77,7 @@ describe("fetchMyActivities", () => {
     const activities = await fetchMyActivities();
 
     expect(supabase.from).toHaveBeenCalledWith("activities");
-    expect(query.eq).toHaveBeenCalledWith("account_id", "provider-1");
+    expect(query.eq).toHaveBeenCalledWith("provider_id", "provider-1");
     expect(query.order).toHaveBeenCalledWith("created_at", {
       ascending: false,
     });

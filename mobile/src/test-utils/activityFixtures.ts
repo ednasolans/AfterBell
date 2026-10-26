@@ -1,20 +1,18 @@
-import { type Activity } from "@/features/activities/types";
+import { type Activity } from "@/lib/activity";
 
 // A saved activity to use in tests; spread it to change only what a test needs
 export const ACTIVITY: Activity = {
   id: "activity-1",
-  accountId: "provider-1",
-  providerProfileId: "profile-1",
+  providerId: "provider-1",
   addressId: "address-1",
   title: "Swimming for kids",
   description: "Small groups",
-  minAge: 7,
-  maxAge: 12,
-  schedule: ["Tuesday 17:00-18:00"],
+  category: "swimming",
+  type: "whole_year",
+  targetAgeRanges: ["7-9", "10-12"],
+  schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
   price: 30,
-  startDate: "2026-10-01",
-  endDate: "2026-12-31",
-  status: "published",
+  pricePeriod: "per_month",
+  maxParticipants: 12,
   createdAt: "2026-10-20T08:00:00Z",
-  updatedAt: "2026-10-20T08:00:00Z",
 };

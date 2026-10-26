@@ -1,12 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
-  formatAgeRange,
-  formatDateRange,
-  formatPrice,
+  formatAgeRanges,
+  formatActivityPrice,
 } from "@/features/catalog/format";
 
-import { type Activity } from "../types";
+import { type Activity } from "@/lib/activity";
 
 type ActivityCardProps = {
   activity: Activity;
@@ -24,23 +23,27 @@ export function ActivityCard({
   onDelete,
   isDeleting,
 }: ActivityCardProps) {
-  const dates = formatDateRange(activity.startDate, activity.endDate);
-
   return (
     <View style={styles.card}>
       <Text style={styles.title}>{activity.title}</Text>
       <Text style={styles.detail}>
-        {activity.status === "published" ? "Published" : "Draft"}
+        {activity.type === "event" ? "Event" : "Whole year"}
       </Text>
       {address ? <Text style={styles.detail}>{address}</Text> : null}
       <Text style={styles.detail}>
-        {`Ages: ${formatAgeRange(activity.minAge, activity.maxAge)}`}
+        {`Ages: ${formatAgeRanges(activity.targetAgeRanges)}`}
       </Text>
       {activity.schedule.length > 0 ? (
-        <Text style={styles.detail}>{activity.schedule.join(", ")}</Text>
+        <Text style={styles.detail}>
+          {" "}
+          {activity.schedule
+            .map((slot) => `${slot.day} ${slot.startTime}–${slot.endTime}`)
+            .join(", ")}
+        </Text>
       ) : null}
-      <Text style={styles.detail}>{formatPrice(activity.price)}</Text>
-      {dates ? <Text style={styles.detail}>{dates}</Text> : null}
+      <Text style={styles.detail}>
+        {formatActivityPrice(activity.price, activity.pricePeriod)}
+      </Text>
 
       <View style={styles.actions}>
         <Pressable

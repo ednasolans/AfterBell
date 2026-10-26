@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { formatAgeRange, formatPrice } from "../format";
+import { formatAgeRanges, formatActivityPrice } from "../format";
 import { type CatalogActivity } from "../types";
 
 type CatalogActivityCardProps = {
@@ -26,9 +26,11 @@ export function CatalogActivityCard({
         <Text style={styles.provider}>{provider.contact.name}</Text>
       ) : null}
       <Text style={styles.detail}>
-        {`Ages: ${formatAgeRange(activity.minAge, activity.maxAge)}`}
+        {`Ages: ${formatAgeRanges(activity.targetAgeRanges)}`}
       </Text>
-      <Text style={styles.detail}>{formatPrice(activity.price)}</Text>
+      <Text style={styles.detail}>
+        {formatActivityPrice(activity.price, activity.pricePeriod)}
+      </Text>
     </Pressable>
   );
 }

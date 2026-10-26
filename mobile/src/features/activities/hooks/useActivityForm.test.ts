@@ -6,14 +6,14 @@ import { useActivityForm } from "./useActivityForm";
 const VALID_ACTIVITY: ActivityForm = {
   title: "Swimming for kids",
   description: "",
-  minAge: 7,
-  maxAge: 12,
-  schedule: ["Tuesday 17:00-18:00"],
+  category: "swimming",
+  type: "whole_year",
+  targetAgeRanges: ["7-9", "10-12"],
+  schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
   price: 30,
-  startDate: "2026-10-01",
-  endDate: "2026-10-31",
+  pricePeriod: "per_month",
+  maxParticipants: 12,
   addressId: "address-1",
-  status: "draft"
 };
 
 describe("useActivityForm", () => {

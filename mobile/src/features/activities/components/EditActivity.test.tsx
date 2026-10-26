@@ -12,7 +12,7 @@ import {
 } from "@/test-utils/queryClientWrapper";
 
 import { fetchActivity } from "../api/fetchActivity";
-import { toActivityForm } from "../api/toActivity";
+import { toActivityForm } from "../api/toActivityForm";
 import { updateActivity } from "../api/updateActivity";
 import { EditActivity } from "./EditActivity";
 

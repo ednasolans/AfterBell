@@ -1,7 +1,5 @@
 import { supabase } from "@/lib/supabase";
-
-import { type Activity } from "../types";
-import { toActivity } from "./toActivity";
+import { type Activity, toActivity } from "@/lib/activity";
 
 // Activities of the logged-in provider, newest first.
 // RLS lets every logged-in user read all activities, so we filter by provider here.
@@ -16,7 +14,7 @@ export async function fetchMyActivities(): Promise<Activity[]> {
   const { data, error } = await supabase
     .from("activities")
     .select("*")
-    .eq("account_id", user.id)
+    .eq("provider_id", user.id)
     .order("created_at", { ascending: false });
   if (error) {
     throw new Error(error.message);
