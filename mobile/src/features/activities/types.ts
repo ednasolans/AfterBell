@@ -4,6 +4,14 @@ import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
 
+export const SELECTABLE_ACTIVITY_TYPES = ["whole_year", "temporary"] as const;
+
+export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+  whole_year: "Whole year",
+  temporary: "Temporary",
+  event: "Event",
+};
+
 export const ACTIVITY_TYPES = ["whole_year", "event", "temporary"] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 

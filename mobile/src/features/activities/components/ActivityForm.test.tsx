@@ -50,4 +50,24 @@ describe("ActivityForm", () => {
     await fireEvent.press(screen.getByRole("button", { name: "Save" }));
     expect(onSubmit).toHaveBeenCalled();
   });
+  it("lets the provider choose the activity type", async () => {
+    await render(
+      <ActivityForm
+        initialForm={EMPTY_ACTIVITY_FORM}
+        submitLabel="Save"
+        onSubmit={jest.fn()}
+        isSaving={false}
+        saveFailed={false}
+      />,
+    );
+
+    await fireEvent.press(
+      screen.getByRole("button", { name: "Activity type: Whole year" }),
+    );
+    await fireEvent.press(screen.getByRole("radio", { name: /Temporary/ }));
+
+    expect(
+      screen.getByRole("button", { name: "Activity type: Temporary" }),
+    ).toBeOnTheScreen();
+  });
 });

@@ -23,7 +23,14 @@ import { parseInteger } from "@/lib/numbers";
 import { hasErrors } from "@/lib/validation";
 
 import { useActivityForm } from "../hooks/useActivityForm";
-import { type ActivityForm as ActivityFormValues } from "../types";
+
+import {
+  ACTIVITY_TYPE_LABELS,
+  SELECTABLE_ACTIVITY_TYPES,
+  type ActivityForm as ActivityFormValues,
+  type ActivityType,
+} from "../types";
+
 import { AddressSelect } from "./AddressSelect";
 import { colors } from "@/theme/colors";
 
@@ -32,13 +39,21 @@ const CATEGORY_OPTIONS: SelectOption<ActivityCategory>[] =
     value: category,
     label: ACTIVITY_CATEGORY_LABELS[category],
   }));
+
 const AGE_OPTIONS: SelectOption<AgeRange>[] = AGE_RANGES.map((age) => ({
   value: age,
   label: AGE_RANGE_LABELS[age],
 }));
+
 const PRICE_PERIOD_OPTIONS: SelectOption<PricePeriod>[] = PRICE_PERIODS.map(
   (period) => ({ value: period, label: PRICE_PERIOD_LABELS[period] }),
 );
+
+const ACTIVITY_TYPE_OPTIONS: SelectOption<ActivityType>[] =
+  SELECTABLE_ACTIVITY_TYPES.map((type) => ({
+    value: type,
+    label: ACTIVITY_TYPE_LABELS[type],
+  }));
 
 type ActivityFormProps = {
   // Starting values: empty to create, the saved activity to edit
@@ -159,6 +174,15 @@ export function ActivityForm({
           Schedule
         </Text>
       </View>
+
+      <Select
+        label="Activity type"
+        placeholder="Choose a type"
+        options={ACTIVITY_TYPE_OPTIONS}
+        value={form.type}
+        onChange={(value) => updateField("type", value)}
+        error={errors.type}
+      />
 
       <ScheduleEditor
         schedule={form.schedule}
