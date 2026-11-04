@@ -5,6 +5,9 @@ import {
   waitFor,
 } from "@testing-library/react-native";
 
+import { type AddressForm } from "@/lib/addresses";
+import { MAIN_ADDRESS, SECOND_ADDRESS } from "@/test-utils/addressFixtures";
+
 import { saveTechnicalSheet } from "../api/saveTechnicalSheet";
 import { TechnicalSheetForm } from "./TechnicalSheetForm";
 
@@ -26,6 +29,26 @@ async function tickFirstOption(placeholder: string) {
   await fireEvent.press(screen.getByText(placeholder));
   await fireEvent.press(screen.getAllByRole("checkbox")[0]);
   await fireEvent.press(screen.getByRole("button", { name: "Done" }));
+}
+
+// Types the fields of one address (the number of the address in the form)
+async function fillAddress(position: number, address: AddressForm) {
+  const fields = [
+    ["Street", address.street],
+    ["Number", address.number],
+    ["Floor", address.floor],
+    ["Door", address.door],
+    ["Postal code", address.postalCode],
+    ["City", address.city],
+    ["Province", address.province],
+    ["Country", address.country],
+  ];
+  for (const [label, value] of fields) {
+    await fireEvent.changeText(
+      screen.getByLabelText(`${label} ${position}`),
+      value,
+    );
+  }
 }
 
 beforeEach(() => {
@@ -56,7 +79,7 @@ describe("TechnicalSheetForm", () => {
     expect(
       screen.getByText("Please fix the errors above before saving."),
     ).toBeOnTheScreen();
-    expect(screen.getByText("Address is required")).toBeOnTheScreen();
+    expect(screen.getByText("Street is required")).toBeOnTheScreen();
     expect(mockedSave).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
   });
@@ -78,19 +101,11 @@ describe("TechnicalSheetForm", () => {
     );
 
     // Addresses: the main one and a second one
-    await fireEvent.changeText(
-      screen.getByLabelText("Street and number 1"),
-      "Carrer Major 1",
-    );
-    await fireEvent.changeText(screen.getByLabelText("City 1"), "Lleida");
+    await fillAddress(1, MAIN_ADDRESS);
     await fireEvent.press(
       screen.getByRole("button", { name: "Add another address" }),
     );
-    await fireEvent.changeText(
-      screen.getByLabelText("Street and number 2"),
-      "Av. Catalunya 5",
-    );
-    await fireEvent.changeText(screen.getByLabelText("City 2"), "Balaguer");
+    await fillAddress(2, SECOND_ADDRESS);
 
     // Contact
     await fireEvent.changeText(
@@ -116,10 +131,7 @@ describe("TechnicalSheetForm", () => {
       expect.objectContaining({
         name: "Lleida Swimming Club",
         description: "Swimming lessons for every age",
-        addresses: [
-          { address: "Carrer Major 1", city: "Lleida" },
-          { address: "Av. Catalunya 5", city: "Balaguer" },
-        ],
+        addresses: [MAIN_ADDRESS, SECOND_ADDRESS],
         phoneNumber: "973 000 000",
         email: "info@club.cat",
         website: "https://club.cat",

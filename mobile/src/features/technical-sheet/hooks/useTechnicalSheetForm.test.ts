@@ -3,6 +3,7 @@ import { act, renderHook } from "@testing-library/react-native";
 import { saveTechnicalSheet } from "../api/saveTechnicalSheet";
 import { EMPTY_TECHNICAL_SHEET_FORM, type TechnicalSheetForm } from "../types";
 import { useTechnicalSheetForm } from "./useTechnicalSheetForm";
+import { MAIN_ADDRESS } from "@/test-utils/addressFixtures";
 
 // The hook must be tested without Supabase: we control what "saving" does
 jest.mock("../api/saveTechnicalSheet", () => ({
@@ -15,7 +16,7 @@ const VALID_SHEET: TechnicalSheetForm = {
   ...EMPTY_TECHNICAL_SHEET_FORM,
   name: "Lleida Swimming Club",
   providerType: "sports_club",
-  addresses: [{ address: "C/ Major 1", city: "Lleida" }],
+  addresses: [MAIN_ADDRESS],
   phoneNumber: "973 000 000",
   activityTypes: ["swimming"],
 };

@@ -1,4 +1,3 @@
-
 import { act, renderHook, waitFor } from "@testing-library/react-native";
 
 import {
@@ -14,10 +13,7 @@ import {
   deleteFamilyProfile,
 } from "../api/familyProfiles";
 
-import type {
-  FamilyProfile,
-  FamilyProfileFormValues,
-} from "../types";
+import type { FamilyProfile, FamilyProfileFormValues } from "../types";
 
 import {
   familyProfileKeys,
@@ -42,6 +38,7 @@ const PROFILE: FamilyProfile = {
   family_group_id: "group-1",
   first_name: "Anna",
   age_range: "7-9",
+  date_of_birth: null,
   interests: ["music", "swimming"],
   created_at: "2026-10-24T10:00:00Z",
 };
@@ -56,10 +53,7 @@ const FORM: FamilyProfileFormValues = {
 async function renderWithClient<T>(hook: () => T) {
   const queryClient = createTestQueryClient();
 
-  const invalidate = jest.spyOn(
-    queryClient,
-    "invalidateQueries",
-  );
+  const invalidate = jest.spyOn(queryClient, "invalidateQueries");
 
   const { result } = await renderHook(hook, {
     wrapper: createQueryClientWrapper(queryClient),
@@ -74,9 +68,7 @@ beforeEach(() => {
 
 describe("familyProfileKeys", () => {
   it("creates the correct keys", () => {
-    expect(familyProfileKeys.all).toEqual([
-      "family-profiles",
-    ]);
+    expect(familyProfileKeys.all).toEqual(["family-profiles"]);
 
     expect(familyProfileKeys.list("user-1")).toEqual([
       "family-profiles",
@@ -84,9 +76,7 @@ describe("familyProfileKeys", () => {
       "list",
     ]);
 
-    expect(
-      familyProfileKeys.detail("user-1", "profile-1"),
-    ).toEqual([
+    expect(familyProfileKeys.detail("user-1", "profile-1")).toEqual([
       "family-profiles",
       "user-1",
       "detail",
@@ -125,15 +115,11 @@ describe("useFamilyProfiles", () => {
       expect(result.current.isError).toBe(true);
     });
 
-    expect(result.current.error?.message).toBe(
-      "Network error",
-    );
+    expect(result.current.error?.message).toBe("Network error");
   });
 
   it("does not query without a user id", async () => {
-    const { result } = await renderWithClient(() =>
-      useFamilyProfiles(""),
-    );
+    const { result } = await renderWithClient(() => useFamilyProfiles(""));
 
     expect(result.current.fetchStatus).toBe("idle");
 
@@ -177,14 +163,9 @@ describe("useCreateFamilyProfile", () => {
       useCreateFamilyProfile(),
     );
 
-    await act(() =>
-      result.current.mutateAsync(FORM),
-    );
+    await act(() => result.current.mutateAsync(FORM));
 
-    expect(createFamilyProfile).toHaveBeenCalledWith(
-      FORM,
-      expect.anything(),
-    );
+    expect(createFamilyProfile).toHaveBeenCalledWith(FORM, expect.anything());
 
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: familyProfileKeys.all,
@@ -227,10 +208,7 @@ describe("useUpdateFamilyProfile", () => {
       }),
     );
 
-    expect(updateFamilyProfile).toHaveBeenCalledWith(
-      "profile-1",
-      FORM,
-    );
+    expect(updateFamilyProfile).toHaveBeenCalledWith("profile-1", FORM);
 
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: familyProfileKeys.all,
@@ -261,7 +239,6 @@ describe("useUpdateFamilyProfile", () => {
   });
 });
 
-
 describe("useDeleteFamilyProfile", () => {
   it("deletes a profile and invalidates family queries", async () => {
     jest.mocked(deleteFamilyProfile).mockResolvedValue(undefined);
@@ -270,9 +247,7 @@ describe("useDeleteFamilyProfile", () => {
       useDeleteFamilyProfile(),
     );
 
-    await act(() =>
-      result.current.mutateAsync("profile-2"),
-    );
+    await act(() => result.current.mutateAsync("profile-2"));
 
     expect(deleteFamilyProfile).toHaveBeenCalledWith(
       "profile-2",
@@ -285,9 +260,9 @@ describe("useDeleteFamilyProfile", () => {
   });
 
   it("does not invalidate queries when deletion fails", async () => {
-    jest.mocked(deleteFamilyProfile).mockRejectedValue(
-      new Error("Deletion not allowed"),
-    );
+    jest
+      .mocked(deleteFamilyProfile)
+      .mockRejectedValue(new Error("Deletion not allowed"));
 
     const { result, invalidate } = await renderWithClient(() =>
       useDeleteFamilyProfile(),

@@ -1,11 +1,12 @@
 import { type TechnicalSheetForm } from "../types";
 import { toTechnicalSheetInsert } from "./toTechnicalSheetInsert";
+import { MAIN_ADDRESS } from "@/test-utils/addressFixtures";
 
 const VALID_SHEET: TechnicalSheetForm = {
   name: "  Lleida Swimming Club ",
   providerType: "sports_club",
   description: "",
-  addresses: [{ address: "C/ Major 1", city: "Lleida" }],
+  addresses: [MAIN_ADDRESS],
   phoneNumber: "973 000 000",
   email: "",
   website: "   ",
