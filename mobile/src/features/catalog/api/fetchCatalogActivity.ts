@@ -1,5 +1,5 @@
 import { toActivity } from "@/lib/activity";
-import { formatAddress } from "@/lib/addresses";
+import { formatAddress, toAddress } from "@/lib/addresses";
 import { supabase } from "@/lib/supabase";
 
 import { type CatalogActivityDetail } from "../types";
@@ -14,7 +14,7 @@ async function fetchAddress(addressId: string): Promise<string | null> {
     .select("*")
     .eq("id", addressId)
     .maybeSingle();
-  return data ? formatAddress(data) : null;
+  return data ? formatAddress(toAddress(data)) : null;
 }
 
 // One published activity with its provider and address. It is null when the

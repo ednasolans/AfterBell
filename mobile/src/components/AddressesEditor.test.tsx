@@ -1,20 +1,21 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
-import { type AddressForm } from "@/lib/addresses";
+import { EMPTY_ADDRESS_FORM } from "@/lib/addresses";
+import {
+  MAIN_ADDRESS as MAIN,
+  SECOND_ADDRESS as SECOND,
+} from "@/test-utils/addressFixtures";
 
 import { AddressesEditor } from "./AddressesEditor";
-
-const MAIN: AddressForm = { address: "C/ Major 1", city: "Lleida" };
-const SECOND: AddressForm = { address: "Av. Catalunya 5", city: "Balaguer" };
 
 describe("AddressesEditor", () => {
   it("shows the first address as the main one, without a remove button", async () => {
     await render(<AddressesEditor addresses={[MAIN]} onChange={jest.fn()} />);
 
     expect(screen.getByText("Main address")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Street and number 1")).toHaveDisplayValue(
-      "C/ Major 1",
-    );
+    expect(screen.getByLabelText("Street 1")).toHaveDisplayValue("C/ Major");
+    expect(screen.getByLabelText("Number 1")).toHaveDisplayValue("1");
+    expect(screen.getByLabelText("Postal code 1")).toHaveDisplayValue("25001");
     expect(screen.getByLabelText("City 1")).toHaveDisplayValue("Lleida");
     expect(
       screen.queryByRole("button", { name: "Remove address 1" }),
@@ -31,7 +32,7 @@ describe("AddressesEditor", () => {
 
     expect(onChange).toHaveBeenCalledWith([
       MAIN,
-      { address: "Av. Catalunya 5", city: "Mollerussa" },
+      { ...SECOND, city: "Mollerussa" },
     ]);
   });
 
@@ -39,14 +40,9 @@ describe("AddressesEditor", () => {
     const onChange = jest.fn();
     await render(<AddressesEditor addresses={[MAIN]} onChange={onChange} />);
 
-    await fireEvent.changeText(
-      screen.getByLabelText("Street and number 1"),
-      "C/ Major 2",
-    );
+    await fireEvent.changeText(screen.getByLabelText("Street 1"), "C/ Nova");
 
-    expect(onChange).toHaveBeenCalledWith([
-      { address: "C/ Major 2", city: "Lleida" },
-    ]);
+    expect(onChange).toHaveBeenCalledWith([{ ...MAIN, street: "C/ Nova" }]);
   });
 
   it("adds an empty address at the end", async () => {
@@ -57,7 +53,7 @@ describe("AddressesEditor", () => {
       screen.getByRole("button", { name: "Add another address" }),
     );
 
-    expect(onChange).toHaveBeenCalledWith([MAIN, { address: "", city: "" }]);
+    expect(onChange).toHaveBeenCalledWith([MAIN, EMPTY_ADDRESS_FORM]);
   });
 
   it("removes an address that is not the main one", async () => {
@@ -76,7 +72,7 @@ describe("AddressesEditor", () => {
   it("shows the errors under the right address", async () => {
     await render(
       <AddressesEditor
-        addresses={[MAIN, { address: "", city: "" }]}
+        addresses={[MAIN, EMPTY_ADDRESS_FORM]}
         onChange={jest.fn()}
         errors={[{}, { city: "City is required" }]}
       />,

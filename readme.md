@@ -14,11 +14,12 @@ University group project of the Master's in Informatics Engineering (MEINF, Univ
 | AI-generated provider profile (generate, edit, approve) | Sprint 1 | [ai-profile.md](docs/features/ai-profile.md) |
 | Activity publication (create, list, edit, delete) | Sprint 1 | [activities.md](docs/features/activities.md) |
 | Activity catalog for customers | Sprint 1 | — |
+| Temporary activities (backend; form and customer view in progress) | Sprint 2 | [activities.md](docs/features/activities.md) |
 | Search and filters, events, tutors, recommendations, favourites and enrolment requests | Sprint 2 | — |
 
 ## Tech stack
 
-- **Mobile app:** React Native with Expo (SDK 57), Expo Router and TypeScript. TanStack Query for server data.
+- **Mobile app:** React Native with Expo (SDK 58), Expo Router and TypeScript. TanStack Query for server data.
 - **Backend:** Supabase: PostgreSQL with Row-Level Security, Auth and Edge Functions.
 - **AI:** an OpenAI-compatible LLM API, called only from the `generate-profile` Edge Function ([decision](docs/decisions/002-llm-provider.md)).
 - **Tests and quality:** Jest with React Native Testing Library, Deno tests for the Edge Functions, SonarQube Cloud on every pull request.

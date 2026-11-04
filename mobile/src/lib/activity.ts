@@ -11,7 +11,10 @@ export interface Activity {
   title: string;
   description: string | null;
   category: ActivityCategory;
-  type: "whole_year" | "event";
+  type: "whole_year" | "event" | "temporary";
+  // Only activities with dates have them: never whole-year ones
+  startDate: string | null;
+  endDate: string | null;
   targetAgeRanges: AgeRange[];
   schedule: TimeSlot[];
   price: number;
@@ -31,8 +34,11 @@ export function toActivity(row: ActivityRow): Activity {
     description: row.description,
     category: row.category as ActivityCategory,
     type: row.type as Activity["type"],
+    startDate: row.start_date,
+    endDate: row.end_date,
     targetAgeRanges: row.target_age_ranges as AgeRange[],
-    schedule: row.schedule as unknown as TimeSlot[],
+    // Only activities with dates can be saved without a schedule
+    schedule: (row.schedule ?? []) as unknown as TimeSlot[],
     price: row.price,
     pricePeriod: row.price_period as PricePeriod,
     maxParticipants: row.max_participants,

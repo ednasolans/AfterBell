@@ -7,6 +7,8 @@ import { supabase } from "../../../lib/supabase";
 import { type TechnicalSheetForm } from "../types";
 import { saveTechnicalSheet } from "./saveTechnicalSheet";
 import { toTechnicalSheetInsert } from "./toTechnicalSheetInsert";
+import { toAddressInsert } from "@/lib/addresses";
+import { MAIN_ADDRESS, SECOND_ADDRESS } from "@/test-utils/addressFixtures";
 
 // Replace the real client: tests must not need a database or environment variables
 jest.mock("../../../lib/supabase", () => ({
@@ -19,10 +21,7 @@ const SHEET: TechnicalSheetForm = {
   name: "Lleida Swimming Club",
   providerType: "sports_club",
   description: "",
-  addresses: [
-    { address: "C/ Major 1", city: "Lleida" },
-    { address: "Av. Catalunya 5", city: "Balaguer" },
-  ],
+  addresses: [MAIN_ADDRESS, SECOND_ADDRESS],
   phoneNumber: "973 000 000",
   email: "",
   website: "",
@@ -68,12 +67,9 @@ describe("saveTechnicalSheet", () => {
       ["addresses"],
       ["technical_sheets"],
     ]);
-    expect(main.insert).toHaveBeenCalledWith({
-      address: "C/ Major 1",
-      city: "Lleida",
-    });
+    expect(main.insert).toHaveBeenCalledWith(toAddressInsert(MAIN_ADDRESS));
     expect(others.insert).toHaveBeenCalledWith([
-      { address: "Av. Catalunya 5", city: "Balaguer" },
+      toAddressInsert(SECOND_ADDRESS),
     ]);
     expect(sheet.insert).toHaveBeenCalledWith(
       toTechnicalSheetInsert(SHEET, "main"),

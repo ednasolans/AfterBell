@@ -7,6 +7,21 @@ import {
   type AddressForm,
 } from "@/lib/addresses";
 
+const ADDRESS_FIELDS: {
+  field: keyof AddressForm;
+  label: string;
+  placeholder: string;
+}[] = [
+  { field: "street", label: "Street", placeholder: "C/ Major" },
+  { field: "number", label: "Number", placeholder: "1" },
+  { field: "floor", label: "Floor", placeholder: "Optional" },
+  { field: "door", label: "Door", placeholder: "Optional" },
+  { field: "postalCode", label: "Postal code", placeholder: "25001" },
+  { field: "city", label: "City", placeholder: "Lleida" },
+  { field: "province", label: "Province", placeholder: "Lleida" },
+  { field: "country", label: "Country", placeholder: "Spain" },
+];
+
 type AddressesEditorProps = {
   addresses: AddressForm[];
   onChange: (addresses: AddressForm[]) => void;
@@ -63,20 +78,16 @@ export function AddressesEditor({
               )}
             </View>
 
-            <TextField
-              label={`Street and number ${number}`}
-              placeholder="C/ Major 1"
-              value={address.address}
-              onChangeText={(text) => updateAddress(index, { address: text })}
-              error={errors[index]?.address}
-            />
-            <TextField
-              label={`City ${number}`}
-              placeholder="Lleida"
-              value={address.city}
-              onChangeText={(text) => updateAddress(index, { city: text })}
-              error={errors[index]?.city}
-            />
+            {ADDRESS_FIELDS.map(({ field, label, placeholder }) => (
+              <TextField
+                key={field}
+                label={`${label} ${number}`}
+                placeholder={placeholder}
+                value={address[field]}
+                onChangeText={(text) => updateAddress(index, { [field]: text })}
+                error={errors[index]?.[field]}
+              />
+            ))}
           </View>
         );
       })}

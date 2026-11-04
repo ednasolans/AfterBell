@@ -1,4 +1,4 @@
-import { type Address } from "@/lib/addresses";
+import { type Address, toAddress } from "@/lib/addresses";
 import { supabase } from "@/lib/supabase";
 
 // Addresses of the logged-in provider (entered in its technical sheet),
@@ -14,11 +14,11 @@ export async function fetchMyAddresses(): Promise<Address[]> {
 
   const { data, error } = await supabase
     .from("addresses")
-    .select("id, address, city")
+    .select("id, address, street, number, city")
     .eq("provider_id", user.id)
     .order("created_at", { ascending: true });
   if (error) {
     throw new Error(error.message);
   }
-  return data;
+  return data.map(toAddress);
 }

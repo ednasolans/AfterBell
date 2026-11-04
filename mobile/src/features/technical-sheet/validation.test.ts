@@ -7,17 +7,26 @@ import {
 } from "./validation";
 import { type ActivityCategory } from "@/lib/activityCategories";
 import { Facility } from "./types";
+import { MAIN_ADDRESS, SECOND_ADDRESS } from "@/test-utils/addressFixtures";
 
 const VALID_SHEET: TechnicalSheetForm = {
   name: "Some Name",
   providerType: "sports_club",
   description: "",
-  addresses: [{ address: "C/ Major 1", city: "Lleida" }],
+  addresses: [MAIN_ADDRESS],
   website: "",
   phoneNumber: "973 000 000",
   email: "user@example.com",
   activityTypes: ["football", "music"] as ActivityCategory[],
   facilities: ["wifi", "cafeteria"] as Facility[],
+};
+
+const EMPTY_ADDRESS_ERRORS = {
+  street: "Street is required",
+  number: "Number is required",
+  postalCode: "Postal code is required",
+  city: "City is required",
+  province: "Province is required",
 };
 
 describe("validateTechnicalSheet", () => {
@@ -26,7 +35,7 @@ describe("validateTechnicalSheet", () => {
     expect(errors).toEqual({
       name: "Name is required",
       providerType: "Select a provider type",
-      addresses: [{ address: "Address is required", city: "City is required" }],
+      addresses: [EMPTY_ADDRESS_ERRORS],
       phoneNumber: "Enter a phone number or an email",
       activityTypes: "At least one activity type is required",
     });
@@ -58,28 +67,20 @@ describe("validateTechnicalSheet", () => {
     it("returns the errors of each address in the same order", () => {
       const errors = validateTechnicalSheet({
         ...VALID_SHEET,
-        addresses: [
-          { address: "C/ Major 1", city: "Lleida" },
-          { address: "Av. Catalunya 5", city: "" },
-        ],
+        addresses: [MAIN_ADDRESS, { ...SECOND_ADDRESS, city: "" }],
       });
       expect(errors.addresses).toEqual([{}, { city: "City is required" }]);
     });
     it("accepts several valid addresses", () => {
       const errors = validateTechnicalSheet({
         ...VALID_SHEET,
-        addresses: [
-          { address: "C/ Major 1", city: "Lleida" },
-          { address: "Av. Catalunya 5", city: "Balaguer" },
-        ],
+        addresses: [MAIN_ADDRESS, SECOND_ADDRESS],
       });
       expect(errors.addresses).toBeUndefined();
     });
     it("requires at least one address", () => {
       const errors = validateTechnicalSheet({ ...VALID_SHEET, addresses: [] });
-      expect(errors.addresses).toEqual([
-        { address: "Address is required", city: "City is required" },
-      ]);
+      expect(errors.addresses).toEqual([EMPTY_ADDRESS_ERRORS]);
     });
   });
   describe("contact information", () => {

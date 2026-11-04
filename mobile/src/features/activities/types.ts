@@ -4,7 +4,7 @@ import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
 
-export const ACTIVITY_TYPES = ["whole_year", "event"] as const;
+export const ACTIVITY_TYPES = ["whole_year", "event", "temporary"] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 // What the user fills in: null means "not chosen yet"
@@ -13,6 +13,9 @@ export interface ActivityForm {
   description: string;
   category: ActivityCategory | null;
   type: ActivityType;
+  // ISO dates (YYYY-MM-DD)
+  startDate: string | null;
+  endDate: string | null;
   targetAgeRanges: AgeRange[];
   schedule: TimeSlot[];
   price: number | null;
@@ -27,6 +30,8 @@ export const EMPTY_ACTIVITY_FORM: ActivityForm = {
   description: "",
   category: null,
   type: "whole_year",
+  startDate: null,
+  endDate: null,
   targetAgeRanges: [],
   schedule: [],
   price: null,

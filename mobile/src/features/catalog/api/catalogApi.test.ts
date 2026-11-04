@@ -1,7 +1,5 @@
-import { formatAddress } from "@/lib/addresses";
 import { type Tables } from "@/lib/database.types";
 
-import { APPROVED_PROFILE_STATUS } from "./fetchApprovedProfiles";
 import { fetchCatalogActivities } from "./fetchCatalogActivities";
 import { fetchCatalogActivity } from "./fetchCatalogActivity";
 
@@ -9,9 +7,13 @@ type QueryResult = { data: unknown; error: { message: string } | null };
 type Call = [string, unknown[]];
 
 const mockFrom = jest.fn();
+const mockRpc = jest.fn();
 
 jest.mock("@/lib/supabase", () => ({
-  supabase: { from: (table: string) => mockFrom(table) },
+  supabase: {
+    from: (table: string) => mockFrom(table),
+    rpc: (name: string) => mockRpc(name),
+  },
 }));
 
 // A query builder that resolves to `result` however it is chained,
@@ -33,7 +35,9 @@ function mockTables(tables: Record<string, QueryResult>) {
   const queries = Object.fromEntries(
     Object.entries(tables).map(([table, result]) => [table, query(result)]),
   );
-  mockFrom.mockImplementation((table: string) => queries[table].builder);
+  const builderOf = (name: string) => queries[name].builder;
+  mockFrom.mockImplementation(builderOf);
+  mockRpc.mockImplementation(builderOf);
   return queries;
 }
 
@@ -71,7 +75,14 @@ const addressRow: Tables<"addresses"> = {
   id: "ad1",
   provider_id: "p1",
   address: "Main Street 1",
+  street: null,
+  number: null,
+  floor: null,
+  door: null,
+  postal_code: null,
   city: "Lleida",
+  province: null,
+  country: null,
   created_at: "2026-10-01T10:00:00Z",
 };
 
@@ -90,13 +101,14 @@ const provider = {
 describe("fetchCatalogActivities", () => {
   beforeEach(() => {
     mockFrom.mockReset();
+    mockRpc.mockReset();
   });
 
   it("returns the published activities of providers with an approved profile", async () => {
     const queries = mockTables({
-      provider_profiles: { data: [profileRow], error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
       activities: { data: [activityRow], error: null },
-      technical_sheets: { data: [sheetRow], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
     });
 
     const result = await fetchCatalogActivities();
@@ -111,10 +123,6 @@ describe("fetchCatalogActivities", () => {
       pricePeriod: "per_month",
     });
     expect(result[0].provider).toEqual(provider);
-    expect(queries.provider_profiles.calls).toContainEqual([
-      "eq",
-      ["status", APPROVED_PROFILE_STATUS],
-    ]);
     expect(queries.activities.calls).toContainEqual([
       "in",
       ["provider_id", ["p1"]],
@@ -123,9 +131,9 @@ describe("fetchCatalogActivities", () => {
 
   it("leaves the contact details empty when the provider has no technical sheet", async () => {
     mockTables({
-      provider_profiles: { data: [profileRow], error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
       activities: { data: [activityRow], error: null },
-      technical_sheets: { data: [], error: null },
+      public_provider_contacts: { data: [], error: null },
     });
 
     const result = await fetchCatalogActivities();
@@ -135,34 +143,36 @@ describe("fetchCatalogActivities", () => {
   });
 
   it("returns nothing, without reading activities, when no profile is approved", async () => {
-    mockTables({ provider_profiles: { data: [], error: null } });
+    mockTables({
+      public_approved_provider_profiles: { data: [], error: null },
+    });
 
     const result = await fetchCatalogActivities();
 
     expect(result).toEqual([]);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
   it("returns nothing, without reading contact details, when there are no published activities", async () => {
     mockTables({
-      provider_profiles: { data: [profileRow], error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
       activities: { data: [], error: null },
     });
 
     const result = await fetchCatalogActivities();
 
     expect(result).toEqual([]);
-    expect(mockFrom).not.toHaveBeenCalledWith("technical_sheets");
+    expect(mockRpc).not.toHaveBeenCalledWith("public_provider_contacts");
   });
 
   it("never returns an activity whose provider has no approved profile", async () => {
     mockTables({
-      provider_profiles: { data: [profileRow], error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
       activities: {
         data: [activityRow, { ...activityRow, id: "a2", provider_id: "p2" }],
         error: null,
       },
-      technical_sheets: { data: [sheetRow], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
     });
 
     const result = await fetchCatalogActivities();
@@ -172,7 +182,10 @@ describe("fetchCatalogActivities", () => {
 
   it("fails when the profiles cannot be read", async () => {
     mockTables({
-      provider_profiles: { data: null, error: { message: "no profiles" } },
+      public_approved_provider_profiles: {
+        data: null,
+        error: { message: "no profiles" },
+      },
     });
 
     await expect(fetchCatalogActivities()).rejects.toThrow("no profiles");
@@ -180,7 +193,7 @@ describe("fetchCatalogActivities", () => {
 
   it("fails when the activities cannot be read", async () => {
     mockTables({
-      provider_profiles: { data: [profileRow], error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
       activities: { data: null, error: { message: "boom" } },
     });
 
@@ -189,25 +202,41 @@ describe("fetchCatalogActivities", () => {
 
   it("fails when the contact details cannot be read", async () => {
     mockTables({
-      provider_profiles: { data: [profileRow], error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
       activities: { data: [activityRow], error: null },
-      technical_sheets: { data: null, error: { message: "no sheets" } },
+      public_provider_contacts: { data: null, error: { message: "no sheets" } },
     });
 
     await expect(fetchCatalogActivities()).rejects.toThrow("no sheets");
+  });
+
+  it("ignores the contact details of other providers", async () => {
+    mockTables({
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      activities: { data: [activityRow], error: null },
+      public_provider_contacts: {
+        data: [{ ...sheetRow, provider_id: "other" }],
+        error: null,
+      },
+    });
+
+    const [item] = await fetchCatalogActivities();
+
+    expect(item.provider.contact).toBeNull();
   });
 });
 
 describe("fetchCatalogActivity", () => {
   beforeEach(() => {
     mockFrom.mockReset();
+    mockRpc.mockReset();
   });
 
   it("returns the published activity with its profile, contact details and address", async () => {
-    const queries = mockTables({
+    mockTables({
       activities: { data: activityRow, error: null },
-      provider_profiles: { data: [profileRow], error: null },
-      technical_sheets: { data: [sheetRow], error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
       addresses: { data: addressRow, error: null },
     });
 
@@ -215,11 +244,7 @@ describe("fetchCatalogActivity", () => {
 
     expect(result?.activity.id).toBe("a1");
     expect(result?.provider).toEqual(provider);
-    expect(result?.address).toBe(formatAddress(addressRow));
-    expect(queries.provider_profiles.calls).toContainEqual([
-      "eq",
-      ["status", APPROVED_PROFILE_STATUS],
-    ]);
+    expect(result?.address).toBe("Main Street 1, Lleida");
   });
 
   it("returns null when the activity does not exist or is not published", async () => {
@@ -229,11 +254,25 @@ describe("fetchCatalogActivity", () => {
     expect(mockFrom).toHaveBeenCalledTimes(1);
   });
 
+  it("ignores the approved profiles of other providers", async () => {
+    mockTables({
+      activities: { data: activityRow, error: null },
+      public_approved_provider_profiles: {
+        data: [{ ...profileRow, provider_id: "other" }],
+        error: null,
+      },
+      public_provider_contacts: { data: [sheetRow], error: null },
+      addresses: { data: addressRow, error: null },
+    });
+
+    expect(await fetchCatalogActivity("a1")).toBeNull();
+  });
+
   it("returns null when the provider has no approved profile", async () => {
     mockTables({
       activities: { data: activityRow, error: null },
-      provider_profiles: { data: [], error: null },
-      technical_sheets: { data: [sheetRow], error: null },
+      public_approved_provider_profiles: { data: [], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
       addresses: { data: addressRow, error: null },
     });
 
@@ -243,8 +282,8 @@ describe("fetchCatalogActivity", () => {
   it("leaves the contact details and the address empty when they cannot be found", async () => {
     mockTables({
       activities: { data: activityRow, error: null },
-      provider_profiles: { data: [profileRow], error: null },
-      technical_sheets: { data: [], error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      public_provider_contacts: { data: [], error: null },
       addresses: { data: null, error: null },
     });
 

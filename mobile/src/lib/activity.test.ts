@@ -14,6 +14,12 @@ const ROW: ActivityRow = {
   price_period: "per_month",
   max_participants: 12,
   created_at: "2026-10-20T08:00:00Z",
+  start_date: null,
+  end_date: null,
+  status: "published",
+  is_tutor: false,
+  search_normalized: "swimming for kids",
+  updated_at: "2026-10-20T08:00:00Z",
 };
 
 describe("toActivity", () => {
@@ -28,6 +34,8 @@ describe("toActivity", () => {
       description: null,
       category: "swimming",
       type: "whole_year",
+      startDate: null,
+      endDate: null,
       targetAgeRanges: ["7-9", "10-12"],
       schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
       price: 30,
@@ -35,5 +43,22 @@ describe("toActivity", () => {
       maxParticipants: 12,
       createdAt: "2026-10-20T08:00:00Z",
     });
+  });
+
+  it("reads the dates of a temporary activity", () => {
+    const activity = toActivity({
+      ...ROW,
+      type: "temporary",
+      start_date: "2027-07-01",
+      end_date: "2027-07-15",
+    });
+
+    expect(activity.type).toBe("temporary");
+    expect(activity.startDate).toBe("2027-07-01");
+    expect(activity.endDate).toBe("2027-07-15");
+  });
+
+  it("uses an empty schedule when the activity has none", () => {
+    expect(toActivity({ ...ROW, schedule: null }).schedule).toEqual([]);
   });
 });

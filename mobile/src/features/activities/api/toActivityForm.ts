@@ -8,6 +8,8 @@ export function toActivityForm(activity: Activity): ActivityForm {
     description: activity.description ?? "",
     category: activity.category,
     type: activity.type,
+    startDate: activity.startDate,
+    endDate: activity.endDate,
     targetAgeRanges: activity.targetAgeRanges,
     schedule: activity.schedule,
     price: activity.price,

@@ -18,7 +18,7 @@ The form has five sections:
 | Section | Fields | Required |
 |---|---|---|
 | Basic information | Name, provider type, description | Name and provider type |
-| Addresses | One or more addresses (street and number, city). The first one is the **main address** | At least one, with both fields |
+| Addresses | One or more addresses (street, number, floor, door, postal code, city, province, country). The first one is the **main address** | At least one. Everything is required except the floor and the door. The country starts as Spain |
 | Contact | Phone number, email, website | A phone number **or** an email |
 | Activity | Activity types (several categories) | At least one |
 | Facilities | Facilities (parking, changing rooms, outdoor field…) | No |
@@ -55,6 +55,8 @@ Errors are shown under each field after the first attempt to save, and update wh
 | `…_create_technical_sheets.sql` | `technical_sheets` table: `CHECK` constraints mirroring the app validation, text length limits (the sheet will be sent to the LLM), RLS (owner-only read and update, insert only for `company` accounts), column-level `UPDATE` privileges, no delete. |
 | `…_remove_activity_fields_from_technical_sheets.sql` | (Issue #32) Drops `target_age_ranges`, `schedule`, `price_min`, `price_max`, `price_period` and the price range constraint. |
 | `…_create_addresses.sql` | `addresses` table (`address`, `city`), `UNIQUE (id, provider_id)` for the composite foreign keys, index on `provider_id`, RLS (read for every logged-in user, create for companies, update/delete for the owner) and privileges. |
+| `…_structure_addresses.sql` | (C11) Adds the structured address columns. New rows must have them; older rows keep their text in `address`. |
+| `…_limit_address_field_lengths.sql` | Length limits of the structured columns, the same as the form. |
 | `…_use_addresses_in_technical_sheets_and_activities.sql` | Moves the old `address`/`city` of each sheet to `addresses`; adds `address_id` with the composite foreign key; drops `address` and `city`; adds `description`; adds `outdoor_field` and `indoor_court` to the facilities constraint; also adds `address_id` to activities. |
 
 ### App: feature (`mobile/src/features/technical-sheet/`)
@@ -72,7 +74,7 @@ Errors are shown under each field after the first attempt to save, and update wh
 
 | File | Content |
 |---|---|
-| `lib/addresses.ts` | `AddressForm`, `Address`, `EMPTY_ADDRESS_FORM`, limits (`ADDRESS_MAX_LENGTH`, `CITY_MAX_LENGTH`), `validateAddress`, `formatAddress` ("C/ Major 1, Lleida") and `toAddressInsert`. Shared with activities. |
+| `lib/addresses.ts` | `AddressForm` (structured fields), `Address` (as it is shown), `EMPTY_ADDRESS_FORM`, length limits, `validateAddress`, `toAddress`, `formatAddress` ("C/ Major 1, Lleida") and `toAddressInsert`. Shared with activities. |
 | `components/AddressesEditor.tsx` | List of addresses with "Add another address" and remove buttons; the first one is the main address and cannot be removed; shows each address's errors under it. |
 | `components/TextField.tsx` | Labelled text input with error message (accessible label, keyboard type, capitalisation, multiline). |
 | `components/Select.tsx`, `MultiSelect.tsx`, `SelectField.tsx`, `OptionsModal.tsx` | Generic single and multiple choice fields (`<T extends string>`) that open a modal with the options. |
@@ -114,7 +116,7 @@ Every file with logic has a test next to it (`*.test.ts` / `*.test.tsx`).
 | Description longer than 500 characters | `technical_sheets_description_check` violation |
 | Existing sheets after the migration | Each one points to a new address with its old address and city |
 
-**App:** open the `technical-sheet-preview` route in Expo Go, press **Save** with the form empty (errors appear, including "Address is required"), add and remove addresses, and fill it in (errors disappear while typing). Saving for real needs a logged-in `company` user.
+**App:** open the `technical-sheet-preview` route in Expo Go, press **Save** with the form empty (errors appear, including "Street is required"), add and remove addresses, and fill it in (errors disappear while typing). Saving for real needs a logged-in `company` user.
 
 ## 5. Known limitations and pending work
 

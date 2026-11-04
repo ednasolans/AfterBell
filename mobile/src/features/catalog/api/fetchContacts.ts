@@ -1,9 +1,11 @@
 import { supabase } from "@/lib/supabase";
 
 import { type ProviderContact } from "../types";
-import { CONTACT_COLUMNS, toProviderContact } from "./toCatalogProvider";
+import { toProviderContact } from "./toCatalogProvider";
 
-// Name and contact details of the given providers, by provider id
+// Name and contact details of the given providers, by provider id.
+// Technical sheets are private: the function returns only these columns, of
+// providers with a published activity.
 export async function fetchContacts(
   providerIds: string[],
 ): Promise<Map<string, ProviderContact>> {
@@ -11,12 +13,13 @@ export async function fetchContacts(
     return new Map();
   }
 
-  const { data, error } = await supabase
-    .from("technical_sheets")
-    .select(CONTACT_COLUMNS)
-    .in("provider_id", providerIds);
+  const { data, error } = await supabase.rpc("public_provider_contacts");
   if (error) {
     throw new Error(error.message);
   }
-  return new Map(data.map((row) => [row.provider_id, toProviderContact(row)]));
+  return new Map(
+    data
+      .filter((row) => providerIds.includes(row.provider_id))
+      .map((row) => [row.provider_id, toProviderContact(row)]),
+  );
 }

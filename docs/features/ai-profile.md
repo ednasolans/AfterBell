@@ -14,7 +14,8 @@ the AI is visible to customers until the provider approves it.
    The profile stays a draft. It can also **Generate again**.
 5. **Approve and publish** asks for confirmation, saves the current edits and
    sets `status = 'approved'`. A trigger sets `approved_at`.
-6. Customers only see approved profiles (RLS).
+6. Customers only see the approved text, through the function
+   `public_approved_provider_profiles()`: the table is readable only by its owner.
 
 Editing or regenerating an approved profile is planned for Sprint 2.
 

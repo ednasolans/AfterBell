@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { type Activity, toActivity } from "@/lib/activity";
 
 // Activities of the logged-in provider, newest first.
-// RLS lets every logged-in user read all activities, so we filter by provider here.
+// RLS also returns the published activities of other providers, so we filter here.
 export async function fetchMyActivities(): Promise<Activity[]> {
   const {
     data: { user },

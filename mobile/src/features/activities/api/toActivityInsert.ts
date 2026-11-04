@@ -1,12 +1,12 @@
-import { type TablesInsert, type TablesUpdate } from "@/lib/database.types";
+import { type TablesInsert } from "@/lib/database.types";
 import { emptyToNull } from "@/lib/text";
 
 import { type ActivityForm } from "../types";
 
 export type ActivityInsert = TablesInsert<"activities">;
-export type ActivityUpdate = TablesUpdate<"activities">;
 
 // Converts a validated form into a database row (camelCase -> snake_case).
+// Used to create and to update: the type and the dates can be changed later.
 // provider_id is not sent: the database fills it with the logged-in user.
 export function toActivityInsert(form: ActivityForm): ActivityInsert {
   const { price, pricePeriod, addressId, category, maxParticipants } = form;
@@ -25,6 +25,10 @@ export function toActivityInsert(form: ActivityForm): ActivityInsert {
     description: emptyToNull(form.description),
     category,
     type: form.type,
+    // The database rejects dates on a whole-year activity, so changing the
+    // type to whole-year must clear them
+    start_date: form.type === "whole_year" ? null : form.startDate,
+    end_date: form.type === "whole_year" ? null : form.endDate,
     target_age_ranges: form.targetAgeRanges,
     schedule: form.schedule.map(({ day, startTime, endTime }) => ({
       day,
@@ -36,13 +40,4 @@ export function toActivityInsert(form: ActivityForm): ActivityInsert {
     max_participants: maxParticipants,
     address_id: addressId,
   };
-}
-
-// The same row without `type`. The type cannot be changed after creation, so
-// owners have no UPDATE privilege on that column: sending it, even with the
-// same value, makes the whole update fail with "permission denied".
-export function toActivityUpdate(form: ActivityForm): ActivityUpdate {
-  const row = toActivityInsert(form);
-  delete row.type;
-  return row;
 }

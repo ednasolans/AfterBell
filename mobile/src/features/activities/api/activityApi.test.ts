@@ -10,7 +10,7 @@ import { fetchActivity } from "./fetchActivity";
 import { fetchMyActivities } from "./fetchMyActivities";
 import { toActivity, type ActivityRow } from "@/lib/activity";
 import { updateActivity } from "./updateActivity";
-import { toActivityUpdate } from "./toActivityInsert";
+import { toActivityInsert } from "./toActivityInsert";
 
 // Replace the real client: tests must not need a database
 jest.mock("@/lib/supabase", () => ({
@@ -31,6 +31,12 @@ const ROW: ActivityRow = {
   price_period: "per_month",
   max_participants: 12,
   created_at: "2026-10-20T08:00:00Z",
+  start_date: null,
+  end_date: null,
+  status: "published",
+  is_tutor: false,
+  search_normalized: "swimming for kids",
+  updated_at: "2026-10-20T08:00:00Z",
 };
 
 const FORM: ActivityForm = {
@@ -38,6 +44,8 @@ const FORM: ActivityForm = {
   description: "",
   category: "swimming",
   type: "whole_year",
+  startDate: null,
+  endDate: null,
   targetAgeRanges: ["7-9", "10-12"],
   schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
   price: 30,
@@ -122,8 +130,12 @@ describe("updateActivity", () => {
 
     await updateActivity({ id: "activity-1", form: FORM });
 
-    expect(query.update).toHaveBeenCalledWith(toActivityUpdate(FORM));
-    expect(query.update.mock.calls[0][0]).not.toHaveProperty("type");
+    expect(query.update).toHaveBeenCalledWith(toActivityInsert(FORM));
+    expect(query.update.mock.calls[0][0]).toMatchObject({
+      type: "whole_year",
+      start_date: null,
+      end_date: null,
+    });
   });
 
   it("throws when no row was updated (another provider's activity)", async () => {

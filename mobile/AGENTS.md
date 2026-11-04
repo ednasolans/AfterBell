@@ -134,12 +134,12 @@ Every `.ts`/`.tsx` file with logic has a test next to it (`schedule.ts` → `sch
 ### API layer (`api/`)
 
 - Each operation is one function (`createActivity`, `fetchMyActivities`, `updateActivity`, `deleteActivity`). Hooks and components only know that function, never Supabase.
-- **Write mappers** (`toXInsert`): form → row. `camelCase` → `snake_case`, trimmed text, empty optional text → `null` (`emptyToNull` in `lib/text.ts`). Owner ids and columns with database defaults (`provider_id`, `type`) are not sent. A `null` guard at the start narrows the types and throws if the form was not validated.
+- **Write mappers** (`toXInsert`): form → row. `camelCase` → `snake_case`, trimmed text, empty optional text → `null` (`emptyToNull` in `lib/text.ts`). Owner ids are not sent (`provider_id`). A `null` guard at the start narrows the types and throws if the form was not validated.
 - **Read mappers** (`toX`, `toXForm`): row → app type, and app type → form values to edit it. Generated types only know that a column is `string`; casting with `as` to our value-list types is allowed **only in read mappers**, because the table's `CHECK` constraints guarantee the values. `Json` columns need `as unknown as`.
 - An `interface` is not assignable to the generic `Json` type: copy nested values into plain objects before saving (`schedule.map(({ day, startTime, endTime }) => ({ day, startTime, endTime }))`).
 - Supabase **returns** errors instead of throwing them: always check `error` and `throw new Error(error.message)`.
 - **`update` and `delete` must check that a row changed.** RLS does not fail when the row belongs to someone else: it changes 0 rows and returns no error. Add `.select("id")` and throw when `data.length === 0`.
-- If RLS lets users read more rows than a screen needs (e.g. every logged-in user can read all activities), filter in the query (`.eq("provider_id", user.id)`). This is a filter, not a security measure.
+- If RLS lets users read more rows than a screen needs (e.g. every logged-in user can read all addresses), filter in the query (`.eq("provider_id", user.id)`). This is a filter, not a security measure.
 - **Saving rows in several tables** (e.g. addresses and then the technical sheet) cannot be one transaction from the app. Insert the parent rows first, and if a later step fails, delete the rows you created before throwing (see `saveTechnicalSheet`). When the order of returned ids matters, insert that row on its own: a multiple insert does not guarantee the order of the returned rows. If this becomes common, move the save to a database function called with `supabase.rpc`.
 
 ### Forms
@@ -200,25 +200,26 @@ Accessibility is required, and it is also what the tests use to find elements:
 - Optional values are stored as `NULL`, never as `''`.
 - Money uses `NUMERIC(8, 2)`, never `FLOAT`.
 - Small nested lists that are always read and written together (e.g. a schedule) can be a `JSONB` column with a `jsonb_typeof(x) = 'array'` check.
-- **Columns that cannot change after creation** (e.g. an activity's `type`) have no `UPDATE` privilege. The app must not send them in an update, not even with the same value: PostgreSQL rejects the whole statement with "permission denied". Use a separate update mapper (`toActivityUpdate`) instead of reusing the insert one.
+- **Columns that cannot change after creation** (e.g. an activity's `provider_id`) have no `UPDATE` privilege. The app must not send them in an update, not even with the same value: PostgreSQL rejects the whole statement with "permission denied".
+- **`UPDATE OF` triggers fire for every column in the `SET` list, even if its value does not change.** The app sends the whole form on each save, so compare `NEW` and `OLD` when the check only matters for real changes (see `require_publication_fields`).
 - Do not duplicate data between tables: each fact lives in one table (e.g. ages, schedule and prices belong to each activity, not to the technical sheet).
 - Add an index on every foreign key used by RLS policies or joins (e.g. `provider_id`, `address_id`). Do not add indexes until a query needs them.
 - **When a row must point to another row of the same owner**, use a composite foreign key: `FOREIGN KEY (address_id, provider_id) REFERENCES addresses (id, provider_id)`, with `UNIQUE (id, provider_id)` in the referenced table. A simple foreign key would let a provider use another provider's address, because addresses are readable by everyone.
 - Choose `ON DELETE` on purpose: `CASCADE` for rows that cannot exist without their owner (`provider_id → accounts`); the default `NO ACTION` when deleting must be blocked while the row is in use (an address used by an activity).
 - Adding a value to a list means a new migration that drops and re-creates the `CHECK` constraint with the same name, and adding the value to the `as const` list in the app.
 - Every new column needs its own `GRANT UPDATE (column)` if owners may change it: earlier grants only cover the columns that existed then.
-- No `updated_at` columns until a feature needs them (they need a trigger to stay right).
+- Add `updated_at` only when a feature needs it, with the `touch_updated_at` trigger to keep it right (`activities` and `technical_sheets` have it).
 
 ### Row-Level Security and privileges
 
 Every table has **two layers**, both in the migration that creates it:
 
-1. **Privileges (which operations and columns):** start with `REVOKE ALL ON TABLE ... FROM PUBLIC, anon, authenticated;` and grant only what is needed. Grant `UPDATE` on a **column list** that excludes ids, owner columns, creation dates and columns that must not change (e.g. an activity's `type`). A `DELETE` policy also needs `GRANT DELETE`.
+1. **Privileges (which operations and columns):** start with `REVOKE ALL ON TABLE ... FROM PUBLIC, anon, authenticated;` and grant only what is needed. Grant `UPDATE` on a **column list** that excludes ids, owner columns, creation dates and columns that must not change. A `DELETE` policy also needs `GRANT DELETE`.
 2. **RLS (which rows):** `ENABLE ROW LEVEL SECURITY` and one policy per allowed operation:
    - `USING` decides which existing rows can be read, changed or deleted; `WITH CHECK` decides which rows can be written. `UPDATE` policies need both; `DELETE` policies only `USING`.
    - Write `(SELECT auth.uid())` and `(SELECT public.is_company())` inside parentheses, so they are evaluated once per query.
    - Use `is_company()` to restrict provider-only operations.
-   - Public catalogue data that every logged-in user may see uses `FOR SELECT TO authenticated USING (true)` (e.g. activities). Private data is owner-only (e.g. technical sheets).
+   - Public catalogue data that every logged-in user may see uses `FOR SELECT TO authenticated USING (true)` (e.g. addresses). Activities are readable when they are `published`, and by their owner. Private data is owner-only (e.g. technical sheets).
    - No policy means no access: add `DELETE` only when the product needs it.
    - Start closed. Opening access later is a new policy; closing it after release means data has already leaked.
 
@@ -253,12 +254,15 @@ ROLLBACK;
 
 The design and its reasons are in [`docs/decisions/database.md`](../docs/decisions/database.md). Rules that are easy to break:
 
-- **Family data is about minors:** store the minimum (first name, age range, interests). Never birth dates, photos or full names. Only the members of the group can read or change it.
+- **Family data is about minors:** store the minimum (first name, date of birth, interests). Never photos or full names. The date of birth (`date_of_birth`) was agreed with the client in C11, so the age never goes out of date; `age_range` stays until the form uses the date. Only the members of the group can read or change it.
 - **One account belongs to one family group**, created automatically for every customer account. Policies that check membership call the `SECURITY DEFINER` helper `public.is_family_member(group_id)`: a policy on `family_group_members` that queries `family_group_members` fails with *infinite recursion*.
-- **AI profiles** (`provider_profiles`): one per provider, `draft` until the provider approves it, and only approved profiles are visible to customers. The `generate-profile` Edge Function uses the caller's session, so RLS also applies to it; the LLM key lives only in the function's secrets. Do not send contact data to the LLM.
+- **AI profiles** (`provider_profiles`): one per provider, `draft` until the provider approves it, and only the approved text is visible to customers. The table is readable only by its owner, so customers read it through `public_approved_provider_profiles()`. The `generate-profile` Edge Function uses the caller's session, so RLS also applies to it; the LLM key lives only in the function's secrets. Do not send contact data to the LLM.
 - **Activities point to `provider_id`**, never to the profile.
-- **Technical sheets are private.** Data that customers need from a sheet must be exposed on purpose (e.g. a view with only those columns), never by opening the whole table.
-- **Events** (`type = 'event'`, Sprint 2) will need dates: add them with a new migration and update the decision record.
+- **Technical sheets are private.** Data that customers need from a sheet must be exposed on purpose with a function that returns only those columns (`public_provider_contacts()`), never by opening the whole table.
+- **Temporary activities:** `type = 'temporary'` needs `start_date` and `end_date`; `whole_year` activities cannot have dates. The app sends the type and the dates together.
+- **Events** have their own entity (#91). The value `event` of `activities.type` stays until that issue decides what to do with it.
+- **Publication:** new activities are `draft` and customers only see `published` ones. Publishing needs a complete technical sheet and a structured address (`require_publication_fields`).
+- **Addresses are structured** (street, number, floor, door, postal code, city, province, country). `address` only remains for older rows: read addresses with `toAddress`.
 
 ### Local development
 
@@ -268,7 +272,7 @@ The design and its reasons are in [`docs/decisions/database.md`](../docs/decisio
 
 ## Security and privacy
 
-- The app stores data about **minors** (family profiles). Store the minimum: age ranges, never birth dates. Never expose family profiles to other accounts.
+- The app stores data about **minors** (family profiles). Store the minimum. Never expose family profiles to other accounts.
 - **Never put secret keys in the app.** The app only uses the Supabase **publishable** key (formerly *anon key*). The **secret** key (formerly *service_role*) and LLM API keys live only in Edge Function secrets.
 - Every `EXPO_PUBLIC_*` variable is embedded in the app and readable by anyone: only public values may use that prefix.
 - Never commit `.env` files or credentials. Required variables are listed in `mobile/.env.example`.
@@ -329,9 +333,11 @@ When the CI fails but local checks pass, reproduce the CI with `npm ci` (clean i
 
 ## Provider profiles
 
-- Table `provider_profiles`, one row per provider, `status` is `draft` or
-  `approved`. Show `approved` as "Published" (`PROFILE_STATUS_LABELS`).
+- Table `provider_profiles`, one row per provider, `status` is `draft`,
+  `pending_approval` or `approved`. Show `approved` as "Published" (`PROFILE_STATUS_LABELS`).
 - The Edge Function `generate-profile` uses the user's session, not the
   secret key. RLS lets the owner insert drafts and update its profile.
+- Customers read `approved_headline` and `approved_description` through
+  `public_approved_provider_profiles()`, never the table.
 - AI content is never published automatically: the provider approves it.
 - Details: `docs/features/ai-profile.md`.
