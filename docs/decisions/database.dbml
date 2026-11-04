@@ -9,6 +9,7 @@ Project AfterBell {
   Note: '''
   Supabase (PostgreSQL). Every table has RLS enabled and column-level privileges.
   Value lists are TEXT + CHECK with the same values as the app lists (mobile/src/lib, features/*/types.ts).
+  Categories are a table.
   '''
 }
 
@@ -52,6 +53,7 @@ Table technical_sheets {
   activity_types text[] [not null, note: 'at least one activity category']
   facilities text[] [not null, default: `'{}'`, note: 'parking | changing_rooms | showers | lockers | waiting_area | cafeteria | wifi | air_conditioning | outdoor_space | wheelchair_access | outdoor_field | indoor_court']
   created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`, note: 'set by a trigger']
 
   Indexes {
     provider_id
@@ -67,8 +69,15 @@ Table technical_sheets {
 Table addresses {
   id uuid [pk, default: `gen_random_uuid()`]
   provider_id uuid [not null, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE']
-  address text [not null, note: 'street and number, not blank, max 200']
+  address text [note: 'older rows only, NULL in new rows']
+  street text [note: 'max 200; required in new rows']
+  number text [note: 'max 20; required in new rows']
+  floor text [note: 'optional, max 20']
+  door text [note: 'optional, max 20']
+  postal_code text [note: 'max 20; required in new rows']
   city text [not null, note: 'not blank, max 100']
+  province text [note: 'max 100; required in new rows']
+  country text [note: 'max 100; required in new rows']
   created_at timestamptz [not null, default: `now()`]
 
   Indexes {
@@ -88,23 +97,101 @@ Table activities {
   address_id uuid [not null, note: 'where it takes place; composite FK (address_id, provider_id)']
   title text [not null, note: 'not blank, max 120']
   description text [note: 'optional, max 1000']
-  category text [not null, note: 'one activity category: football | basketball | tennis | swimming | dance | drama | music | language | art | tutoring | other']
-  type text [not null, default: 'whole_year', note: 'whole_year | event; cannot be changed']
-  target_age_ranges text[] [not null, note: 'at least one: 0-3 | 4-6 | 7-9 | 10-12 | 13-15 | 16-17 | adult']
-  schedule jsonb [not null, note: 'list of { day, startTime, endTime }, checked by is_valid_schedule()']
+  category text [not null, note: 'FK categories.name']
+  type text [not null, default: 'whole_year', note: 'whole_year | event | temporary; editable']
+  start_date date [note: 'required if temporary, never if whole_year']
+  end_date date [note: 'required if temporary, never if whole_year; not before start_date']
+  status text [not null, default: 'draft', note: 'draft | published']
+  is_tutor boolean [not null, default: false]
+  target_age_ranges text[] [not null, note: 'at least one: 0-3 | 4-6 | 7-9 | 10-12 | 13-15 | 16-17 | adult | all_publics']
+  schedule jsonb [note: 'list of { day, startTime, endTime }, checked by is_valid_schedule(); required if whole_year']
   price "numeric(8,2)" [not null, note: '>= 0']
   price_period text [not null, note: 'per_hour | per_day | per_week | per_month | per_term | per_year']
   max_participants integer [not null, note: '1 to 1000']
+  search_normalized text [not null, default: `''`, note: 'set by a trigger']
   created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`, note: 'set by a trigger']
 
   Indexes {
     provider_id
     address_id
+    category
+    price
+    (start_date, end_date)
+    status
   }
   Note: '''
-  RLS: every logged-in user reads; companies create their own; the owner updates and deletes (permanent).
-  The number of enrolled people is not stored: it will be counted from enrollments.
+  RLS: logged-in users read published activities, the owner also its drafts; companies create their own; the owner updates and deletes (permanent).
+  The number of enrolled people is not stored: activity_capacity() counts the accepted requests.
   '''
+}
+
+Table categories {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name text [not null, unique, note: 'cannot be changed or deleted']
+  category_type text [not null, note: 'individual | collective']
+  Note: 'Read by every logged-in user. New categories are added with a migration.'
+}
+
+Table languages {
+  id uuid [pk, default: `gen_random_uuid()`]
+  activity_id uuid [not null, note: 'FK activities, ON DELETE CASCADE']
+  language text [not null, note: 'not blank']
+  level text [not null, note: 'not blank']
+
+  Indexes {
+    (activity_id, language, level) [unique]
+    activity_id
+  }
+  Note: 'RLS: readable with its activity; only the owner of the activity changes it.'
+}
+
+Table favourites {
+  customer_id uuid [not null, note: 'FK accounts, ON DELETE CASCADE']
+  activity_id uuid [not null, note: 'FK activities, ON DELETE CASCADE']
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    (customer_id, activity_id) [pk]
+    activity_id
+  }
+  Note: 'RLS: only the customer reads, adds and deletes its own favourites, of published activities.'
+}
+
+Table enrolment_requests {
+  id uuid [pk, default: `gen_random_uuid()`]
+  activity_id uuid [not null, note: 'FK activities, ON DELETE CASCADE']
+  customer_id uuid [not null, note: 'FK accounts, ON DELETE CASCADE']
+  family_profile_id uuid [not null, note: 'FK family_profiles']
+  message text [note: 'optional, max 1000']
+  status text [not null, default: 'pending', note: 'pending | accepted | rejected | cancelled']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`, note: 'set by a trigger']
+
+  Indexes {
+    (activity_id, status)
+    customer_id
+    family_profile_id
+  }
+  Note: '''
+  One active request per profile and activity (partial unique index).
+  RLS: the customer and the provider read. Changes only through the enrolment functions.
+  '''
+}
+
+Table search_summary_cache {
+  cache_key text [pk]
+  summary text [not null]
+  created_at timestamptz [not null, default: `now()`]
+  expires_at timestamptz [not null, note: 'after created_at']
+  Note: 'No client access: only the backend uses it.'
+}
+
+Table search_summary_requests {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, note: 'FK accounts, ON DELETE CASCADE']
+  requested_at timestamptz [not null, default: `now()`]
+  Note: 'Rate limit. No client access, and no search text is stored.'
 }
 
 // ============================================================
@@ -138,7 +225,8 @@ Table family_profiles {
   id uuid [pk, default: `gen_random_uuid()`]
   family_group_id uuid [not null, note: 'FK family_groups, ON DELETE CASCADE']
   first_name text [not null, note: 'not blank, max 50']
-  age_range text [not null, note: 'one of AGE_RANGES (lib/ages.ts). Never birth dates']
+  age_range text [note: 'one of AGE_RANGES (lib/ages.ts)']
+  date_of_birth date [note: 'optional, not in the future']
   interests text[] [not null, default: `'{}'`, note: 'activity categories']
   created_at timestamptz [not null, default: `now()`]
 
@@ -161,14 +249,17 @@ Table provider_profiles {
   provider_id uuid [not null, unique, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE. One profile per provider']
   headline text [not null, note: 'not blank, max 120']
   description text [not null, note: 'not blank, max 2000']
-  status text [not null, default: 'draft', note: 'draft | approved']
+  status text [not null, default: 'draft', note: 'draft | pending_approval | approved']
+  approved_headline text [note: 'approved copy, set by a trigger']
+  approved_description text [note: 'approved copy, set by a trigger']
   model text [not null, note: 'LLM that generated the text, max 100']
   generated_at timestamptz [not null, default: `now()`]
-  approved_at timestamptz [note: 'set by the trigger set_profile_approved_at; only when approved']
+  approved_at timestamptz [note: 'set by the trigger set_profile_approved_at']
+  sheet_updated_at timestamptz [note: 'updated_at of the source sheet, set by a trigger']
   Note: '''
   Public profile generated by the AI from the technical sheet (Edge Function generate-profile,
   which uses the caller's session, so RLS applies).
-  RLS: logged-in users read approved profiles; the owner also reads its draft.
+  RLS: only the owner reads the table; customers use public_approved_provider_profiles().
   Only companies insert their own profile, only as draft. The owner updates it. No delete.
   Activities point to provider_id, not to this table.
   '''
@@ -187,6 +278,14 @@ Ref: activities.provider_id > accounts.id [delete: cascade]
 // Composite keys: the address must belong to the same provider
 Ref: technical_sheets.(address_id, provider_id) > addresses.(id, provider_id) [delete: no action]
 Ref: activities.(address_id, provider_id) > addresses.(id, provider_id) [delete: no action]
+Ref: activities.category > categories.name
+Ref: languages.activity_id > activities.id [delete: cascade]
+Ref: favourites.customer_id > accounts.id [delete: cascade]
+Ref: favourites.activity_id > activities.id [delete: cascade]
+Ref: enrolment_requests.activity_id > activities.id [delete: cascade]
+Ref: enrolment_requests.customer_id > accounts.id [delete: cascade]
+Ref: enrolment_requests.family_profile_id > family_profiles.id
+Ref: search_summary_requests.user_id > accounts.id [delete: cascade]
 
 // Families and AI profiles
 Ref: family_group_members.account_id - accounts.id [delete: cascade]
@@ -203,6 +302,10 @@ TableGroup providers [color: #2563eb] {
   technical_sheets
   addresses
   activities
+  categories
+  languages
+  favourites
+  enrolment_requests
 }
 
 TableGroup families [color: #16a34a] {
@@ -213,4 +316,6 @@ TableGroup families [color: #16a34a] {
 
 TableGroup ai_profiles [color: #7c3aed] {
   provider_profiles
+  search_summary_cache
+  search_summary_requests
 }

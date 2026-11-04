@@ -7,7 +7,7 @@ This guide explains what was built so that providers can create and manage their
 > - #34 Create activity form
 > - #35 Provider's activity list with edit and delete
 >
-> **Later change:** the provider addresses issue added the place where each activity takes place (one of the provider's addresses). The database design is justified in [`docs/decisions/database.md`](../decisions/database.md).
+> **Later changes:** the provider addresses issue added the place where each activity takes place (one of the provider's addresses). #76 added temporary activities with a start and end date (see section 6). The database design is justified in [`docs/decisions/database.md`](../decisions/database.md).
 
 ## 1. What the feature does
 
@@ -18,7 +18,7 @@ A provider (`company` account) can:
 3. **Edit** an activity with the same form, filled in with the saved values.
 4. **Delete** an activity, after confirming it. Deleting is permanent.
 
-Any logged-in user (families included) can read activities, so families will be able to discover them and sign up. Only the owner can change or delete them.
+Since C11 new activities are drafts: logged-in users read published activities, and each provider also reads its own drafts. Only the owner can change or delete them.
 
 ### Acceptance criteria
 
@@ -36,7 +36,7 @@ Any logged-in user (families included) can read activities, so families will be 
 |---|---|---|
 | **Ages, schedule and prices belong to each activity** and were removed from the technical sheet | Keeping them in both tables | A provider offers activities with different ages, times and prices; keeping them in the sheet would duplicate data. Done with a new migration (`ALTER TABLE … DROP COLUMN`), because the sheet migration was already in `main`. |
 | **`category`: one value** from the shared list of activity categories | Free text / several categories | A specific activity ("Swimming for kids") has one category. Added now, although filters arrive in Sprint 2, to avoid a data migration later. |
-| **`type`: `whole_year` or `event`**, default `whole_year`, not editable | No type column | Sprint 1 only has whole-year activities; events come later. Changing the type would change the nature of the activity. |
+| **`type`: `whole_year`, `temporary` or `event`**, default `whole_year`, editable | No type column | Sprint 1 only had whole-year activities. #76 made the type editable, because C1 lets providers switch between whole-year and temporary. |
 | **One price** (`price`) **and period** (`per_month`, `per_term`…) as `NUMERIC(8, 2)` | A price range | The activity now has one published price; the period keeps its meaning clear and the numeric type stores cents. |
 | **Schedule as a `JSONB` list** of `{ day, startTime, endTime }` | A separate `time_slots` table / a text list | One insert saves the whole activity; it matches the app type `TimeSlot`; it can still be queried by day later. The app validates each slot. |
 | **`max_participants`: required whole number between 1 and 1000**, editable by the owner | Optional / no upper limit | Every activity has a capacity the provider must think about; the upper limit catches typing mistakes (10000 instead of 100). Added with its own migration and its own column-level `GRANT UPDATE` (new columns are not covered by the earlier grant). |
@@ -48,11 +48,11 @@ Any logged-in user (families included) can read activities, so families will be 
 
 | Decision | Why |
 |---|---|
-| **Any logged-in user can read activities** (`USING (true)`, team decision) | Families need to see them to sign up. Users without a session (`anon`) cannot read them. |
+| **Logged-in users read published activities; the owner also reads its drafts** (C11) | Families need to see what is published, not work in progress. Users without a session (`anon`) cannot read them. |
 | **Only `company` accounts can create**, and only for themselves | `WITH CHECK (auth.uid() = provider_id AND is_company())`. |
 | **Owner-only update and delete** | `USING (auth.uid() = provider_id)`. |
 | **Permanent delete** (team decision) | Simpler than a soft delete for Sprint 1. Needs both a `DELETE` policy and `GRANT DELETE`. |
-| **Column-level `UPDATE` privileges** | `id`, `provider_id`, `type` and `created_at` cannot be changed, even by the owner. |
+| **Column-level `UPDATE` privileges** | `id`, `provider_id` and `created_at` cannot be changed, even by the owner. |
 | The app checks that an update/delete **changed one row** | RLS does not raise an error for someone else's row: it changes 0 rows. Without this check the app would say "saved" when nothing was saved. |
 
 ### App architecture
@@ -82,6 +82,10 @@ Any logged-in user (families included) can read activities, so families will be 
 | `…_create_addresses.sql` | `addresses` table of the providers (see [`technical-sheet.md`](technical-sheet.md)). |
 | `…_use_addresses_in_technical_sheets_and_activities.sql` | Adds the required `address_id` with the composite foreign key; existing activities take the main address of their provider; lets owners update it. |
 | `…_use_single_activity_price.sql` | Replaces the activity price range with one `price`; existing rows keep the former lower price. |
+| `…_update_activities.sql` | (C11) Adds `temporary`, the dates, `status`, `is_tutor`, `updated_at` and `search_normalized`. |
+| `…_default_activity_search_normalized.sql` | Gives `search_normalized` a default, so the app does not send it. |
+| `…_validate_temporary_activity_dates.sql` | (#76) `validate_activity_dates` trigger and `activities_whole_year_no_dates`. |
+| `…_skip_publication_check_when_unchanged.sql` | Published activities are checked again only if a checked field really changes. |
 
 `mobile/src/lib/database.types.ts` was regenerated from these migrations.
 
@@ -91,10 +95,10 @@ Any logged-in user (families included) can read activities, so families will be 
 |---|---|
 | `types.ts` | `ACTIVITY_TYPES`; `ActivityForm` (form values, with `addressId`); `EMPTY_ACTIVITY_FORM`; re-exports `Activity` from `lib/activity.ts`. |
 | `validation.ts` | `validateActivity`, split into details, place, schedule and prices; limits exported as constants (`TITLE_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`, `MAX_PARTICIPANTS`) matching the database. |
-| `api/toActivityInsert.ts` | Form → database row. `toActivityInsert` creates (sends `type`, `whole_year` for now); `toActivityUpdate` edits and does **not** send `type`: it cannot be changed, so there is no `UPDATE` privilege on it, and sending it would make the whole update fail. Neither sends `provider_id`. |
+| `api/toActivityInsert.ts` | Form → database row, used to create and to update. Sends the type and the dates, and always sends `NULL` dates for a whole-year activity. It does not send `provider_id`. |
 | `api/toActivityForm.ts` | `Activity` → form values (to edit). |
 | `api/createActivity.ts` | Inserts an activity. |
-| `api/fetchMyActivities.ts` | Activities of the logged-in provider, newest first (filters by `provider_id`, because RLS lets everyone read all activities). |
+| `api/fetchMyActivities.ts` | Activities of the logged-in provider, newest first (filters by `provider_id`, because RLS also returns the published activities of other providers). |
 | `api/fetchMyAddresses.ts` | Addresses of the logged-in provider, main address first (filters by `provider_id`, because RLS lets everyone read all addresses). |
 | `api/fetchActivity.ts` | One activity by id (edit screen). |
 | `api/updateActivity.ts` | Updates an activity; throws if no row changed. |
@@ -131,7 +135,7 @@ Screens only connect a feature component with a hook and decide where to go afte
 | `lib/numbers.ts` | `parseInteger` (whole numbers typed by the user). |
 | `lib/activityCategories.ts` | Activity categories and labels. |
 | `lib/text.ts` | `emptyToNull`. |
-| `lib/addresses.ts` | `Address` type and `formatAddress` (shared with the technical sheet). |
+| `lib/addresses.ts` | `Address` type, `toAddress` and `formatAddress` (shared with the technical sheet). |
 | `lib/validation.ts` | `isBlank` and `hasErrors` (moved here to be shared). |
 | `lib/queryClient.ts` | The TanStack Query client and the foreground refetch. |
 | `components/ScheduleEditor.tsx` | Moved from the technical sheet to be shared. |
@@ -183,5 +187,20 @@ All of them passed.
 - [ ] **End-to-end test on a phone once login works:** a `company` user creates, edits and deletes an activity, and a `customer` user cannot.
 - [ ] The `(provider)` layout must block customers (auth issue).
 - [ ] Enrollments: count enrolled people per activity and block enrolling when `max_participants` is reached (enrollments issue).
-- [ ] Families' activity browsing and filters by category and city (Sprint 2). Families will need the address of each activity: read it in the same query (`addresses(...)`) or with a view.
-- [ ] Events (`type = 'event'`) and their own form.
+- [ ] Filters by category and city (Sprint 2).
+- [ ] Publishing and unpublishing from the app (#87, #88): until then, new activities stay as drafts and customers do not see them.
+- [ ] The form fields for the type and the dates (#77), and the dates in the customer views (#78).
+- [ ] Activities with an older address keep working, but the app cannot complete that address yet, so they cannot change a checked field or be published again.
+
+## 6. Temporary activities (#76)
+
+The API is the Supabase table: the app writes it with `createActivity` and `updateActivity` and reads it with the `toActivity` mapper. The fields are `type`, `start_date` and `end_date` (`startDate` and `endDate` in the app, as `YYYY-MM-DD`).
+
+| Rule | Error message |
+|---|---|
+| Dates on a whole-year activity | `Whole-year activities cannot have dates` |
+| Temporary activity without one of its dates | `Temporary activities require a start date and an end date` |
+| End date before the start date | `The end date cannot be before the start date` |
+| Start date in the past, when it is being set | `The start date cannot be in the past` |
+
+The errors reach the app in `error.message`. Existing activities stay `whole_year`. Tests: `supabase/tests/activity_dates.sql` (run it as its header explains; it rolls everything back) and the Jest tests of the mappers. The form fields belong to #77.

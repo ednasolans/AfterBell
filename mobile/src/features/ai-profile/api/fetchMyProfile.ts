@@ -5,7 +5,7 @@ import { currentUserId } from "./currentUserId";
 import { toProviderProfile } from "./toProviderProfile";
 
 // Profile of the logged-in provider, or null if it has not been generated yet.
-// RLS lets everyone read approved profiles, so we filter by provider here.
+// RLS only returns the owner's profile; the filter makes the query explicit.
 export async function fetchMyProfile(): Promise<ProviderProfile | null> {
   const userId = await currentUserId();
   const { data, error } = await supabase
