@@ -8,6 +8,8 @@ const VALID_ACTIVITY: ActivityForm = {
   description: "",
   category: "swimming",
   type: "whole_year",
+  startDate: null,
+  endDate: null,
   targetAgeRanges: ["7-9", "10-12"],
   schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
   price: 30,

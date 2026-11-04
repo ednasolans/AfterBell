@@ -1,14 +1,13 @@
 import { type ActivityForm } from "../types";
-import { type TablesInsert, type TablesUpdate } from "@/lib/database.types";
-import { toActivityUpdate, toActivityInsert } from "./toActivityInsert";
-export type ActivityInsert = TablesInsert<"activities">;
-export type ActivityUpdate = TablesUpdate<"activities">;
+import { toActivityInsert } from "./toActivityInsert";
 
 const VALID_FORM: ActivityForm = {
   title: "  Swimming for kids ",
   description: "   ",
   category: "swimming",
   type: "whole_year",
+  startDate: null,
+  endDate: null,
   targetAgeRanges: ["7-9", "10-12"],
   schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
   price: 30,
@@ -24,6 +23,8 @@ describe("toActivityInsert", () => {
       description: null,
       category: "swimming",
       type: "whole_year",
+      start_date: null,
+      end_date: null,
       target_age_ranges: ["7-9", "10-12"],
       schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
       price: 30,
@@ -69,23 +70,28 @@ describe("toActivityInsert", () => {
   ])("throws if the activity was not validated (%o)", (changes) => {
     expect(() => toActivityInsert({ ...VALID_FORM, ...changes })).toThrow();
   });
-});
 
-describe("toActivityUpdate", () => {
-  it("sends the editable fields but not the type, which cannot be changed", () => {
-    const row = toActivityUpdate(VALID_FORM);
-
-    expect(row).not.toHaveProperty("type");
-    expect(row).toEqual({
-      title: "Swimming for kids",
-      description: null,
-      category: "swimming",
-      target_age_ranges: ["7-9", "10-12"],
-      schedule: [{ day: "tuesday", startTime: "17:00", endTime: "18:00" }],
-      price: 30,
-      price_period: "per_month",
-      max_participants: 12,
-      address_id: "address-1",
+  it("sends the type and the dates of a temporary activity", () => {
+    const row = toActivityInsert({
+      ...VALID_FORM,
+      type: "temporary",
+      startDate: "2027-07-01",
+      endDate: "2027-07-15",
     });
+
+    expect(row.type).toBe("temporary");
+    expect(row.start_date).toBe("2027-07-01");
+    expect(row.end_date).toBe("2027-07-15");
+  });
+
+  it("clears the dates when the activity becomes whole-year", () => {
+    const row = toActivityInsert({
+      ...VALID_FORM,
+      startDate: "2027-07-01",
+      endDate: "2027-07-15",
+    });
+
+    expect(row.start_date).toBeNull();
+    expect(row.end_date).toBeNull();
   });
 });

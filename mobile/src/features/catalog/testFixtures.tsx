@@ -17,6 +17,8 @@ export function makeActivity(overrides: Partial<Activity> = {}): Activity {
     description: "Fun for everyone",
     category: "football",
     type: "whole_year",
+    startDate: null,
+    endDate: null,
     targetAgeRanges: ["7-9", "10-12"],
     schedule: [{ day: "monday", startTime: "17:00", endTime: "18:00" }],
     price: 15,
