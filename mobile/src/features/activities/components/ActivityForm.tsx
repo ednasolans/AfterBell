@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { DateField } from "@/components/DateField";
 import { FormSubmit } from "@/components/FormSubmit";
 import { MultiSelect } from "@/components/MultiSelect";
 import { NumberField } from "@/components/NumberField";
@@ -23,6 +24,7 @@ import { parseInteger } from "@/lib/numbers";
 import { hasErrors } from "@/lib/validation";
 
 import { useActivityForm } from "../hooks/useActivityForm";
+import { toSaveErrorMessage } from "../saveErrors";
 
 import {
   ACTIVITY_TYPE_LABELS,
@@ -62,7 +64,8 @@ type ActivityFormProps = {
   // Saves the activity (e.g. mutateAsync of a mutation); it must throw if saving fails
   onSubmit: (form: ActivityFormValues) => Promise<unknown>;
   isSaving: boolean;
-  saveFailed: boolean;
+  // Why the last save failed, or null
+  saveError: Error | null;
   onSaved?: () => void;
 };
 
@@ -71,7 +74,7 @@ export function ActivityForm({
   submitLabel,
   onSubmit,
   isSaving,
-  saveFailed,
+  saveError,
   onSaved,
 }: ActivityFormProps) {
   const { form, updateField, errors, submit } = useActivityForm({
@@ -184,6 +187,26 @@ export function ActivityForm({
         error={errors.type}
       />
 
+      {form.type === "temporary" ? (
+        <>
+          <DateField
+            label="Start date"
+            placeholder="Choose a date"
+            value={form.startDate}
+            onChange={(value) => updateField("startDate", value)}
+            error={errors.startDate}
+          />
+          <DateField
+            label="End date"
+            placeholder="Choose a date"
+            value={form.endDate}
+            onChange={(value) => updateField("endDate", value)}
+            minimumDate={form.startDate}
+            error={errors.endDate}
+          />
+        </>
+      ) : null}
+
       <ScheduleEditor
         schedule={form.schedule}
         onChange={(schedule) => updateField("schedule", schedule)}
@@ -231,11 +254,7 @@ export function ActivityForm({
         onPress={handleSave}
         isSaving={isSaving}
         hasFieldErrors={hasErrors(errors)}
-        saveError={
-          saveFailed
-            ? "The activity could not be saved. Please try again."
-            : null
-        }
+        saveError={toSaveErrorMessage(saveError)}
       />
     </ScrollView>
   );

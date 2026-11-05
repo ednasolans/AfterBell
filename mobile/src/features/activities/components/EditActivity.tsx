@@ -34,7 +34,7 @@ export function EditActivity({ id, onSaved }: EditActivityProps) {
       submitLabel="Save changes"
       onSubmit={(form) => updateActivity.mutateAsync({ id, form })}
       isSaving={updateActivity.isPending}
-      saveFailed={updateActivity.isError}
+      saveError={updateActivity.error}
       onSaved={onSaved}
     />
   );
