@@ -11,7 +11,9 @@ import { colors } from "@/theme/colors";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
 import { ACTIVITY_IMAGES } from "@/features/catalog/visuals";
 import { Image } from "expo-image";
-import { ACTIVITY_TYPE_LABELS } from "@/features/activities/types";
+
+import { ACTIVITY_TYPE_LABELS } from "../types";
+
 type ActivityCardProps = {
   activity: Activity;
   // Text of the address where it takes place, if it is already known
