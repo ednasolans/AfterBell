@@ -94,7 +94,7 @@ Since C11 new activities are drafts: logged-in users read published activities, 
 | File | Content |
 |---|---|
 | `types.ts` | `ACTIVITY_TYPES`; `ActivityForm` (form values, with `addressId`); `EMPTY_ACTIVITY_FORM`; re-exports `Activity` from `lib/activity.ts`. |
-| `validation.ts` | `validateActivity`, split into details, place, schedule and prices; limits exported as constants (`TITLE_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`, `MAX_PARTICIPANTS`) matching the database. |
+| `validation.ts` | `validateActivity`, split into details, place, schedule, dates and prices; limits exported as constants (`TITLE_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`, `MAX_PARTICIPANTS`) matching the database. |
 | `api/toActivityInsert.ts` | Form → database row, used to create and to update. Sends the type and the dates, and always sends `NULL` dates for a whole-year activity. It does not send `provider_id`. |
 | `api/toActivityForm.ts` | `Activity` → form values (to edit). |
 | `api/createActivity.ts` | Inserts an activity. |
@@ -108,7 +108,8 @@ Since C11 new activities are drafts: logged-in users read published activities, 
 | `hooks/useMyActivities.ts`, `useActivity.ts` | Queries (`useQuery`). |
 | `hooks/useMyAddresses.ts` | Query of the provider's addresses, with its key `myAddressesKey`. |
 | `hooks/useCreateActivity.ts`, `useUpdateActivity.ts`, `useDeleteActivity.ts` | Mutations (`useMutation`); refresh the activity queries on success. |
-| `components/ActivityForm.tsx` | The form: details, place, schedule and prices sections, and `FormSubmit`. |
+| `components/ActivityForm.tsx` | The form: details, place, schedule (with the type and the dates) and prices sections, and `FormSubmit`. |
+| `saveErrors.ts` | `toSaveErrorMessage`: which save errors are shown to the provider. |
 | `components/AddressSelect.tsx` | Chooses one of the provider's addresses; shows loading, error with retry, and "add your addresses in your technical sheet" when there are none. |
 | `components/ActivityCard.tsx` | One activity in the list: title, category, address, schedule, price, maximum participants ("Up to 12 people"), Edit and Delete. |
 | `components/MyActivitiesList.tsx` | The list with its four states, the "New activity" button and delete with confirmation. |
@@ -132,6 +133,8 @@ Screens only connect a feature component with a hook and decide where to go afte
 | `lib/schedule.ts` | Week days, `TimeSlot`, time and slot validation, sorting, formatting (moved from the technical sheet). |
 | `lib/price.ts` | Price periods, `parsePrice`, and `formatPrice` ("30 € per month"). |
 | `lib/activity.ts` | `Activity` (saved activity) and `toActivity` (database row → `Activity`). Shared with the customer catalog. |
+| `lib/dates.ts` | `toIsoDate`, `fromIsoDate` and `formatDate`. |
+| `components/DateField.tsx` | Date picker field, for Android and iOS. |
 | `lib/numbers.ts` | `parseInteger` (whole numbers typed by the user). |
 | `lib/activityCategories.ts` | Activity categories and labels. |
 | `lib/text.ts` | `emptyToNull`. |
@@ -150,6 +153,7 @@ Screens only connect a feature component with a hook and decide where to go afte
 ### New dependency
 
 - `@tanstack/react-query` (no native code; works in Expo Go).
+- `@react-native-community/datetimepicker` (#77; included in Expo Go).
 
 ## 4. How to test it
 
@@ -189,7 +193,7 @@ All of them passed.
 - [ ] Enrollments: count enrolled people per activity and block enrolling when `max_participants` is reached (enrollments issue).
 - [ ] Filters by category and city (Sprint 2).
 - [ ] Publishing and unpublishing from the app (#87, #88): until then, new activities stay as drafts and customers do not see them.
-- [ ] The form fields for the type and the dates (#77), and the dates in the customer views (#78).
+- [ ] The dates in the customer views (#78).
 - [ ] Activities with an older address keep working, but the app cannot complete that address yet, so they cannot change a checked field or be published again.
 
 ## 6. Temporary activities (#76)
@@ -203,4 +207,17 @@ The API is the Supabase table: the app writes it with `createActivity` and `upda
 | End date before the start date | `The end date cannot be before the start date` |
 | Start date in the past, when it is being set | `The start date cannot be in the past` |
 
-The errors reach the app in `error.message`. Existing activities stay `whole_year`. Tests: `supabase/tests/activity_dates.sql` (run it as its header explains; it rolls everything back) and the Jest tests of the mappers. The form fields belong to #77.
+The errors reach the app in `error.message`. Existing activities stay `whole_year`. Tests: `supabase/tests/activity_dates.sql` (run it as its header explains; it rolls everything back) and the Jest tests of the mappers.
+
+### Form (#77)
+
+The provider chooses *Whole year* or *Temporary* in the *Schedule* section. `event` is not offered, because events are their own entity (#91). The date fields only appear for a temporary activity, and they are filled in when editing.
+
+| Decision | Alternatives considered | Why |
+|---|---|---|
+| **`@react-native-community/datetimepicker`** behind `DateField` | A text field / `@expo/ui` | It is the system date picker and it is included in Expo Go. Android opens a dialog and iOS shows the calendar under the field, and `DateField` hides that difference. |
+| **The form validates with the same rules as the trigger** | Relying on the database | The provider sees the error next to the field, before saving. |
+| **`validateActivity` receives the original values** | Checking the past date only when creating | A past start date is only wrong when it is being set, so an activity that has already started can still be edited. |
+| **Dates are ISO text (`YYYY-MM-DD`), converted in `lib/dates.ts`** | `Date.toISOString()` | `toISOString()` converts to UTC, so in Spain a date picked at midnight would be saved as the day before. |
+| **Only the messages we wrote are shown** (`saveErrors.ts`); anything else uses a generic text | Showing every `error.message` | A lost connection or a Postgres message means nothing to a provider. |
+| **Changing the type to whole-year clears the dates** (`useActivityForm`) | Keeping them hidden | The database rejects dates on a whole-year activity. |
