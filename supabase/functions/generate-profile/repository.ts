@@ -3,7 +3,12 @@
 // so every query is also filtered by the RLS policies.
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import type { GeneratedProfile, SheetForPrompt } from "../_shared/types.ts";
+import { TEMPORARY_ACTIVITIES_MAX } from "../_shared/labels.ts";
+import type {
+  GeneratedProfile,
+  SheetForPrompt,
+  TemporaryActivityForPrompt,
+} from "../_shared/types.ts";
 import type { ExistingProfile, ProfileRepository, SavedDraft } from "./handler.ts";
 
 // Only the fields the LLM may see. Contact data is never read.
@@ -52,7 +57,25 @@ export class SupabaseProfileRepository implements ProfileRepository {
       facilities: data.facilities,
       description: data.description,
       city: data.addresses.city,
+      temporary_activities: await this.getTemporaryActivities(userId),
     };
+  }
+
+  // The profile is public, so drafts stay out, and finished activities would
+  // make it out of date. The first ones to start go first.
+  private async getTemporaryActivities(userId: string): Promise<TemporaryActivityForPrompt[]> {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await this.client
+      .from("activities")
+      .select("title, start_date, end_date")
+      .eq("provider_id", userId)
+      .eq("type", "temporary")
+      .eq("status", "published")
+      .gte("end_date", today)
+      .order("start_date", { ascending: true })
+      .limit(TEMPORARY_ACTIVITIES_MAX);
+    if (error) throw new Error(`activities query failed: ${error.message}`);
+    return data ?? [];
   }
 
   async getProfile(userId: string): Promise<ExistingProfile | null> {

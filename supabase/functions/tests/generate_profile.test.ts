@@ -73,6 +73,35 @@ Deno.test("a company with a sheet gets a saved draft", async () => {
   assertEquals(repo.saved.length, 1);
 });
 
+Deno.test("the dates of the sheet reach the LLM", async () => {
+  const sheet: SheetForPrompt = {
+    ...SHEET,
+    temporary_activities: [
+      { title: "Summer camp", start_date: "2027-07-01", end_date: "2027-07-15" },
+    ],
+  };
+  let prompt = "";
+  const { status } = await call(
+    deps(new FakeRepo({ sheet }), (messages) => {
+      prompt = messages[1].content;
+      return Promise.resolve(answer(VALID_ANSWER));
+    }),
+  );
+
+  assertEquals(status, 200);
+  assertEquals(prompt.includes("2027-07-15"), true);
+});
+
+Deno.test("a profile is generated although the dates are incomplete", async () => {
+  const sheet: SheetForPrompt = {
+    ...SHEET,
+    temporary_activities: [{ title: "Summer camp", start_date: null, end_date: null }],
+  };
+  const { status } = await call(deps(new FakeRepo({ sheet })));
+
+  assertEquals(status, 200);
+});
+
 Deno.test("no session is rejected with 401", async () => {
   const { status } = await call(deps(new FakeRepo({ userId: null })));
   assertEquals(status, 401);
