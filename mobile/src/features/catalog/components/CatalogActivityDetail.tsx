@@ -4,7 +4,12 @@ import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
 import { colors } from "@/theme/colors";
 
-import { formatAgeRanges, formatActivityPrice } from "../format";
+import {
+  formatActivityPrice,
+  formatAgeRanges,
+  formatDateRange,
+  isFinished,
+} from "../format";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
 
 type DetailRowProps = { label: string; value: string };
@@ -44,13 +49,22 @@ export function CatalogActivityDetail({
     );
   }
 
-  const { activity, provider, address } = query.data;
+  const { activity, provider, address, enrolledCount } = query.data;
+  const dates = formatDateRange(activity.startDate, activity.endDate);
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{activity.title}</Text>
       {activity.description ? (
         <Text style={styles.description}>{activity.description}</Text>
       ) : null}
+
+      {activity.type === "temporary" ? (
+        <Text style={styles.typeLabel}>Temporary activity</Text>
+      ) : null}
+      {isFinished(activity) ? (
+        <Text style={styles.finished}>This activity has finished</Text>
+      ) : null}
+      {dates ? <DetailRow label="Dates" value={dates} /> : null}
 
       <DetailRow
         label="Ages"
@@ -70,6 +84,12 @@ export function CatalogActivityDetail({
       />
       <DetailRow label="Category" value={activity.category} />
       {address ? <DetailRow label="Address" value={address} /> : null}
+      {enrolledCount === null ? null : (
+        <DetailRow
+          label="Enrolled"
+          value={`${enrolledCount} of ${activity.maxParticipants}`}
+        />
+      )}
 
       <Text style={styles.sectionTitle}>Provider</Text>
       {provider.contact ? (
@@ -101,6 +121,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  typeLabel: { fontWeight: "700", color: colors.primaryDark },
+  finished: { fontWeight: "700", color: colors.danger },
   label: { width: 90, fontWeight: "700", color: colors.text },
   value: { flex: 1, color: colors.textMuted },
   sectionTitle: {

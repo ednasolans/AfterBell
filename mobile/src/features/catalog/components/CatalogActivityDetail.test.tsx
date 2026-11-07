@@ -1,5 +1,7 @@
 import { waitFor } from "@testing-library/react-native";
 
+import { formatDate } from "@/lib/dates";
+
 import {
   makeActivity,
   makeCatalogActivity,
@@ -19,6 +21,7 @@ function makeDetail(overrides: Partial<Detail> = {}): Detail {
   return {
     ...makeCatalogActivity(),
     address: "Main Street 1, Lleida",
+    enrolledCount: 3,
     ...overrides,
   };
 }
@@ -49,6 +52,91 @@ describe("CatalogActivityDetail", () => {
     expect(getByText("club@example.com")).toBeTruthy();
     expect(getByText("600000000")).toBeTruthy();
     expect(getByText("https://club.example.com")).toBeTruthy();
+  });
+
+  it("shows the label and the dates of a temporary activity", async () => {
+    mockFetch.mockResolvedValue(
+      makeDetail({
+        activity: makeActivity({
+          type: "temporary",
+          startDate: "2099-07-01",
+          endDate: "2099-07-15",
+        }),
+      }),
+    );
+
+    const { getByText, queryByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() => expect(getByText("Temporary activity")).toBeTruthy());
+    expect(
+      getByText(`${formatDate("2099-07-01")} – ${formatDate("2099-07-15")}`),
+    ).toBeTruthy();
+    expect(queryByText("This activity has finished")).toBeNull();
+  });
+
+  it("shows no dates on a whole-year activity", async () => {
+    mockFetch.mockResolvedValue(makeDetail());
+
+    const { getByText, queryByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
+    expect(queryByText("Dates")).toBeNull();
+    expect(queryByText("Temporary activity")).toBeNull();
+  });
+
+  it("marks an activity that has finished", async () => {
+    mockFetch.mockResolvedValue(
+      makeDetail({
+        activity: makeActivity({
+          type: "temporary",
+          startDate: "2020-07-01",
+          endDate: "2020-07-15",
+        }),
+      }),
+    );
+
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() =>
+      expect(getByText("This activity has finished")).toBeTruthy(),
+    );
+  });
+
+  it("shows how many people are enrolled", async () => {
+    mockFetch.mockResolvedValue(makeDetail());
+
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() => expect(getByText("3 of 20")).toBeTruthy());
+  });
+
+  it("shows 0 when nobody is enrolled", async () => {
+    mockFetch.mockResolvedValue(makeDetail({ enrolledCount: 0 }));
+
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() => expect(getByText("0 of 20")).toBeTruthy());
+  });
+
+  it("hides the counter when it could not be read", async () => {
+    mockFetch.mockResolvedValue(makeDetail({ enrolledCount: null }));
+
+    const { getByText, queryByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
+    expect(queryByText("Enrolled")).toBeNull();
   });
 
   it("leaves out the parts that are not available", async () => {

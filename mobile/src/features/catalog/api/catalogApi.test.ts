@@ -12,7 +12,7 @@ const mockRpc = jest.fn();
 jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: (table: string) => mockFrom(table),
-    rpc: (name: string) => mockRpc(name),
+    rpc: (name: string, args?: unknown) => mockRpc(name, args),
   },
 }));
 
@@ -33,7 +33,10 @@ function query(result: QueryResult) {
 
 function mockTables(tables: Record<string, QueryResult>) {
   const queries = Object.fromEntries(
-    Object.entries(tables).map(([table, result]) => [table, query(result)]),
+    Object.entries({
+      activity_capacity: { data: [{ taken_places: 3 }], error: null },
+      ...tables,
+    }).map(([table, result]) => [table, query(result)]),
   );
   const builderOf = (name: string) => queries[name].builder;
   mockFrom.mockImplementation(builderOf);
@@ -210,6 +213,30 @@ describe("fetchCatalogActivities", () => {
     await expect(fetchCatalogActivities()).rejects.toThrow("no sheets");
   });
 
+  it("keeps the activities that have finished", async () => {
+    mockTables({
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      activities: {
+        data: [
+          {
+            ...activityRow,
+            id: "finished",
+            type: "temporary",
+            start_date: "2020-01-01",
+            end_date: "2020-01-02",
+          },
+          activityRow,
+        ],
+        error: null,
+      },
+      public_provider_contacts: { data: [sheetRow], error: null },
+    });
+
+    const result = await fetchCatalogActivities();
+
+    expect(result.map((item) => item.activity.id)).toEqual(["finished", "a1"]);
+  });
+
   it("ignores the contact details of other providers", async () => {
     mockTables({
       public_approved_provider_profiles: { data: [profileRow], error: null },
@@ -252,6 +279,49 @@ describe("fetchCatalogActivity", () => {
 
     expect(await fetchCatalogActivity("missing")).toBeNull();
     expect(mockFrom).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns the number of people enrolled", async () => {
+    mockTables({
+      activities: { data: activityRow, error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
+      addresses: { data: addressRow, error: null },
+    });
+
+    const result = await fetchCatalogActivity("a1");
+
+    expect(result?.enrolledCount).toBe(3);
+    expect(mockRpc).toHaveBeenCalledWith("activity_capacity", {
+      p_activity_id: "a1",
+    });
+  });
+
+  it("counts 0 when the activity has no capacity row", async () => {
+    mockTables({
+      activity_capacity: { data: [], error: null },
+      activities: { data: activityRow, error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
+      addresses: { data: addressRow, error: null },
+    });
+
+    expect((await fetchCatalogActivity("a1"))?.enrolledCount).toBe(0);
+  });
+
+  it("returns the activity without the counter when it cannot be read", async () => {
+    mockTables({
+      activity_capacity: { data: null, error: { message: "boom" } },
+      activities: { data: activityRow, error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
+      addresses: { data: addressRow, error: null },
+    });
+
+    const result = await fetchCatalogActivity("a1");
+
+    expect(result?.activity.id).toBe("a1");
+    expect(result?.enrolledCount).toBeNull();
   });
 
   it("ignores the approved profiles of other providers", async () => {

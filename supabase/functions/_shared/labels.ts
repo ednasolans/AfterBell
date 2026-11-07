@@ -1,7 +1,7 @@
 // Human-readable labels (English) for the codes stored in technical_sheets.
 // Values must match the CHECK lists in the technical_sheets migration.
 
-import type { SheetForPrompt } from "./types.ts";
+import type { SheetForPrompt, TemporaryActivityForPrompt } from "./types.ts";
 
 export const PROVIDER_TYPE_LABELS: Record<string, string> = {
   sports_club: "sports club",
@@ -49,6 +49,10 @@ function translate(codes: string[], labels: Record<string, string>): string[] {
 }
 
 const DESCRIPTION_MAX_CHARS = 500; // same limit as the database
+const TITLE_MAX_CHARS = 120; // same limit as the database
+/** The description has about 80 words: there is no room for more activities. */
+export const TEMPORARY_ACTIVITIES_MAX = 5;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Sheet data ready to be sent to the LLM. */
 export interface PromptData {
@@ -58,6 +62,7 @@ export interface PromptData {
   facilities: string[];
   description: string | null;
   city: string;
+  temporary_activities?: { title: string; start_date: string; end_date: string }[];
 }
 
 /** Trims the provider's free text; empty text becomes null. */
@@ -66,7 +71,20 @@ function cleanDescription(text: string | null): string | null {
   return trimmed === "" ? null : trimmed.slice(0, DESCRIPTION_MAX_CHARS);
 }
 
+/** Keeps the complete activities: incomplete data must not reach the LLM. */
+function cleanTemporaryActivities(activities: TemporaryActivityForPrompt[]) {
+  return activities.flatMap(({ title, start_date, end_date }) => {
+    const cleanTitle = title.trim().slice(0, TITLE_MAX_CHARS);
+    const isComplete = cleanTitle !== "" && ISO_DATE.test(start_date ?? "") &&
+      ISO_DATE.test(end_date ?? "");
+    return isComplete
+      ? [{ title: cleanTitle, start_date: start_date!, end_date: end_date! }]
+      : [];
+  }).slice(0, TEMPORARY_ACTIVITIES_MAX);
+}
+
 export function toPromptData(sheet: SheetForPrompt): PromptData {
+  const temporaryActivities = cleanTemporaryActivities(sheet.temporary_activities ?? []);
   return {
     name: sheet.name.trim(),
     type: PROVIDER_TYPE_LABELS[sheet.provider_type] ?? "activity provider",
@@ -74,5 +92,7 @@ export function toPromptData(sheet: SheetForPrompt): PromptData {
     facilities: translate(sheet.facilities, FACILITY_LABELS),
     description: cleanDescription(sheet.description),
     city: sheet.city.trim(),
+    // Left out when empty, so the LLM has no dates to talk about
+    ...(temporaryActivities.length > 0 ? { temporary_activities: temporaryActivities } : {}),
   };
 }
