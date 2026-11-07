@@ -193,7 +193,6 @@ All of them passed.
 - [ ] Enrollments: count enrolled people per activity and block enrolling when `max_participants` is reached (enrollments issue).
 - [ ] Filters by category and city (Sprint 2).
 - [ ] Publishing and unpublishing from the app (#87, #88): until then, new activities stay as drafts and customers do not see them.
-- [ ] The dates in the customer views (#78).
 - [ ] Activities with an older address keep working, but the app cannot complete that address yet, so they cannot change a checked field or be published again.
 
 ## 6. Temporary activities (#76)
@@ -221,3 +220,15 @@ The provider chooses *Whole year* or *Temporary* in the *Schedule* section. `eve
 | **Dates are ISO text (`YYYY-MM-DD`), converted in `lib/dates.ts`** | `Date.toISOString()` | `toISOString()` converts to UTC, so in Spain a date picked at midnight would be saved as the day before. |
 | **Only the messages we wrote are shown** (`saveErrors.ts`); anything else uses a generic text | Showing every `error.message` | A lost connection or a Postgres message means nothing to a provider. |
 | **Changing the type to whole-year clears the dates** (`useActivityForm`) | Keeping them hidden | The database rejects dates on a whole-year activity. |
+
+### Customer view (#78)
+
+Customers see the dates on the catalog card and in the detail, formatted in the language of the device, and the detail adds the label *Temporary activity*. Whole-year activities show no dates.
+
+| Decision | Alternatives considered | Why |
+|---|---|---|
+| **Finished activities stay in the list, marked as finished**, and the detail says so too | Hiding them from the list | Team decision: customers can still see what a provider has offered. They cannot be requested any more (`send_enrolment_request` rejects them), and recommendations leave them out. An activity is finished from the day after `end_date`. |
+| **The enrolment counter comes from `activity_capacity()`** | Counting rows from the app | Customers cannot read other families' requests, and the function counts only accepted ones. It shows 0 until enrolments exist (C9). |
+| **If the counter cannot be read it is hidden** | Failing the whole screen / showing 0 | It is not essential for the detail, and a wrong 0 would be misleading. |
+
+Search (`search_activities`) also returns finished activities, so its results need the same mark (C6).
