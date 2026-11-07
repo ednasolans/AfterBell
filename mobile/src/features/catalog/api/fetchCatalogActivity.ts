@@ -17,6 +17,18 @@ async function fetchAddress(addressId: string): Promise<string | null> {
   return data ? formatAddress(toAddress(data)) : null;
 }
 
+// Accepted enrolment requests. Like the address, it is not essential for the
+// detail, so a failure hides the counter instead of the whole screen.
+async function fetchEnrolledCount(activityId: string): Promise<number | null> {
+  const { data, error } = await supabase.rpc("activity_capacity", {
+    p_activity_id: activityId,
+  });
+  if (error) {
+    return null;
+  }
+  return data[0]?.taken_places ?? 0;
+}
+
 // One published activity with its provider and address. It is null when the
 // activity does not exist or its provider has no approved profile.
 export async function fetchCatalogActivity(
@@ -35,10 +47,11 @@ export async function fetchCatalogActivity(
   }
 
   const activity = toActivity(data);
-  const [profiles, contacts, address] = await Promise.all([
+  const [profiles, contacts, address, enrolledCount] = await Promise.all([
     fetchApprovedProfiles([activity.providerId]),
     fetchContacts([activity.providerId]),
     fetchAddress(activity.addressId),
+    fetchEnrolledCount(activity.id),
   ]);
 
   const profile = profiles.get(activity.providerId);
@@ -53,5 +66,6 @@ export async function fetchCatalogActivity(
       contacts.get(activity.providerId) ?? null,
     ),
     address,
+    enrolledCount,
   };
 }

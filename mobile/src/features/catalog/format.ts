@@ -1,4 +1,6 @@
+import { type Activity } from "@/lib/activity";
 import { type AgeRange } from "@/lib/ages";
+import { formatDate, toIsoDate } from "@/lib/dates";
 import { formatPrice as formatPriceValue } from "@/lib/price";
 
 export function formatAgeRanges(ranges: AgeRange[]): string {
@@ -24,8 +26,18 @@ export function formatDateRange(
   startDate: string | null,
   endDate: string | null,
 ): string | null {
-  if (startDate && endDate) return `${startDate} – ${endDate}`;
-  if (startDate) return `From ${startDate}`;
-  if (endDate) return `Until ${endDate}`;
+  if (startDate && endDate) {
+    return `${formatDate(startDate)} – ${formatDate(endDate)}`;
+  }
+  if (startDate) return `From ${formatDate(startDate)}`;
+  if (endDate) return `Until ${formatDate(endDate)}`;
   return null;
+}
+
+// An activity is still on during its last day. ISO dates compare as text.
+export function isFinished(
+  { endDate }: Pick<Activity, "endDate">,
+  today: string = toIsoDate(new Date()),
+): boolean {
+  return endDate !== null && endDate < today;
 }
