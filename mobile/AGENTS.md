@@ -79,10 +79,10 @@ mobile/src/
 │       ├── hooks/          Form state and TanStack Query hooks
 │       ├── types.ts        Data types and value lists of this feature
 │       └── validation.ts   Pure validation functions
-├── components/     Reusable UI shared by several features (TextField, Select, MultiSelect, ScheduleEditor,
+├── components/     Reusable UI shared by several features (TextField, Select, MultiSelect, DateField, ScheduleEditor,
 │                   PriceField, AddressesEditor, FormSubmit, LoadingView, ErrorView…)
 ├── lib/            Shared non-UI code: Supabase client, generated DB types, query client,
-│                   shared value lists and helpers (ages, activityCategories, addresses, schedule, price, text, validation)
+│                   shared value lists and helpers (ages, activityCategories, addresses, dates, schedule, price, text, validation)
 ├── test-utils/     Helpers used only by tests (excluded from coverage)
 └── theme/          Colours, typography and spacing
 ```
@@ -260,6 +260,7 @@ The design and its reasons are in [`docs/decisions/database.md`](../docs/decisio
 - **Activities point to `provider_id`**, never to the profile.
 - **Technical sheets are private.** Data that customers need from a sheet must be exposed on purpose with a function that returns only those columns (`public_provider_contacts()`), never by opening the whole table.
 - **Temporary activities:** `type = 'temporary'` needs `start_date` and `end_date`; `whole_year` activities cannot have dates. The app sends the type and the dates together.
+- **Dates are ISO text (`YYYY-MM-DD`).** Convert them with `lib/dates.ts`, never with `toISOString()`: it uses UTC and can move the date to the day before.
 - **Events** have their own entity (#91). The value `event` of `activities.type` stays until that issue decides what to do with it.
 - **Publication:** new activities are `draft` and customers only see `published` ones. Publishing needs a complete technical sheet and a structured address (`require_publication_fields`).
 - **Addresses are structured** (street, number, floor, door, postal code, city, province, country). `address` only remains for older rows: read addresses with `toAddress`.

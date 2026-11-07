@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { DateField } from "@/components/DateField";
 import { FormSubmit } from "@/components/FormSubmit";
 import { MultiSelect } from "@/components/MultiSelect";
 import { NumberField } from "@/components/NumberField";
@@ -23,7 +24,15 @@ import { parseInteger } from "@/lib/numbers";
 import { hasErrors } from "@/lib/validation";
 
 import { useActivityForm } from "../hooks/useActivityForm";
-import { type ActivityForm as ActivityFormValues } from "../types";
+import { toSaveErrorMessage } from "../saveErrors";
+
+import {
+  ACTIVITY_TYPE_LABELS,
+  SELECTABLE_ACTIVITY_TYPES,
+  type ActivityForm as ActivityFormValues,
+  type ActivityType,
+} from "../types";
+
 import { AddressSelect } from "./AddressSelect";
 import { colors } from "@/theme/colors";
 
@@ -32,13 +41,21 @@ const CATEGORY_OPTIONS: SelectOption<ActivityCategory>[] =
     value: category,
     label: ACTIVITY_CATEGORY_LABELS[category],
   }));
+
 const AGE_OPTIONS: SelectOption<AgeRange>[] = AGE_RANGES.map((age) => ({
   value: age,
   label: AGE_RANGE_LABELS[age],
 }));
+
 const PRICE_PERIOD_OPTIONS: SelectOption<PricePeriod>[] = PRICE_PERIODS.map(
   (period) => ({ value: period, label: PRICE_PERIOD_LABELS[period] }),
 );
+
+const ACTIVITY_TYPE_OPTIONS: SelectOption<ActivityType>[] =
+  SELECTABLE_ACTIVITY_TYPES.map((type) => ({
+    value: type,
+    label: ACTIVITY_TYPE_LABELS[type],
+  }));
 
 type ActivityFormProps = {
   // Starting values: empty to create, the saved activity to edit
@@ -47,7 +64,8 @@ type ActivityFormProps = {
   // Saves the activity (e.g. mutateAsync of a mutation); it must throw if saving fails
   onSubmit: (form: ActivityFormValues) => Promise<unknown>;
   isSaving: boolean;
-  saveFailed: boolean;
+  // Why the last save failed, or null
+  saveError: Error | null;
   onSaved?: () => void;
 };
 
@@ -56,7 +74,7 @@ export function ActivityForm({
   submitLabel,
   onSubmit,
   isSaving,
-  saveFailed,
+  saveError,
   onSaved,
 }: ActivityFormProps) {
   const { form, updateField, errors, submit } = useActivityForm({
@@ -160,6 +178,35 @@ export function ActivityForm({
         </Text>
       </View>
 
+      <Select
+        label="Activity type"
+        placeholder="Choose a type"
+        options={ACTIVITY_TYPE_OPTIONS}
+        value={form.type}
+        onChange={(value) => updateField("type", value)}
+        error={errors.type}
+      />
+
+      {form.type === "temporary" ? (
+        <>
+          <DateField
+            label="Start date"
+            placeholder="Choose a date"
+            value={form.startDate}
+            onChange={(value) => updateField("startDate", value)}
+            error={errors.startDate}
+          />
+          <DateField
+            label="End date"
+            placeholder="Choose a date"
+            value={form.endDate}
+            onChange={(value) => updateField("endDate", value)}
+            minimumDate={form.startDate}
+            error={errors.endDate}
+          />
+        </>
+      ) : null}
+
       <ScheduleEditor
         schedule={form.schedule}
         onChange={(schedule) => updateField("schedule", schedule)}
@@ -207,11 +254,7 @@ export function ActivityForm({
         onPress={handleSave}
         isSaving={isSaving}
         hasFieldErrors={hasErrors(errors)}
-        saveError={
-          saveFailed
-            ? "The activity could not be saved. Please try again."
-            : null
-        }
+        saveError={toSaveErrorMessage(saveError)}
       />
     </ScrollView>
   );

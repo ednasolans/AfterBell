@@ -4,3 +4,9 @@ process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 jest.mock("@expo/vector-icons", () => ({
   Ionicons: () => null,
 }));
+
+jest.mock("@react-native-community/datetimepicker", () => ({
+  __esModule: true,
+  default: jest.fn(() => null),
+  DateTimePickerAndroid: { open: jest.fn() },
+}));

@@ -14,7 +14,7 @@ University group project of the Master's in Informatics Engineering (MEINF, Univ
 | AI-generated provider profile (generate, edit, approve) | Sprint 1 | [ai-profile.md](docs/features/ai-profile.md) |
 | Activity publication (create, list, edit, delete) | Sprint 1 | [activities.md](docs/features/activities.md) |
 | Activity catalog for customers | Sprint 1 | — |
-| Temporary activities (backend; form and customer view in progress) | Sprint 2 | [activities.md](docs/features/activities.md) |
+| Temporary activities (backend, provider form, customer view and AI profile) | Sprint 2 | [activities.md](docs/features/activities.md) |
 | Search and filters, events, tutors, recommendations, favourites and enrolment requests | Sprint 2 | — |
 
 ## Tech stack

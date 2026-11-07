@@ -1,6 +1,7 @@
+import { toIsoDate } from "@/lib/dates";
 import { isBlank } from "@/lib/validation";
 
-import { type ActivityForm } from "./types";
+import { EMPTY_ACTIVITY_FORM, type ActivityForm } from "./types";
 
 export type ActivityErrors = Partial<Record<keyof ActivityForm, string>>;
 
@@ -39,6 +40,35 @@ function validateSchedule(form: ActivityForm, errors: ActivityErrors): void {
   }
 }
 
+// Same rules as the validate_activity_dates trigger. A past start date is only
+// wrong when it is being set: an activity that has already started can still
+// be edited. ISO dates can be compared as text.
+function validateDates(
+  form: ActivityForm,
+  original: ActivityForm,
+  today: string,
+  errors: ActivityErrors,
+): void {
+  if (form.type !== "temporary") {
+    return;
+  }
+  const { startDate, endDate } = form;
+  if (startDate === null) {
+    errors.startDate = "Choose the start date";
+  }
+  if (endDate === null) {
+    errors.endDate = "Choose the end date";
+  }
+  if (startDate !== null && endDate !== null && endDate < startDate) {
+    errors.endDate = "The end date cannot be before the start date";
+  }
+  const isSettingStart =
+    startDate !== original.startDate || form.type !== original.type;
+  if (startDate !== null && startDate < today && isSettingStart) {
+    errors.startDate = "The start date cannot be in the past";
+  }
+}
+
 function validatePrice(form: ActivityForm, errors: ActivityErrors): void {
   if (form.price === null) {
     errors.price = "Enter the price";
@@ -64,12 +94,18 @@ function validateParticipants(
   }
 }
 
-export function validateActivity(form: ActivityForm): ActivityErrors {
+// `original` holds the saved values when editing, and is empty when creating
+export function validateActivity(
+  form: ActivityForm,
+  original: ActivityForm = EMPTY_ACTIVITY_FORM,
+  today: string = toIsoDate(new Date()),
+): ActivityErrors {
   const errors: ActivityErrors = {};
   validateDetails(form, errors);
   validateAudience(form, errors);
   validatePlace(form, errors);
   validateSchedule(form, errors);
+  validateDates(form, original, today, errors);
   validatePrice(form, errors);
   validateParticipants(form, errors);
   return errors;

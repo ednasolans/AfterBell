@@ -20,4 +20,17 @@ describe("ActivityCard", () => {
     expect(screen.getByText("Ages: 7-9, 10-12")).toBeOnTheScreen();
     expect(screen.getByText("30 € per month")).toBeOnTheScreen();
   });
+  it("shows the type of a temporary activity", async () => {
+    await render(
+      <ActivityCard
+        activity={{ ...ACTIVITY, type: "temporary" }}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+        isDeleting={false}
+      />,
+    );
+
+    expect(screen.getByText("Temporary")).toBeOnTheScreen();
+    expect(screen.queryByText("Whole year")).not.toBeOnTheScreen();
+  });
 });
