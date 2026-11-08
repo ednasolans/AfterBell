@@ -1,5 +1,7 @@
 import { act, fireEvent, waitFor } from "@testing-library/react-native";
 
+import { formatDate } from "@/lib/dates";
+
 import {
   makeActivity,
   makeCatalogActivity,
@@ -30,6 +32,76 @@ describe("CatalogList", () => {
     expect(getByText("Sports Club")).toBeTruthy();
     expect(getByText("Ages: 7-9, 10-12")).toBeTruthy();
     expect(getByText("15 € per month")).toBeTruthy();
+  });
+
+  it("shows the dates of a temporary activity", async () => {
+    mockFetch.mockResolvedValue([
+      makeCatalogActivity({
+        activity: makeActivity({
+          type: "temporary",
+          startDate: "2099-07-01",
+          endDate: "2099-07-15",
+        }),
+      }),
+    ]);
+
+    const { getByText } = await renderWithQuery(
+      <CatalogList onOpen={jest.fn()} />,
+    );
+
+    await waitFor(() =>
+      expect(
+        getByText(`${formatDate("2099-07-01")} – ${formatDate("2099-07-15")}`),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("marks an activity that has finished", async () => {
+    mockFetch.mockResolvedValue([
+      makeCatalogActivity({
+        activity: makeActivity({
+          type: "temporary",
+          startDate: "2020-07-01",
+          endDate: "2020-07-15",
+        }),
+      }),
+    ]);
+
+    const { getByText } = await renderWithQuery(
+      <CatalogList onOpen={jest.fn()} />,
+    );
+
+    await waitFor(() => expect(getByText("Finished")).toBeTruthy());
+  });
+
+  it("does not mark an activity that has not finished", async () => {
+    mockFetch.mockResolvedValue([
+      makeCatalogActivity({
+        activity: makeActivity({
+          type: "temporary",
+          startDate: "2099-07-01",
+          endDate: "2099-07-15",
+        }),
+      }),
+    ]);
+
+    const { getByText, queryByText } = await renderWithQuery(
+      <CatalogList onOpen={jest.fn()} />,
+    );
+
+    await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
+    expect(queryByText("Finished")).toBeNull();
+  });
+
+  it("shows no dates on a whole-year activity", async () => {
+    mockFetch.mockResolvedValue([makeCatalogActivity()]);
+
+    const { getByText, queryByText } = await renderWithQuery(
+      <CatalogList onOpen={jest.fn()} />,
+    );
+
+    await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
+    expect(queryByText(/–/)).toBeNull();
   });
 
   it("shows the activity without a provider name when it has no contact details", async () => {

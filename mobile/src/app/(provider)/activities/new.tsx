@@ -11,7 +11,7 @@ export default function NewActivityScreen() {
       submitLabel="Create activity"
       onSubmit={createActivity.mutateAsync}
       isSaving={createActivity.isPending}
-      saveFailed={createActivity.isError}
+      saveError={createActivity.error}
       onSaved={() => router.back()}
     />
   );

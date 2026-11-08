@@ -4,7 +4,12 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "@/theme/colors";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
 
-import { formatAgeRanges, formatActivityPrice } from "../format";
+import {
+  formatActivityPrice,
+  formatAgeRanges,
+  formatDateRange,
+  isFinished,
+} from "../format";
 import { type CatalogActivity } from "../types";
 import { ACTIVITY_IMAGES } from "../visuals";
 
@@ -19,6 +24,7 @@ export function CatalogActivityCard({
 }: Readonly<CatalogActivityCardProps>) {
   const { activity, provider } = item;
   const image = ACTIVITY_IMAGES[activity.category];
+  const dates = formatDateRange(activity.startDate, activity.endDate);
 
   return (
     <Pressable
@@ -39,6 +45,11 @@ export function CatalogActivityCard({
             {ACTIVITY_CATEGORY_LABELS[activity.category]}
           </Text>
         </View>
+        {isFinished(activity) ? (
+          <View style={styles.finishedBadge}>
+            <Text style={styles.finishedText}>Finished</Text>
+          </View>
+        ) : null}
         <View style={styles.bookmark}>
           <Ionicons name="heart-outline" size={18} color={colors.text} />
         </View>
@@ -53,6 +64,16 @@ export function CatalogActivityCard({
               color={colors.primaryDark}
             />
             <Text style={styles.provider}>{provider.contact.name}</Text>
+          </View>
+        ) : null}
+        {dates ? (
+          <View style={styles.metaItem}>
+            <Ionicons
+              name="calendar-outline"
+              size={15}
+              color={colors.textMuted}
+            />
+            <Text style={styles.detail}>{dates}</Text>
           </View>
         ) : null}
         <View style={styles.metaRow}>
@@ -109,6 +130,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   categoryText: { color: colors.primaryDark, fontSize: 12, fontWeight: "800" },
+  finishedBadge: {
+    position: "absolute",
+    left: 12,
+    bottom: 12,
+    backgroundColor: colors.danger,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  finishedText: { color: colors.white, fontSize: 12, fontWeight: "800" },
   bookmark: {
     position: "absolute",
     right: 12,

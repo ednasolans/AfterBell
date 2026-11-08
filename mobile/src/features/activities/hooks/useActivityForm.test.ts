@@ -82,4 +82,44 @@ describe("useActivityForm", () => {
 
     expect(saved).toBe(false);
   });
+
+  it("clears the dates when the activity becomes whole-year", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({
+        initialForm: {
+          ...EMPTY_ACTIVITY_FORM,
+          type: "temporary",
+          startDate: "2027-07-01",
+          endDate: "2027-07-15",
+        },
+        onSubmit: jest.fn(),
+      }),
+    );
+
+    await act(() => {
+      result.current.updateField("type", "whole_year");
+    });
+
+    expect(result.current.form.startDate).toBeNull();
+    expect(result.current.form.endDate).toBeNull();
+  });
+
+  it("keeps the dates when another field changes", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({
+        initialForm: {
+          ...EMPTY_ACTIVITY_FORM,
+          type: "temporary",
+          startDate: "2027-07-01",
+        },
+        onSubmit: jest.fn(),
+      }),
+    );
+
+    await act(() => {
+      result.current.updateField("title", "Summer camp");
+    });
+
+    expect(result.current.form.startDate).toBe("2027-07-01");
+  });
 });

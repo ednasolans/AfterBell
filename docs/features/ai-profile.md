@@ -81,3 +81,20 @@ cd mobile && npx expo start
 
 Automated tests: `deno test` in `supabase/functions` and
 `npm test -- ai-profile` in `mobile`.
+
+## Temporary activities (#79)
+
+The profile also mentions the dates of the provider's temporary activities.
+They come from the `activities` table, because the sheet has no dates. Besides
+the sheet, the function sends the title, start date and end date of each one.
+
+- Only activities that are `published` and not finished are sent, up to 5 (the
+  first to start go first). The profile is public, so drafts stay out, and the
+  description is too short for more.
+- Whole-year activities are not sent, so the LLM has no dates to talk about.
+  When there are no temporary activities, the field is left out of the prompt.
+- Activities with a missing date, a wrong date or an empty title are dropped in
+  `toPromptData`, so incomplete data does not break the generation.
+- The dates are read on each generation, so the next profile uses the current
+  ones. Regenerating an approved profile belongs to C2.
+- The prompt is `profile-v6`.

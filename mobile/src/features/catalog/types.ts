@@ -24,7 +24,10 @@ export interface CatalogActivity {
   provider: CatalogProvider;
 }
 
-// The detail screen also shows where the activity takes place
+// The detail screen also shows where the activity takes place and how many
+// people are enrolled
 export interface CatalogActivityDetail extends CatalogActivity {
   address: string | null;
+  // Null when it cannot be read
+  enrolledCount: number | null;
 }
