@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
-
+import { Text } from "react-native";
 import { formatDate } from "@/lib/dates";
 
 import {
@@ -10,6 +10,16 @@ import { ActivityForm } from "./ActivityForm";
 
 jest.mock("./AddressSelect", () => ({
   AddressSelect: () => null,
+}));
+
+// The catalogue of the database, with a category the app does not know yet
+jest.mock("@/lib/useCategories", () => ({
+  useCategories: () => ({
+    data: [
+      { name: "swimming", type: "individual" },
+      { name: "board_games", type: "collective" },
+    ],
+  }),
 }));
 
 const TEMPORARY_FORM: ActivityFormValues = {
@@ -43,6 +53,45 @@ describe("ActivityForm", () => {
     expect(screen.getByText("Age ranges")).toBeOnTheScreen();
     expect(screen.getByText("Price period")).toBeOnTheScreen();
     expect(screen.getByText("Maximum participants")).toBeOnTheScreen();
+  });
+
+  it("offers the categories of the database", async () => {
+    await render(
+      <ActivityForm
+        initialForm={EMPTY_ACTIVITY_FORM}
+        submitLabel="Save"
+        onSubmit={jest.fn()}
+        isSaving={false}
+        saveError={null}
+      />,
+    );
+
+    await fireEvent.press(
+      screen.getByRole("button", { name: "Category: Choose a category" }),
+    );
+    await fireEvent.press(screen.getByRole("radio", { name: /Board games/ }));
+
+    expect(
+      screen.getByRole("button", { name: "Category: Board games" }),
+    ).toBeOnTheScreen();
+    expect(
+      screen.queryByRole("radio", { name: /Football/ }),
+    ).not.toBeOnTheScreen();
+  });
+
+  it("shows the header above the form", async () => {
+    await render(
+      <ActivityForm
+        initialForm={EMPTY_ACTIVITY_FORM}
+        submitLabel="Save"
+        onSubmit={jest.fn()}
+        isSaving={false}
+        saveError={null}
+        header={<Text>Publication header</Text>}
+      />,
+    );
+
+    expect(screen.getByText("Publication header")).toBeOnTheScreen();
   });
 
   it("submits a valid activity", async () => {

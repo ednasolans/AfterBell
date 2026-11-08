@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
+import { categoryLabel } from "@/lib/activityCategories";
 
 import {
   formatActivityPrice,
@@ -11,7 +11,7 @@ import {
   isFinished,
 } from "../format";
 import { type CatalogActivity } from "../types";
-import { ACTIVITY_IMAGES } from "../visuals";
+import { activityImage } from "../visuals";
 
 type CatalogActivityCardProps = {
   item: CatalogActivity;
@@ -23,7 +23,7 @@ export function CatalogActivityCard({
   onPress,
 }: Readonly<CatalogActivityCardProps>) {
   const { activity, provider } = item;
-  const image = ACTIVITY_IMAGES[activity.category];
+  const image = activityImage(activity.category);
   const dates = formatDateRange(activity.startDate, activity.endDate);
 
   return (
@@ -42,7 +42,7 @@ export function CatalogActivityCard({
         />
         <View style={styles.categoryBadge}>
           <Text style={styles.categoryText}>
-            {ACTIVITY_CATEGORY_LABELS[activity.category]}
+            {categoryLabel(activity.category)}
           </Text>
         </View>
         {isFinished(activity) ? (

@@ -41,6 +41,7 @@ describe("toActivity", () => {
       price: 30,
       pricePeriod: "per_month",
       maxParticipants: 12,
+      status: "published",
       createdAt: "2026-10-20T08:00:00Z",
     });
   });

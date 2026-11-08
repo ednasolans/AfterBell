@@ -24,6 +24,7 @@ export function makeActivity(overrides: Partial<Activity> = {}): Activity {
     price: 15,
     pricePeriod: "per_month",
     maxParticipants: 20,
+    status: "published",
     createdAt: "2026-10-01T10:00:00Z",
     ...overrides,
   };

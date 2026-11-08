@@ -6,7 +6,7 @@ import { fetchApprovedProfiles } from "./fetchApprovedProfiles";
 import { fetchContacts } from "./fetchContacts";
 import { toCatalogProvider } from "./toCatalogProvider";
 
-// The activities of the providers that have an approved profile,
+// The published activities of the providers that have an approved profile,
 // newest first, each with the profile and contact details of its provider.
 export async function fetchCatalogActivities(): Promise<CatalogActivity[]> {
   const profiles = await fetchApprovedProfiles();
@@ -18,6 +18,7 @@ export async function fetchCatalogActivities(): Promise<CatalogActivity[]> {
     .from("activities")
     .select("*")
     .in("provider_id", Array.from(profiles.keys()))
+    .eq("status", "published")
     .order("created_at", { ascending: false });
   if (error) {
     throw new Error(error.message);

@@ -30,7 +30,8 @@ async function fetchEnrolledCount(activityId: string): Promise<number | null> {
 }
 
 // One published activity with its provider and address. It is null when the
-// activity does not exist or its provider has no approved profile.
+// activity does not exist, is not published or its provider has no approved
+// profile.
 export async function fetchCatalogActivity(
   id: string,
 ): Promise<CatalogActivityDetail | null> {
@@ -38,6 +39,7 @@ export async function fetchCatalogActivity(
     .from("activities")
     .select("*")
     .eq("id", id)
+    .eq("status", "published")
     .maybeSingle();
   if (error) {
     throw new Error(error.message);

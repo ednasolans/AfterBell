@@ -8,8 +8,9 @@ import {
 
 import { type Activity } from "@/lib/activity";
 import { colors } from "@/theme/colors";
-import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
-import { ACTIVITY_IMAGES } from "@/features/catalog/visuals";
+import { categoryLabel } from "@/lib/activityCategories";
+import { ACTIVITY_STATUS_LABELS } from "@/lib/activityStatus";
+import { activityImage } from "@/features/catalog/visuals";
 import { Image } from "expo-image";
 
 import { ACTIVITY_TYPE_LABELS } from "../types";
@@ -34,13 +35,28 @@ export function ActivityCard({
     <View style={styles.card}>
       <View style={styles.imageWrap}>
         <Image
-          source={ACTIVITY_IMAGES[activity.category]}
+          source={activityImage(activity.category)}
           style={styles.image}
           contentFit="cover"
         />
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
-            {ACTIVITY_CATEGORY_LABELS[activity.category]}
+            {categoryLabel(activity.category)}
+          </Text>
+        </View>
+        <View
+          style={[
+            styles.status,
+            activity.status === "published" && styles.statusPublished,
+          ]}
+        >
+          <Text
+            style={[
+              styles.statusText,
+              activity.status === "published" && styles.statusTextPublished,
+            ]}
+          >
+            {ACTIVITY_STATUS_LABELS[activity.status]}
           </Text>
         </View>
       </View>
@@ -144,6 +160,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   badgeText: { color: colors.primaryDark, fontSize: 11, fontWeight: "800" },
+  // Draft or Published, in the opposite corner to the category
+  status: {
+    position: "absolute",
+    right: 12,
+    top: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 9,
+    backgroundColor: colors.surfaceMuted,
+  },
+  statusPublished: { backgroundColor: colors.primarySoft },
+  statusText: { color: colors.textMuted, fontSize: 11, fontWeight: "800" },
+  statusTextPublished: { color: colors.primaryDark },
   content: { padding: 15, gap: 6 },
   titleRow: {
     flexDirection: "row",

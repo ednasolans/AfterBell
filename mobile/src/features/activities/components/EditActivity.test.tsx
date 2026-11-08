@@ -21,6 +21,15 @@ jest.mock("../api/updateActivity", () => ({ updateActivity: jest.fn() }));
 jest.mock("../api/fetchMyAddresses", () => ({
   fetchMyAddresses: jest.fn().mockResolvedValue([]),
 }));
+jest.mock("@/lib/categories", () => ({
+  fetchCategories: jest.fn().mockResolvedValue([]),
+}));
+jest.mock("../api/changeActivityStatus", () => ({
+  changeActivityStatus: jest.fn(),
+}));
+jest.mock("../api/fetchPublicationIssues", () => ({
+  fetchPublicationIssues: jest.fn().mockResolvedValue([]),
+}));
 
 async function renderEdit(onSaved = jest.fn()) {
   await render(<EditActivity id="activity-1" onSaved={onSaved} />, {
@@ -41,6 +50,18 @@ describe("EditActivity", () => {
       await screen.findByDisplayValue("Swimming for kids"),
     ).toBeOnTheScreen();
     expect(fetchActivity).toHaveBeenCalledWith("activity-1");
+  });
+
+  it("shows the publication panel above the form", async () => {
+    jest.mocked(fetchActivity).mockResolvedValue(ACTIVITY);
+    await renderEdit();
+
+    expect(
+      await screen.findByRole("header", { name: "Publication" }),
+    ).toBeOnTheScreen();
+    expect(
+      await screen.findByRole("button", { name: "Publish" }),
+    ).toBeOnTheScreen();
   });
 
   it("saves the changes to the same activity", async () => {

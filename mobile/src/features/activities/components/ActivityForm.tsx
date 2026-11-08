@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { type ReactNode } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { DateField } from "@/components/DateField";
@@ -8,11 +9,8 @@ import { NumberField } from "@/components/NumberField";
 import { Select, type SelectOption } from "@/components/Select";
 import { ScheduleEditor } from "@/components/ScheduleEditor";
 import { TextField } from "@/components/TextField";
-import {
-  ACTIVITY_CATEGORIES,
-  ACTIVITY_CATEGORY_LABELS,
-  type ActivityCategory,
-} from "@/lib/activityCategories";
+import { categoryOptions } from "@/lib/activityCategories";
+import { useCategories } from "@/lib/useCategories";
 import { AGE_RANGES, AGE_RANGE_LABELS, type AgeRange } from "@/lib/ages";
 import {
   PRICE_PERIODS,
@@ -35,12 +33,6 @@ import {
 
 import { AddressSelect } from "./AddressSelect";
 import { colors } from "@/theme/colors";
-
-const CATEGORY_OPTIONS: SelectOption<ActivityCategory>[] =
-  ACTIVITY_CATEGORIES.map((category) => ({
-    value: category,
-    label: ACTIVITY_CATEGORY_LABELS[category],
-  }));
 
 const AGE_OPTIONS: SelectOption<AgeRange>[] = AGE_RANGES.map((age) => ({
   value: age,
@@ -67,6 +59,7 @@ type ActivityFormProps = {
   // Why the last save failed, or null
   saveError: Error | null;
   onSaved?: () => void;
+  header?: ReactNode;
 };
 
 export function ActivityForm({
@@ -76,7 +69,9 @@ export function ActivityForm({
   isSaving,
   saveError,
   onSaved,
+  header,
 }: ActivityFormProps) {
+  const categories = useCategories();
   const { form, updateField, errors, submit } = useActivityForm({
     initialForm,
     onSubmit,
@@ -94,6 +89,7 @@ export function ActivityForm({
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
     >
+      {header}
       <Text style={styles.eyebrow}>ACTIVITY SETUP</Text>
       <Text style={styles.title} accessibilityRole="header">
         Create an activity
@@ -132,7 +128,7 @@ export function ActivityForm({
       <Select
         label="Category"
         placeholder="Choose a category"
-        options={CATEGORY_OPTIONS}
+        options={categoryOptions(categories.data)}
         value={form.category}
         onChange={(value) => updateField("category", value)}
         error={errors.category}

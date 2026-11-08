@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
+import { categoryLabel } from "@/lib/activityCategories";
 import { LoadingView } from "@/components/LoadingView";
 import { colors } from "@/theme/colors";
 
@@ -82,7 +83,7 @@ export function CatalogActivityDetail({
         label="Price"
         value={formatActivityPrice(activity.price, activity.pricePeriod)}
       />
-      <DetailRow label="Category" value={activity.category} />
+      <DetailRow label="Category" value={categoryLabel(activity.category)} />
       {address ? <DetailRow label="Address" value={address} /> : null}
       {enrolledCount === null ? null : (
         <DetailRow

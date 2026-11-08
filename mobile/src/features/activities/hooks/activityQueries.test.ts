@@ -36,6 +36,7 @@ const ACTIVITY: Activity = {
   price: 30,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  status: "draft",
   createdAt: "2026-10-20T08:00:00Z",
 };
 
