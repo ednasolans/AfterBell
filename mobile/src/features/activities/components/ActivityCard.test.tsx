@@ -43,6 +43,19 @@ describe("ActivityCard", () => {
     expect(screen.getByText("Published")).toBeOnTheScreen();
   });
 
+  it("shows a category the app does not know yet", async () => {
+    await render(
+      <ActivityCard
+        activity={{ ...ACTIVITY, category: "board_games" }}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+        isDeleting={false}
+      />,
+    );
+
+    expect(screen.getByText("Board games")).toBeOnTheScreen();
+  });
+
   it("shows the type of a temporary activity", async () => {
     await render(
       <ActivityCard

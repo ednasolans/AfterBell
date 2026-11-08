@@ -1,5 +1,4 @@
 import { type Activity } from "@/lib/activity";
-import { type ActivityCategory } from "@/lib/activityCategories";
 import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
@@ -20,7 +19,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
 export interface ActivityForm {
   title: string;
   description: string;
-  category: ActivityCategory | null;
+  category: string | null;
   type: ActivityType;
   // ISO dates (YYYY-MM-DD)
   startDate: string | null;

@@ -9,11 +9,8 @@ import { NumberField } from "@/components/NumberField";
 import { Select, type SelectOption } from "@/components/Select";
 import { ScheduleEditor } from "@/components/ScheduleEditor";
 import { TextField } from "@/components/TextField";
-import {
-  ACTIVITY_CATEGORIES,
-  ACTIVITY_CATEGORY_LABELS,
-  type ActivityCategory,
-} from "@/lib/activityCategories";
+import { categoryOptions } from "@/lib/activityCategories";
+import { useCategories } from "@/lib/useCategories";
 import { AGE_RANGES, AGE_RANGE_LABELS, type AgeRange } from "@/lib/ages";
 import {
   PRICE_PERIODS,
@@ -36,12 +33,6 @@ import {
 
 import { AddressSelect } from "./AddressSelect";
 import { colors } from "@/theme/colors";
-
-const CATEGORY_OPTIONS: SelectOption<ActivityCategory>[] =
-  ACTIVITY_CATEGORIES.map((category) => ({
-    value: category,
-    label: ACTIVITY_CATEGORY_LABELS[category],
-  }));
 
 const AGE_OPTIONS: SelectOption<AgeRange>[] = AGE_RANGES.map((age) => ({
   value: age,
@@ -80,6 +71,7 @@ export function ActivityForm({
   onSaved,
   header,
 }: ActivityFormProps) {
+  const categories = useCategories();
   const { form, updateField, errors, submit } = useActivityForm({
     initialForm,
     onSubmit,
@@ -136,7 +128,7 @@ export function ActivityForm({
       <Select
         label="Category"
         placeholder="Choose a category"
-        options={CATEGORY_OPTIONS}
+        options={categoryOptions(categories.data)}
         value={form.category}
         onChange={(value) => updateField("category", value)}
         error={errors.category}

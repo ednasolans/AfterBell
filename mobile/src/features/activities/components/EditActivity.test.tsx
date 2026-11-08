@@ -21,6 +21,9 @@ jest.mock("../api/updateActivity", () => ({ updateActivity: jest.fn() }));
 jest.mock("../api/fetchMyAddresses", () => ({
   fetchMyAddresses: jest.fn().mockResolvedValue([]),
 }));
+jest.mock("@/lib/categories", () => ({
+  fetchCategories: jest.fn().mockResolvedValue([]),
+}));
 jest.mock("../api/changeActivityStatus", () => ({
   changeActivityStatus: jest.fn(),
 }));

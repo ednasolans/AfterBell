@@ -1,4 +1,3 @@
-import { type ActivityCategory } from "@/lib/activityCategories";
 import { type Tables } from "@/lib/database.types";
 import { type ActivityStatus } from "@/lib/activityStatus";
 import { type AgeRange } from "@/lib/ages";
@@ -11,7 +10,7 @@ export interface Activity {
   addressId: string;
   title: string;
   description: string | null;
-  category: ActivityCategory;
+  category: string;
   type: "whole_year" | "event" | "temporary";
   // Only activities with dates have them: never whole-year ones
   startDate: string | null;
@@ -21,7 +20,7 @@ export interface Activity {
   price: number;
   pricePeriod: PricePeriod;
   maxParticipants: number;
-  status: ActivityStatus;     // Only published activities are visible to customers
+  status: ActivityStatus; // Only published activities are visible to customers
   createdAt: string;
 }
 
@@ -34,7 +33,7 @@ export function toActivity(row: ActivityRow): Activity {
     addressId: row.address_id,
     title: row.title,
     description: row.description,
-    category: row.category as ActivityCategory,
+    category: row.category,
     type: row.type as Activity["type"],
     startDate: row.start_date,
     endDate: row.end_date,

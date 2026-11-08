@@ -23,3 +23,11 @@ export const ACTIVITY_IMAGES: Record<ActivityCategory, string> = {
   other:
     "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80",
 };
+
+// Image of a category, or the "other" image for categories added to the
+// database after this version of the app
+export function activityImage(category: string): string {
+  return category in ACTIVITY_IMAGES
+    ? ACTIVITY_IMAGES[category as ActivityCategory]
+    : ACTIVITY_IMAGES.other;
+}

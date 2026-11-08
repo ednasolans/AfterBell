@@ -8,9 +8,9 @@ import {
 
 import { type Activity } from "@/lib/activity";
 import { colors } from "@/theme/colors";
-import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
+import { categoryLabel } from "@/lib/activityCategories";
 import { ACTIVITY_STATUS_LABELS } from "@/lib/activityStatus";
-import { ACTIVITY_IMAGES } from "@/features/catalog/visuals";
+import { activityImage } from "@/features/catalog/visuals";
 import { Image } from "expo-image";
 
 import { ACTIVITY_TYPE_LABELS } from "../types";
@@ -35,13 +35,13 @@ export function ActivityCard({
     <View style={styles.card}>
       <View style={styles.imageWrap}>
         <Image
-          source={ACTIVITY_IMAGES[activity.category]}
+          source={activityImage(activity.category)}
           style={styles.image}
           contentFit="cover"
         />
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
-            {ACTIVITY_CATEGORY_LABELS[activity.category]}
+            {categoryLabel(activity.category)}
           </Text>
         </View>
         <View
