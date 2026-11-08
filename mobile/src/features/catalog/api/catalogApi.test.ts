@@ -130,6 +130,10 @@ describe("fetchCatalogActivities", () => {
       "in",
       ["provider_id", ["p1"]],
     ]);
+    expect(queries.activities.calls).toContainEqual([
+      "eq",
+      ["status", "published"],
+    ]);
   });
 
   it("leaves the contact details empty when the provider has no technical sheet", async () => {
@@ -275,9 +279,13 @@ describe("fetchCatalogActivity", () => {
   });
 
   it("returns null when the activity does not exist or is not published", async () => {
-    mockTables({ activities: { data: null, error: null } });
+    const queries = mockTables({ activities: { data: null, error: null } });
 
     expect(await fetchCatalogActivity("missing")).toBeNull();
+    expect(queries.activities.calls).toContainEqual([
+      "eq",
+      ["status", "published"],
+    ]);
     expect(mockFrom).toHaveBeenCalledTimes(1);
   });
 

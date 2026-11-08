@@ -186,6 +186,18 @@ describe("CatalogActivityDetail", () => {
     expect(queryByText("Email")).toBeNull();
   });
 
+  it("shows the label of the category, also for new categories", async () => {
+    mockFetch.mockResolvedValue(
+      makeDetail({ activity: makeActivity({ category: "board_games" }) }),
+    );
+
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() => expect(getByText("Board games")).toBeTruthy());
+  });
+
   it("says so when the activity does not exist anymore", async () => {
     mockFetch.mockResolvedValue(null);
 
