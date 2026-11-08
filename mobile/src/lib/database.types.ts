@@ -7,31 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       accounts: {
@@ -608,6 +583,10 @@ export type Database = {
           taken_places: number;
         }[];
       };
+      activity_publication_issues: {
+        Args: { p_activity_id: string };
+        Returns: string[];
+      };
       available_activity_filters: {
         Args: Record<PropertyKey, never>;
         Returns: Json;
@@ -647,6 +626,19 @@ export type Database = {
           provider_id: string;
           website: string;
         }[];
+      };
+      publication_issues: {
+        Args: {
+          p_activity_id: string;
+          p_address_id: string;
+          p_category: string;
+          p_end_date: string;
+          p_is_tutor: boolean;
+          p_provider_id: string;
+          p_start_date: string;
+          p_type: string;
+        };
+        Returns: string[];
       };
       recommend_activities: {
         Args: { p_city: string; p_family_profile_id: string };
@@ -864,9 +856,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
