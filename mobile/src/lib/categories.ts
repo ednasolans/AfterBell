@@ -1,4 +1,4 @@
-import { ACTIVITY_CATEGORY_LABELS } from "@/lib/activityCategories";
+import { categoryLabel } from "@/lib/activityCategories";
 import { supabase } from "@/lib/supabase";
 
 // Values of categories.category_type (CHECK constraint)
@@ -27,16 +27,4 @@ export async function fetchCategories(): Promise<Category[]> {
       type: row.category_type as CategoryType,
     }))
     .sort((a, b) => categoryLabel(a.name).localeCompare(categoryLabel(b.name)));
-}
-
-// Label of a category for display. Categories added to the database after
-// this version of the app have no label yet: "board_games" → "Board games".
-export function categoryLabel(name: string): string {
-  if (name in ACTIVITY_CATEGORY_LABELS) {
-    return ACTIVITY_CATEGORY_LABELS[
-      name as keyof typeof ACTIVITY_CATEGORY_LABELS
-    ];
-  }
-  const words = name.replaceAll("_", " ").trim();
-  return words.charAt(0).toUpperCase() + words.slice(1);
 }

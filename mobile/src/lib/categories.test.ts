@@ -1,5 +1,4 @@
-import { categoryLabel, fetchCategories } from "@/lib/categories";
-import { supabase } from "@/lib/supabase";
+import { fetchCategories } from "@/lib/categories";import { supabase } from "@/lib/supabase";
 import { createQueryBuilderMock } from "@/test-utils/supabaseQueryMock";
 
 // Replace the real client: tests must not need a database
@@ -49,19 +48,5 @@ describe("fetchCategories", () => {
     mockQuery({ data: null, error: { message: "permission denied" } });
 
     await expect(fetchCategories()).rejects.toThrow("permission denied");
-  });
-});
-
-describe("categoryLabel", () => {
-  it("returns the label of a known category", () => {
-    expect(categoryLabel("football")).toBe("Football");
-  });
-
-  it("builds a label for a category the app does not know yet", () => {
-    expect(categoryLabel("board_games")).toBe("Board games");
-  });
-
-  it("capitalises a one-word unknown category", () => {
-    expect(categoryLabel("chess")).toBe("Chess");
   });
 });
