@@ -28,7 +28,6 @@ export const ACTIVITY_CATEGORY_LABELS: Record<ActivityCategory, string> = {
   other: "Other",
 };
 
-
 // Label of a category for display. Categories added to the database after
 // this version of the app have no label yet: "board_games" → "Board games".
 export function categoryLabel(name: string): string {

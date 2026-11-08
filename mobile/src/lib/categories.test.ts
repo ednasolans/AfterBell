@@ -1,4 +1,5 @@
-import { fetchCategories } from "@/lib/categories";import { supabase } from "@/lib/supabase";
+import { fetchCategories } from "@/lib/categories";
+import { supabase } from "@/lib/supabase";
 import { createQueryBuilderMock } from "@/test-utils/supabaseQueryMock";
 
 // Replace the real client: tests must not need a database
