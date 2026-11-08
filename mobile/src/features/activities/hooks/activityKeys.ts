@@ -5,4 +5,6 @@ export const activityKeys = {
   all: ["activities"] as const,
   mine: () => [...activityKeys.all, "mine"] as const,
   detail: (id: string) => [...activityKeys.all, "detail", id] as const,
+  publicationIssues: (id: string) =>
+    [...activityKeys.all, "publication-issues", id] as const,
 };
