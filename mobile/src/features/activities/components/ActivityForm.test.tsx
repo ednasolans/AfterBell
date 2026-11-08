@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
-
+import { Text } from "react-native";
 import { formatDate } from "@/lib/dates";
 
 import {
@@ -43,6 +43,20 @@ describe("ActivityForm", () => {
     expect(screen.getByText("Age ranges")).toBeOnTheScreen();
     expect(screen.getByText("Price period")).toBeOnTheScreen();
     expect(screen.getByText("Maximum participants")).toBeOnTheScreen();
+  });
+  it("shows the header above the form", async () => {
+    await render(
+      <ActivityForm
+        initialForm={EMPTY_ACTIVITY_FORM}
+        submitLabel="Save"
+        onSubmit={jest.fn()}
+        isSaving={false}
+        saveError={null}
+        header={<Text>Publication header</Text>}
+      />,
+    );
+
+    expect(screen.getByText("Publication header")).toBeOnTheScreen();
   });
 
   it("submits a valid activity", async () => {

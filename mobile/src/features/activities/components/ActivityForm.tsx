@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { type ReactNode } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { DateField } from "@/components/DateField";
@@ -67,6 +68,7 @@ type ActivityFormProps = {
   // Why the last save failed, or null
   saveError: Error | null;
   onSaved?: () => void;
+  header?: ReactNode;
 };
 
 export function ActivityForm({
@@ -76,6 +78,7 @@ export function ActivityForm({
   isSaving,
   saveError,
   onSaved,
+  header,
 }: ActivityFormProps) {
   const { form, updateField, errors, submit } = useActivityForm({
     initialForm,
@@ -94,6 +97,7 @@ export function ActivityForm({
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
     >
+      {header}
       <Text style={styles.eyebrow}>ACTIVITY SETUP</Text>
       <Text style={styles.title} accessibilityRole="header">
         Create an activity
