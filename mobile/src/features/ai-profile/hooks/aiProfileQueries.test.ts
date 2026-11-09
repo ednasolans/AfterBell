@@ -35,7 +35,7 @@ jest.mock("../api/updateMyProfile", () => ({
   approveProfile: jest.fn(),
   discardProfileChanges: jest.fn(),
 }));
-
+  
 const PROFILE: ProviderProfile = {
   headline: "Music lessons in Lleida",
   description: "A music school.",

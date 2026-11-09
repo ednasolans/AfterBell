@@ -1,0 +1,78 @@
+warning: in the working copy of 'mobile/src/lib/database.types.ts', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/mobile/src/lib/database.types.ts b/mobile/src/lib/database.types.ts[m
+[1mindex 44894ab..b92e3a2 100644[m
+[1m--- a/mobile/src/lib/database.types.ts[m
+[1m+++ b/mobile/src/lib/database.types.ts[m
+[36m@@ -7,31 +7,6 @@[m [mexport type Json =[m
+   | Json[];[m
+ [m
+ export type Database = {[m
+[31m-  graphql_public: {[m
+[31m-    Tables: {[m
+[31m-      [_ in never]: never;[m
+[31m-    };[m
+[31m-    Views: {[m
+[31m-      [_ in never]: never;[m
+[31m-    };[m
+[31m-    Functions: {[m
+[31m-      graphql: {[m
+[31m-        Args: {[m
+[31m-          extensions?: Json;[m
+[31m-          operationName?: string;[m
+[31m-          query?: string;[m
+[31m-          variables?: Json;[m
+[31m-        };[m
+[31m-        Returns: Json;[m
+[31m-      };[m
+[31m-    };[m
+[31m-    Enums: {[m
+[31m-      [_ in never]: never;[m
+[31m-    };[m
+[31m-    CompositeTypes: {[m
+[31m-      [_ in never]: never;[m
+[31m-    };[m
+[31m-  };[m
+   public: {[m
+     Tables: {[m
+       accounts: {[m
+[36m@@ -608,6 +583,10 @@[m [mexport type Database = {[m
+           taken_places: number;[m
+         }[];[m
+       };[m
+[32m+[m[32m      activity_publication_issues: {[m
+[32m+[m[32m        Args: { p_activity_id: string };[m
+[32m+[m[32m        Returns: string[];[m
+[32m+[m[32m      };[m
+       available_activity_filters: {[m
+         Args: Record<PropertyKey, never>;[m
+         Returns: Json;[m
+[36m@@ -648,6 +627,19 @@[m [mexport type Database = {[m
+           website: string;[m
+         }[];[m
+       };[m
+[32m+[m[32m      publication_issues: {[m
+[32m+[m[32m        Args: {[m
+[32m+[m[32m          p_activity_id: string;[m
+[32m+[m[32m          p_address_id: string;[m
+[32m+[m[32m          p_category: string;[m
+[32m+[m[32m          p_end_date: string;[m
+[32m+[m[32m          p_is_tutor: boolean;[m
+[32m+[m[32m          p_provider_id: string;[m
+[32m+[m[32m          p_start_date: string;[m
+[32m+[m[32m          p_type: string;[m
+[32m+[m[32m        };[m
+[32m+[m[32m        Returns: string[];[m
+[32m+[m[32m      };[m
+       recommend_activities: {[m
+         Args: { p_city: string; p_family_profile_id: string };[m
+         Returns: {[m
+[36m@@ -864,9 +856,6 @@[m [mexport type CompositeTypes<[m
+     : never;[m
+ [m
+ export const Constants = {[m
+[31m-  graphql_public: {[m
+[31m-    Enums: {},[m
+[31m-  },[m
+   public: {[m
+     Enums: {},[m
+   },[m
