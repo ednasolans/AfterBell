@@ -29,4 +29,16 @@ describe('resolveRedirect', () => {
     expect(resolveRedirect('(customer)', 'customer')).toBeNull();
     expect(resolveRedirect('(provider)', 'company')).toBeNull();
   });
+
+  it("routes tutor accounts to the provider area", () => {
+    expect(resolveRedirect("(auth)", "tutor")).toBe(
+      "/provider-home",
+    );
+
+    expect(resolveRedirect("(customer)", "tutor")).toBe(
+      "/provider-home",
+    );
+
+    expect(resolveRedirect("(provider)", "tutor")).toBeNull();
+  });
 });

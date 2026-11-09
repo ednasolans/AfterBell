@@ -17,7 +17,8 @@ export function resolveRedirect(
     return group === '(auth)' || group === undefined ? null : '/login';
   }
 
-  const isProvider = accountType === 'company';
+  const isProvider =
+    accountType === "company" || accountType === "tutor";
   const expectedGroup = isProvider ? '(provider)' : '(customer)';
 
   if (group === expectedGroup) return null;
