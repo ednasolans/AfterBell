@@ -38,6 +38,8 @@ export function toActivityInsert(form: ActivityForm): ActivityInsert {
     price,
     price_period: pricePeriod,
     max_participants: maxParticipants,
+    // The form always asks for a maximum for now, "no limit" comes with #119
+    unlimited_participants: false,
     address_id: addressId,
   };
 }

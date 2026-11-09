@@ -19,7 +19,8 @@ export interface Activity {
   schedule: TimeSlot[];
   price: number;
   pricePeriod: PricePeriod;
-  maxParticipants: number;
+  // Null only when the provider chose "no limit"
+  maxParticipants: number | null;
   status: ActivityStatus; // Only published activities are visible to customers
   createdAt: string;
 }

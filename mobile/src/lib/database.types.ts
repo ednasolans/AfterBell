@@ -7,6 +7,31 @@ export type Json =
   | Json[];
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       accounts: {
@@ -40,7 +65,7 @@ export type Database = {
           end_date: string | null;
           id: string;
           is_tutor: boolean;
-          max_participants: number;
+          max_participants: number | null;
           price: number;
           price_period: string;
           provider_id: string;
@@ -51,6 +76,7 @@ export type Database = {
           target_age_ranges: string[];
           title: string;
           type: string;
+          unlimited_participants: boolean;
           updated_at: string;
         };
         ComputedFields: never;
@@ -62,7 +88,7 @@ export type Database = {
           end_date?: string | null;
           id?: string;
           is_tutor?: boolean;
-          max_participants: number;
+          max_participants?: number | null;
           price: number;
           price_period: string;
           provider_id?: string;
@@ -73,6 +99,7 @@ export type Database = {
           target_age_ranges: string[];
           title: string;
           type?: string;
+          unlimited_participants?: boolean;
           updated_at?: string;
         };
         Update: {
@@ -83,7 +110,7 @@ export type Database = {
           end_date?: string | null;
           id?: string;
           is_tutor?: boolean;
-          max_participants?: number;
+          max_participants?: number | null;
           price?: number;
           price_period?: string;
           provider_id?: string;
@@ -94,6 +121,7 @@ export type Database = {
           target_age_ranges?: string[];
           title?: string;
           type?: string;
+          unlimited_participants?: boolean;
           updated_at?: string;
         };
         Relationships: [
@@ -602,11 +630,47 @@ export type Database = {
       is_company: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_family_member: { Args: { group_id: string }; Returns: boolean };
       is_valid_schedule: { Args: { schedule: Json }; Returns: boolean };
+      my_enrolment_requests: {
+        Args: { p_limit?: number; p_offset?: number };
+        Returns: {
+          activity_available: boolean;
+          activity_id: string;
+          activity_title: string;
+          created_at: string;
+          family_profile_id: string;
+          family_profile_name: string;
+          id: string;
+          message: string;
+          status: string;
+          updated_at: string;
+        }[];
+      };
       provider_enrolled_family_profiles: {
         Args: { p_activity_id: string };
         Returns: {
           age_years: number;
           first_name: string;
+        }[];
+      };
+      provider_enrolment_requests: {
+        Args: {
+          p_activity_id?: string;
+          p_limit?: number;
+          p_offset?: number;
+          p_status?: string;
+        };
+        Returns: {
+          activity_id: string;
+          activity_title: string;
+          created_at: string;
+          customer_email: string;
+          family_profile_age: number;
+          family_profile_age_range: string;
+          family_profile_name: string;
+          id: string;
+          message: string;
+          status: string;
+          updated_at: string;
         }[];
       };
       public_approved_provider_profiles: {
@@ -650,7 +714,7 @@ export type Database = {
           end_date: string | null;
           id: string;
           is_tutor: boolean;
-          max_participants: number;
+          max_participants: number | null;
           price: number;
           price_period: string;
           provider_id: string;
@@ -661,6 +725,7 @@ export type Database = {
           target_age_ranges: string[];
           title: string;
           type: string;
+          unlimited_participants: boolean;
           updated_at: string;
         }[];
         SetofOptions: {
@@ -700,7 +765,7 @@ export type Database = {
           end_date: string | null;
           id: string;
           is_tutor: boolean;
-          max_participants: number;
+          max_participants: number | null;
           price: number;
           price_period: string;
           provider_id: string;
@@ -711,6 +776,7 @@ export type Database = {
           target_age_ranges: string[];
           title: string;
           type: string;
+          unlimited_participants: boolean;
           updated_at: string;
         }[];
         SetofOptions: {
@@ -856,6 +922,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

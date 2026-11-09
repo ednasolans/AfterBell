@@ -128,6 +128,18 @@ describe("CatalogActivityDetail", () => {
     await waitFor(() => expect(getByText("0 of 20")).toBeTruthy());
   });
 
+  it("shows the counter without a maximum when there is no limit", async () => {
+    mockFetch.mockResolvedValue(
+      makeDetail({ activity: makeActivity({ maxParticipants: null }) }),
+    );
+
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() => expect(getByText("3 (no limit)")).toBeTruthy());
+  });
+
   it("hides the counter when it could not be read", async () => {
     mockFetch.mockResolvedValue(makeDetail({ enrolledCount: null }));
 

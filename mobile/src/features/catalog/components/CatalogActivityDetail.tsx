@@ -88,7 +88,11 @@ export function CatalogActivityDetail({
       {enrolledCount === null ? null : (
         <DetailRow
           label="Enrolled"
-          value={`${enrolledCount} of ${activity.maxParticipants}`}
+          value={
+            activity.maxParticipants === null
+              ? `${enrolledCount} (no limit)`
+              : `${enrolledCount} of ${activity.maxParticipants}`
+          }
         />
       )}
 

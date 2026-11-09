@@ -30,6 +30,7 @@ describe("toActivityInsert", () => {
       price: 30,
       price_period: "per_month",
       max_participants: 12,
+      unlimited_participants: false,
       address_id: "address-1",
     });
   });
