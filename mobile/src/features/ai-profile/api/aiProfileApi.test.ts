@@ -2,18 +2,24 @@ import { supabase } from "@/lib/supabase";
 import { createQueryBuilderMock } from "@/test-utils/supabaseQueryMock";
 
 import { fetchMyProfile } from "./fetchMyProfile";
+import { fetchProfileIsOutdated } from "./fetchProfileIsOutdated";
 import {
   DEFAULT_GENERATE_ERROR,
   generateErrorMessage,
   generateProfile,
 } from "./generateProfile";
 import { hasTechnicalSheet } from "./hasTechnicalSheet";
-import { approveProfile, saveProfile } from "./updateMyProfile";
+import {
+  approveProfile,
+  discardProfileChanges,
+  saveProfile,
+} from "./updateMyProfile";
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {
     auth: { getUser: jest.fn() },
     from: jest.fn(),
+    rpc: jest.fn(),
     functions: { invoke: jest.fn() },
   },
 }));
@@ -27,6 +33,8 @@ const ROW = {
   model: "gemini-3.5-flash-lite",
   generated_at: "2026-10-24T10:00:00Z",
   approved_at: null,
+  approved_headline: null,
+  approved_description: null,
 };
 
 function loggedIn() {
@@ -58,6 +66,8 @@ describe("fetchMyProfile", () => {
       status: "draft",
       generatedAt: "2026-10-24T10:00:00Z",
       approvedAt: null,
+      approvedHeadline: null,
+      approvedDescription: null,
     });
     expect(builder.eq).toHaveBeenCalledWith("provider_id", "provider-1");
   });
@@ -97,8 +107,15 @@ describe("hasTechnicalSheet", () => {
   });
 });
 
+function rpcReturns(result: {
+  data: unknown;
+  error: { message: string } | null;
+}) {
+  jest.mocked(supabase.rpc).mockResolvedValue(result as never);
+}
+
 describe("saveProfile", () => {
-  it("saves the trimmed texts of the draft", async () => {
+  it("saves the trimmed texts of the profile", async () => {
     const builder = queryReturns({ data: [{ id: "profile-1" }], error: null });
     await saveProfile({
       headline: " New headline ",
@@ -108,14 +125,20 @@ describe("saveProfile", () => {
       headline: "New headline",
       description: "New text",
     });
-    expect(builder.eq).toHaveBeenCalledWith("status", "draft");
+    expect(builder.eq).toHaveBeenCalledWith("provider_id", "provider-1");
+    // Approved profiles can be edited too: the database moves them to pending
+    expect(builder.in).toHaveBeenCalledWith("status", [
+      "draft",
+      "pending_approval",
+      "approved",
+    ]);
   });
 
-  it("throws when no draft was changed", async () => {
+  it("throws when there is no profile to change", async () => {
     queryReturns({ data: [], error: null });
     await expect(
       saveProfile({ headline: "h", description: "d" }),
-    ).rejects.toThrow("You do not have a draft profile to change");
+    ).rejects.toThrow("You do not have a profile to change");
   });
 
   it("throws when the update fails", async () => {
@@ -127,10 +150,54 @@ describe("saveProfile", () => {
 });
 
 describe("approveProfile", () => {
-  it("only changes the status of the draft", async () => {
+  it("approves a draft or a pending version", async () => {
     const builder = queryReturns({ data: [{ id: "profile-1" }], error: null });
     await approveProfile();
     expect(builder.update).toHaveBeenCalledWith({ status: "approved" });
+    expect(builder.in).toHaveBeenCalledWith("status", [
+      "draft",
+      "pending_approval",
+    ]);
+  });
+
+  it("throws when there is no new text to approve", async () => {
+    queryReturns({ data: [], error: null });
+    await expect(approveProfile()).rejects.toThrow(
+      "There is no new text to approve",
+    );
+  });
+});
+
+describe("discardProfileChanges", () => {
+  it("goes back to the approved version", async () => {
+    rpcReturns({ data: true, error: null });
+    await discardProfileChanges();
+    expect(supabase.rpc).toHaveBeenCalledWith("discard_profile_changes");
+  });
+
+  it("throws when there is nothing to discard", async () => {
+    rpcReturns({ data: false, error: null });
+    await expect(discardProfileChanges()).rejects.toThrow(
+      "There are no changes to discard",
+    );
+  });
+
+  it("throws the Supabase error", async () => {
+    rpcReturns({ data: null, error: { message: "Network error" } });
+    await expect(discardProfileChanges()).rejects.toThrow("Network error");
+  });
+});
+
+describe("fetchProfileIsOutdated", () => {
+  it("tells whether the sheet changed after the AI wrote the profile", async () => {
+    rpcReturns({ data: true, error: null });
+    await expect(fetchProfileIsOutdated()).resolves.toBe(true);
+    expect(supabase.rpc).toHaveBeenCalledWith("my_profile_is_outdated");
+  });
+
+  it("throws the Supabase error", async () => {
+    rpcReturns({ data: null, error: { message: "Network error" } });
+    await expect(fetchProfileIsOutdated()).rejects.toThrow("Network error");
   });
 });
 
