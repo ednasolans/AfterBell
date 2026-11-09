@@ -88,7 +88,8 @@ erDiagram
         jsonb schedule "list of slots, optional unless whole_year"
         numeric price
         text price_period
-        int max_participants "1 to 1000"
+        int max_participants "1 to 1000, empty only with no limit"
+        bool unlimited_participants "true only on purpose"
         text search_normalized "set by a trigger"
         timestamptz created_at
         timestamptz updated_at "set by a trigger"
@@ -216,6 +217,8 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 |---|---|
 | **`categories` is a table**, referenced by `activities.category` | Each category has a type (`individual` or `collective`). Names cannot be changed or deleted, because `technical_sheets` and `family_profiles` store them in arrays, checked by a trigger. |
 | **`languages` belongs to an activity** | Language and tutor activities need their languages and levels to be published. |
+| **An activity can have no limit of participants, but only on purpose** (`unlimited_participants`) | A `NULL` maximum meaning "no limit" / no limit at all | Team decision: an empty maximum must not mean "no limit" just because someone forgot it. The flag is `false` by default, so a missing maximum is rejected. |
+| **One family profile per request; a full activity does not accept requests** | Several profiles per request / pending requests on a full activity | Each child is accepted or rejected on its own, and a request that can never be accepted would only confuse the family. See [`enrolments.md`](../features/enrolments.md). |
 | **`enrolment_requests` can only be changed through functions** (`send_`, `accept_`, `reject_` and `cancel_enrolment_request`) | The functions check who is calling and lock the activity row, so two acceptances cannot go over `max_participants`. |
 | **`search_summary_cache` and `search_summary_requests` have no client access** | Only the backend uses them, and they store no search text linked to a person. |
 
