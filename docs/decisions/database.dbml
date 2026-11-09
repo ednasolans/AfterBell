@@ -31,7 +31,7 @@ Table auth.users {
 Table accounts {
   id uuid [pk, note: 'Same id as auth.users (ON DELETE CASCADE)']
   email text [not null]
-  account_type text [not null, default: 'customer', note: 'customer | company']
+  account_type text [not null, default: 'customer', note: 'customer | company | tutor']
   created_at timestamptz [not null, default: `now()`]
   Note: '''
   One row per user, created by the trigger handle_new_user.
@@ -44,6 +44,8 @@ Table technical_sheets {
   id uuid [pk, default: `gen_random_uuid()`]
   provider_id uuid [not null, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE']
   name text [not null, note: 'not blank, max 120']
+  first_name text [note: 'Required for tutors, max 50']
+  last_name text [note: 'Required for tutors, max 50']
   provider_type text [not null, note: 'sports_club | music_school | language_school | art_school | tutoring_academy | private_tutor']
   description text [note: 'optional, max 500']
   address_id uuid [not null, note: 'main address; composite FK (address_id, provider_id)']
