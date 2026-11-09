@@ -27,6 +27,8 @@ const DRAFT: ProviderProfile = {
   status: "draft",
   generatedAt: "2026-10-24T10:00:00Z",
   approvedAt: null,
+  approvedHeadline: null,
+  approvedDescription: null,
 };
 
 async function renderAiProfile() {
