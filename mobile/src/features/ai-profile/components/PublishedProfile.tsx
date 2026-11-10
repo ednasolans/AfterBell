@@ -1,13 +1,18 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import LoadingButton from "@/components/LoadingButton";
+
 import { type ProviderProfile } from "../types";
 import { ProfileStatusBadge } from "./ProfileStatusBadge";
 import { colors } from "@/theme/colors";
 
-type PublishedProfileProps = { profile: ProviderProfile };
+type PublishedProfileProps = {
+  profile: ProviderProfile;
+  onEdit: () => void;
+};
 
-export function PublishedProfile({ profile }: PublishedProfileProps) {
+export function PublishedProfile({ profile, onEdit }: PublishedProfileProps) {
   return (
     <View style={styles.card}>
       <View style={styles.statusRow}>
@@ -23,11 +28,10 @@ export function PublishedProfile({ profile }: PublishedProfileProps) {
       <Text style={styles.headline}>{profile.headline}</Text>
       <Text style={styles.description}>{profile.description}</Text>
       <Text style={styles.hint}>
-          Families can see this profile. If you generate it again, they keep
-        seeing this text until you approve the new one.
-        Families can now see your profile. Editing a published profile will be
-        available soon.
+        Families can see this profile. If you edit it or generate it again, they
+        keep seeing this text until you approve the new one.
       </Text>
+      <LoadingButton label="Edit text" onPress={onEdit} variant="outline" />
     </View>
   );
 }
@@ -67,5 +71,5 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginBottom: 16,
   },
-  hint: { color: colors.textMuted, lineHeight: 20 },
+  hint: { color: colors.textMuted, lineHeight: 20, marginBottom: 14 },
 });

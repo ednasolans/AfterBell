@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
@@ -6,6 +7,7 @@ import LoadingButton from "@/components/LoadingButton";
 import { LoadingView } from "@/components/LoadingView";
 
 import { useApproveProfile } from "../hooks/useApproveProfile";
+import { useDiscardProfileChanges } from "../hooks/useDiscardProfileChanges";
 import { useGenerateProfile } from "../hooks/useGenerateProfile";
 import { useHasTechnicalSheet } from "../hooks/useHasTechnicalSheet";
 import { useMyProfile } from "../hooks/useMyProfile";
@@ -13,6 +15,7 @@ import { useProfileIsOutdated } from "../hooks/useProfileIsOutdated";
 import { useSaveProfile } from "../hooks/useSaveProfile";
 import { OutdatedWarning } from "./OutdatedWarning";
 import { ProfileDraftEditor } from "./ProfileDraftEditor";
+import { type ProfileForm } from "../types";
 import { PublishedProfile } from "./PublishedProfile";
 import { colors } from "@/theme/colors";
 
@@ -70,6 +73,9 @@ export function AiProfile() {
   const save = useSaveProfile();
   const approve = useApproveProfile();
   const outdated = useProfileIsOutdated();
+  const discard = useDiscardProfileChanges();
+  // The provider opened the editor of the published profile
+  const [isEditingPublished, setIsEditingPublished] = useState(false);
 
   if (profile.isPending || sheet.isPending) {
     return <LoadingView />;
@@ -126,14 +132,39 @@ export function AiProfile() {
     <OutdatedWarning onRegenerate={regenerate} />
   ) : null;
 
-  if (current?.status === "approved") {
+  if (current?.status === "approved" && !isEditingPublished) {
     return (
       <View style={styles.container}>
+        {approve.isSuccess ? (
+          <Text style={styles.success} accessibilityRole="alert">
+            Your profile is published.
+          </Text>
+        ) : null}
         {outdatedWarning}
-        <PublishedProfile profile={current} />
+        <PublishedProfile
+          profile={current}
+          onEdit={() => setIsEditingPublished(true)}
+        />
         {generateSection}
       </View>
     );
+  }
+
+  // Going back to the published text: close the editor of the published
+  // profile, or drop the pending version saved in the database
+  function discardChanges() {
+    if (current?.status === "approved") {
+      setIsEditingPublished(false);
+    } else {
+      discard.mutate();
+    }
+  }
+
+  // After saving, an edited published profile is pending approval: the
+  // editor stays open as the pending version
+  async function saveChanges(form: ProfileForm) {
+    await save.mutateAsync(form);
+    setIsEditingPublished(false);
   }
 
   return (
@@ -152,12 +183,17 @@ export function AiProfile() {
           // A new draft (generated again) starts a fresh form
           key={current.generatedAt}
           profile={current}
-          onSave={save.mutateAsync}
+          onSave={saveChanges}
           isSaving={save.isPending}
           saveFailed={save.isError}
           onApprove={() => approve.mutate()}
           isApproving={approve.isPending}
           approveFailed={approve.isError}
+          onDiscard={
+            current.approvedHeadline === null ? undefined : discardChanges
+          }
+          isDiscarding={discard.isPending}
+          discardFailed={discard.isError}
         />
       ) : (
         <View style={styles.infoCard}>
@@ -198,4 +234,5 @@ const styles = StyleSheet.create({
   },
   generate: { marginTop: 8 },
   error: { color: colors.danger, textAlign: "center", marginBottom: 8 },
+  success: { color: colors.primaryDark, fontWeight: "700" },
 });
