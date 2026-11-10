@@ -303,6 +303,66 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"tutor_levels": {
+                  Row: {
+                    "code": string,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code": string,"name": string
+                  }
+                  Update: {
+                    "code"?: string,"name"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"tutor_offers": {
+                  Row: {
+                    "category": string,"created_at": string,"description": string | null,"id": string,"level_codes": (string)[],"price_per_hour": number | null,"status": string,"subject_codes": (string)[],"technical_sheet_id": string,"title": string | null,"tutor_id": string,"updated_at": string,"tutor_offer_missing_fields": (string)[] | null
+                  }
+                  ComputedFields: "tutor_offer_missing_fields"
+                  Insert: {
+                    "category"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"level_codes"?: (string)[],"price_per_hour"?: number | null,"status"?: string,"subject_codes"?: (string)[],"technical_sheet_id": string,"title"?: string | null,"tutor_id"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "category"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"level_codes"?: (string)[],"price_per_hour"?: number | null,"status"?: string,"subject_codes"?: (string)[],"technical_sheet_id"?: string,"title"?: string | null,"tutor_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tutor_offers_category_fkey"
+      columns: ["category"]
+isOneToOne: false
+      referencedRelation: "categories"
+      referencedColumns: ["name"]
+    },{
+      foreignKeyName: "tutor_offers_technical_sheet_id_fkey"
+      columns: ["technical_sheet_id"]
+isOneToOne: false
+      referencedRelation: "technical_sheets"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tutor_offers_tutor_id_fkey"
+      columns: ["tutor_id"]
+isOneToOne: false
+      referencedRelation: "accounts"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"tutor_subjects": {
+                  Row: {
+                    "code": string,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code": string,"name": string
+                  }
+                  Update: {
+                    "code"?: string,"name"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
@@ -423,6 +483,12 @@ isOneToOne: false
       } },
 "send_enrolment_request":
 { Args: { "p_activity_id": string,"p_family_profile_id": string,"p_message"?: string }; Returns: string
+                           },
+"tutor_offer_missing_fields":
+{ Args: { "p_offer": Omit<Database["public"]['Tables']["tutor_offers"]['Row'], Database["public"]['Tables']["tutor_offers"]['ComputedFields']> }; Returns: (string)[]
+                           },
+"tutor_offer_publication_issues":
+{ Args: { "p_offer_id": string }; Returns: (string)[]
                            },
 "update_my_tutor_profile":
 { Args: { "p_city": string,"p_country": string,"p_door": string,"p_first_name": string,"p_floor": string,"p_last_name": string,"p_number": string,"p_postal_code": string,"p_presentation": string,"p_province": string,"p_street": string }; Returns: undefined
