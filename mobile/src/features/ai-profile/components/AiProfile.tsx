@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import LoadingButton from "@/components/LoadingButton";
@@ -9,21 +9,27 @@ import { useApproveProfile } from "../hooks/useApproveProfile";
 import { useGenerateProfile } from "../hooks/useGenerateProfile";
 import { useHasTechnicalSheet } from "../hooks/useHasTechnicalSheet";
 import { useMyProfile } from "../hooks/useMyProfile";
+import { useProfileIsOutdated } from "../hooks/useProfileIsOutdated";
 import { useSaveProfile } from "../hooks/useSaveProfile";
+import { OutdatedWarning } from "./OutdatedWarning";
 import { ProfileDraftEditor } from "./ProfileDraftEditor";
 import { PublishedProfile } from "./PublishedProfile";
 import { colors } from "@/theme/colors";
 
 type GenerateSectionProps = {
   hasSheet: boolean;
-  hasDraft: boolean;
+  label: string;
+  isFirst: boolean;
+  onPress: () => void;
   generate: ReturnType<typeof useGenerateProfile>;
 };
 
-// Button to generate (or generate again) the draft with AI
+// Button to generate (or generate again) the profile with AI
 function GenerateSection({
   hasSheet,
-  hasDraft,
+  label,
+  isFirst,
+  onPress,
   generate,
 }: GenerateSectionProps) {
   if (!hasSheet) {
@@ -48,10 +54,10 @@ function GenerateSection({
         </Text>
       ) : null}
       <LoadingButton
-        label={hasDraft ? "Generate again" : "Generate profile with AI"}
-        onPress={() => generate.mutate()}
+        label={label}
+        onPress={onPress}
         loading={generate.isPending}
-        variant={hasDraft ? "outline" : "primary"}
+        variant={isFirst ? "primary" : "outline"}
       />
     </View>
   );
@@ -63,6 +69,7 @@ export function AiProfile() {
   const generate = useGenerateProfile();
   const save = useSaveProfile();
   const approve = useApproveProfile();
+  const outdated = useProfileIsOutdated();
 
   if (profile.isPending || sheet.isPending) {
     return <LoadingView />;
@@ -80,8 +87,53 @@ export function AiProfile() {
     );
   }
 
-  if (profile.data?.status === "approved") {
-    return <PublishedProfile profile={profile.data} />;
+  const current = profile.data;
+  // While it loads or if it fails, the warning is simply not shown
+  const isOutdated = current !== null && outdated.data === true;
+
+  // Once a profile has been approved, a new text replaces the published one
+  // only after approval: explain it before calling the AI
+  function confirmRegenerate() {
+    Alert.alert(
+      "Regenerate your profile?",
+      "The AI will write a new text from your technical sheet. Families will keep seeing your current profile until you approve the new one.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Regenerate", onPress: () => generate.mutate() },
+      ],
+    );
+  }
+
+  // A draft is only seen by the provider: it is generated again directly
+  const isDraftOrEmpty = current === null || current.status === "draft";
+  const regenerate = isDraftOrEmpty
+    ? () => generate.mutate()
+    : confirmRegenerate;
+  const generateLabel = isDraftOrEmpty
+    ? "Generate again"
+    : "Regenerate profile";
+
+  const generateSection = (
+    <GenerateSection
+      hasSheet={sheet.data}
+      label={current === null ? "Generate profile with AI" : generateLabel}
+      isFirst={current === null}
+      onPress={regenerate}
+      generate={generate}
+    />
+  );
+  const outdatedWarning = isOutdated ? (
+    <OutdatedWarning onRegenerate={regenerate} />
+  ) : null;
+
+  if (current?.status === "approved") {
+    return (
+      <View style={styles.container}>
+        {outdatedWarning}
+        <PublishedProfile profile={current} />
+        {generateSection}
+      </View>
+    );
   }
 
   return (
@@ -93,11 +145,13 @@ export function AiProfile() {
       <Text style={styles.subtitle}>
         Let AI help you tell families what makes your organisation special.
       </Text>
-      {profile.data ? (
+      {outdatedWarning}
+
+      {current ? (
         <ProfileDraftEditor
           // A new draft (generated again) starts a fresh form
-          key={profile.data.generatedAt}
-          profile={profile.data}
+          key={current.generatedAt}
+          profile={current}
           onSave={save.mutateAsync}
           isSaving={save.isPending}
           saveFailed={save.isError}
@@ -118,11 +172,7 @@ export function AiProfile() {
           </Text>
         </View>
       )}
-      <GenerateSection
-        hasSheet={sheet.data}
-        hasDraft={profile.data !== null}
-        generate={generate}
-      />
+      {generateSection}
     </View>
   );
 }

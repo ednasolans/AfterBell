@@ -1,12 +1,12 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
-import { Alert } from "react-native";
-
+import { Alert, type AlertButton } from "react-native";
 import {
   createQueryClientWrapper,
   createTestQueryClient,
 } from "@/test-utils/queryClientWrapper";
 
 import { fetchMyProfile } from "../api/fetchMyProfile";
+import { fetchProfileIsOutdated } from "../api/fetchProfileIsOutdated";
 import { generateProfile } from "../api/generateProfile";
 import { hasTechnicalSheet } from "../api/hasTechnicalSheet";
 import { approveProfile, saveProfile } from "../api/updateMyProfile";
@@ -14,6 +14,9 @@ import { type ProviderProfile } from "../types";
 import { AiProfile } from "./AiProfile";
 
 jest.mock("../api/fetchMyProfile", () => ({ fetchMyProfile: jest.fn() }));
+jest.mock("../api/fetchProfileIsOutdated", () => ({
+  fetchProfileIsOutdated: jest.fn(),
+}));
 jest.mock("../api/hasTechnicalSheet", () => ({ hasTechnicalSheet: jest.fn() }));
 jest.mock("../api/generateProfile", () => ({ generateProfile: jest.fn() }));
 jest.mock("../api/updateMyProfile", () => ({
@@ -37,9 +40,28 @@ async function renderAiProfile() {
   });
 }
 
+const PUBLISHED: ProviderProfile = {
+  ...DRAFT,
+  status: "approved",
+  approvedAt: "2026-10-24T11:00:00Z",
+  approvedHeadline: DRAFT.headline,
+  approvedDescription: DRAFT.description,
+};
+
+// Presses one of the buttons of the last dialog shown with Alert.alert
+async function pressAlertButton(text: string) {
+  const calls = jest.mocked(Alert.alert).mock.calls;
+  const buttons = (calls[calls.length - 1][2] ?? []) as AlertButton[];
+  await act(async () => {
+    await buttons.find((button) => button.text === text)?.onPress?.();
+  });
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(Alert, "alert");
   jest.mocked(hasTechnicalSheet).mockResolvedValue(true);
+  jest.mocked(fetchProfileIsOutdated).mockResolvedValue(false);
 });
 
 describe("AiProfile", () => {
@@ -148,6 +170,112 @@ describe("AiProfile", () => {
     expect(await screen.findByText("Published")).toBeTruthy();
     expect(screen.getByText(DRAFT.headline)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
+  });
+  it("asks for confirmation before regenerating a published profile", async () => {
+    jest.mocked(fetchMyProfile).mockResolvedValue(PUBLISHED);
+    jest.mocked(generateProfile).mockResolvedValue(undefined);
+    await renderAiProfile();
+
+    await fireEvent.press(
+      await screen.findByRole("button", { name: "Regenerate profile" }),
+    );
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Regenerate your profile?",
+      expect.stringContaining("until you approve the new one"),
+      expect.any(Array),
+    );
+    expect(generateProfile).not.toHaveBeenCalled();
+
+    await pressAlertButton("Regenerate");
+
+    expect(generateProfile).toHaveBeenCalled();
+  });
+
+  it("does not regenerate when the provider cancels", async () => {
+    jest.mocked(fetchMyProfile).mockResolvedValue(PUBLISHED);
+    await renderAiProfile();
+
+    await fireEvent.press(
+      await screen.findByRole("button", { name: "Regenerate profile" }),
+    );
+    await pressAlertButton("Cancel");
+
+    expect(generateProfile).not.toHaveBeenCalled();
+  });
+
+  it("keeps the published profile when regenerating fails", async () => {
+    jest.mocked(fetchMyProfile).mockResolvedValue(PUBLISHED);
+    jest
+      .mocked(generateProfile)
+      .mockRejectedValue(new Error("The AI is not available right now."));
+    await renderAiProfile();
+
+    await fireEvent.press(
+      await screen.findByRole("button", { name: "Regenerate profile" }),
+    );
+    await pressAlertButton("Regenerate");
+
+    expect(
+      await screen.findByText("The AI is not available right now."),
+    ).toBeTruthy();
+    expect(screen.getByText(DRAFT.headline)).toBeTruthy();
+  });
+
+  it("warns when the technical sheet changed and offers to regenerate", async () => {
+    jest.mocked(fetchMyProfile).mockResolvedValue(PUBLISHED);
+    jest.mocked(fetchProfileIsOutdated).mockResolvedValue(true);
+    await renderAiProfile();
+
+    expect(
+      await screen.findByText(/Your technical sheet changed/),
+    ).toBeTruthy();
+    await fireEvent.press(
+      screen.getByRole("button", { name: "Regenerate now" }),
+    );
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Regenerate your profile?",
+      expect.any(String),
+      expect.any(Array),
+    );
+  });
+
+  it("does not warn when the profile is up to date", async () => {
+    jest.mocked(fetchMyProfile).mockResolvedValue(PUBLISHED);
+    await renderAiProfile();
+
+    expect(await screen.findByText("Published")).toBeTruthy();
+    expect(screen.queryByText(/Your technical sheet changed/)).toBeNull();
+  });
+
+  it("generates an outdated draft again without asking", async () => {
+    jest.mocked(fetchMyProfile).mockResolvedValue(DRAFT);
+    jest.mocked(fetchProfileIsOutdated).mockResolvedValue(true);
+    jest.mocked(generateProfile).mockResolvedValue(undefined);
+    await renderAiProfile();
+
+    await fireEvent.press(
+      await screen.findByRole("button", { name: "Regenerate now" }),
+    );
+
+    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(generateProfile).toHaveBeenCalled();
+  });
+
+  it("shows when a new version is pending approval", async () => {
+    jest.mocked(fetchMyProfile).mockResolvedValue({
+      ...PUBLISHED,
+      status: "pending_approval",
+      headline: "New headline",
+    });
+    await renderAiProfile();
+
+    expect(
+      await screen.findByLabelText("Status: Pending approval"),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Regenerate profile" }),
+    ).toBeTruthy();
   });
 
   it("lets the user retry when loading fails", async () => {

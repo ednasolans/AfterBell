@@ -23,6 +23,8 @@ export function PublishedProfile({ profile }: PublishedProfileProps) {
       <Text style={styles.headline}>{profile.headline}</Text>
       <Text style={styles.description}>{profile.description}</Text>
       <Text style={styles.hint}>
+          Families can see this profile. If you generate it again, they keep
+        seeing this text until you approve the new one.
         Families can now see your profile. Editing a published profile will be
         available soon.
       </Text>

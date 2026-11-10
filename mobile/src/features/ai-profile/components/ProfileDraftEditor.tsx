@@ -66,7 +66,7 @@ export function ProfileDraftEditor({
           size={22}
           color={colors.primaryDark}
         />
-        <ProfileStatusBadge status="draft" />
+        <ProfileStatusBadge status={profile.status} />
       </View>
       <Text style={styles.hint}>
         Review the text written by the AI. You can change it before publishing.
