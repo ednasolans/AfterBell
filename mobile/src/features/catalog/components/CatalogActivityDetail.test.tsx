@@ -1,4 +1,5 @@
 import { waitFor } from "@testing-library/react-native";
+import { Text } from "react-native";
 
 import { formatDate } from "@/lib/dates";
 
@@ -116,6 +117,23 @@ describe("CatalogActivityDetail", () => {
     );
 
     await waitFor(() => expect(getByText("3 of 20")).toBeTruthy());
+    expect(getByText("Places left")).toBeTruthy();
+    expect(getByText("17")).toBeTruthy();
+  });
+
+  it("shows the content added under the activity", async () => {
+    mockFetch.mockResolvedValue(makeDetail());
+
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail
+        id="a1"
+        renderFooter={(detail) => (
+          <Text>{`Footer of ${detail.activity.id}`}</Text>
+        )}
+      />,
+    );
+
+    await waitFor(() => expect(getByText("Footer of a1")).toBeTruthy());
   });
 
   it("shows 0 when nobody is enrolled", async () => {

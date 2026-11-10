@@ -1,17 +1,19 @@
+import { type ReactNode } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import { categoryLabel } from "@/lib/activityCategories";
 import { LoadingView } from "@/components/LoadingView";
+import { isFinished } from "@/lib/activity";
 import { colors } from "@/theme/colors";
 
 import {
   formatActivityPrice,
   formatAgeRanges,
   formatDateRange,
-  isFinished,
 } from "../format";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
+import { type CatalogActivityDetail as Detail } from "../types";
 
 type DetailRowProps = { label: string; value: string };
 
@@ -24,10 +26,15 @@ function DetailRow({ label, value }: Readonly<DetailRowProps>) {
   );
 }
 
-type CatalogActivityDetailProps = { id: string };
+type CatalogActivityDetailProps = {
+  id: string;
+  // Extra content under the activity, e.g. the enrolment request (another feature)
+  renderFooter?: (detail: Detail) => ReactNode;
+};
 
 export function CatalogActivityDetail({
   id,
+  renderFooter,
 }: Readonly<CatalogActivityDetailProps>) {
   const query = useCatalogActivity(id);
 
@@ -95,6 +102,12 @@ export function CatalogActivityDetail({
           }
         />
       )}
+      {enrolledCount !== null && activity.maxParticipants !== null ? (
+        <DetailRow
+          label="Places left"
+          value={String(Math.max(0, activity.maxParticipants - enrolledCount))}
+        />
+      ) : null}
 
       <Text style={styles.sectionTitle}>Provider</Text>
       {provider.contact ? (
@@ -111,6 +124,8 @@ export function CatalogActivityDetail({
       {provider.contact?.website ? (
         <DetailRow label="Website" value={provider.contact.website} />
       ) : null}
+
+      {renderFooter?.(query.data)}
     </ScrollView>
   );
 }

@@ -1,11 +1,6 @@
 import { formatDate } from "@/lib/dates";
 
-import {
-  formatAgeRange,
-  formatDateRange,
-  formatPrice,
-  isFinished,
-} from "./format";
+import { formatAgeRange, formatDateRange, formatPrice } from "./format";
 
 describe("formatAgeRange", () => {
   it("shows the youngest and the oldest age", () => {
@@ -44,21 +39,5 @@ describe("formatDateRange", () => {
 
   it("returns null without dates", () => {
     expect(formatDateRange(null, null)).toBeNull();
-  });
-});
-
-describe("isFinished", () => {
-  const TODAY = "2027-07-15";
-
-  it("is false without an end date", () => {
-    expect(isFinished({ endDate: null }, TODAY)).toBe(false);
-  });
-
-  it("is false during the last day", () => {
-    expect(isFinished({ endDate: TODAY }, TODAY)).toBe(false);
-  });
-
-  it("is true the day after the end date", () => {
-    expect(isFinished({ endDate: "2027-07-14" }, TODAY)).toBe(true);
   });
 });

@@ -1,4 +1,9 @@
-import { type Activity, toActivity, type ActivityRow } from "./activity";
+import {
+  type Activity,
+  isFinished,
+  toActivity,
+  type ActivityRow,
+} from "./activity";
 
 const ROW: ActivityRow = {
   id: "activity-1",
@@ -72,5 +77,21 @@ describe("toActivity", () => {
         unlimited_participants: true,
       }).maxParticipants,
     ).toBeNull();
+  });
+});
+
+describe("isFinished", () => {
+  const TODAY = "2027-07-15";
+
+  it("is false without an end date", () => {
+    expect(isFinished({ endDate: null }, TODAY)).toBe(false);
+  });
+
+  it("is false during the last day", () => {
+    expect(isFinished({ endDate: TODAY }, TODAY)).toBe(false);
+  });
+
+  it("is true the day after the end date", () => {
+    expect(isFinished({ endDate: "2027-07-14" }, TODAY)).toBe(true);
   });
 });

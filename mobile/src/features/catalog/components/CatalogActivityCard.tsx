@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { isFinished } from "@/lib/activity";
 import { colors } from "@/theme/colors";
 import { categoryLabel } from "@/lib/activityCategories";
 
@@ -8,7 +9,6 @@ import {
   formatActivityPrice,
   formatAgeRanges,
   formatDateRange,
-  isFinished,
 } from "../format";
 import { type CatalogActivity } from "../types";
 import { activityImage } from "../visuals";
