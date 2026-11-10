@@ -1,4 +1,4 @@
-import { waitFor } from "@testing-library/react-native";
+import { fireEvent, waitFor } from "@testing-library/react-native";
 import { Text } from "react-native";
 
 import { formatDate } from "@/lib/dates";
@@ -16,6 +16,16 @@ const mockFetch = jest.fn();
 
 jest.mock("../api/fetchCatalogActivity", () => ({
   fetchCatalogActivity: (id: string) => mockFetch(id),
+}));
+
+const mockAddFavourite = jest.fn();
+const mockRemoveFavourite = jest.fn();
+
+jest.mock("../api/addFavourite", () => ({
+  addFavourite: (id: string) => mockAddFavourite(id),
+}));
+jest.mock("../api/removeFavourite", () => ({
+  removeFavourite: (id: string) => mockRemoveFavourite(id),
 }));
 
 function makeDetail(overrides: Partial<Detail> = {}): Detail {
@@ -250,5 +260,23 @@ describe("CatalogActivityDetail", () => {
     await waitFor(() =>
       expect(getByText("The activity could not be loaded.")).toBeTruthy(),
     );
+  });
+
+  it("shows a full heart when the activity is a favourite, and removes it", async () => {
+    mockFetch.mockResolvedValue(makeDetail({ isFavourite: true }));
+    mockRemoveFavourite.mockResolvedValue(undefined);
+
+    const { findByLabelText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await fireEvent.press(
+      await findByLabelText("Remove Saturday workshop from favourites"),
+    );
+
+    expect(mockRemoveFavourite).toHaveBeenCalledWith("a1");
+    expect(
+      await findByLabelText("Save Saturday workshop in favourites"),
+    ).toBeTruthy();
   });
 });

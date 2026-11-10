@@ -14,6 +14,7 @@ import {
 } from "../format";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
 import { type CatalogActivityDetail as Detail } from "../types";
+import { FavouriteButton } from "./FavouriteButton";
 
 type DetailRowProps = { label: string; value: string };
 
@@ -57,11 +58,19 @@ export function CatalogActivityDetail({
     );
   }
 
-  const { activity, provider, address, enrolledCount } = query.data;
+  const { activity, provider, address, enrolledCount, isFavourite } =
+    query.data;
   const dates = formatDateRange(activity.startDate, activity.endDate);
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{activity.title}</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{activity.title}</Text>
+        <FavouriteButton
+          activityId={activity.id}
+          activityTitle={activity.title}
+          isFavourite={isFavourite}
+        />
+      </View>
       {activity.description ? (
         <Text style={styles.description}>{activity.description}</Text>
       ) : null}
@@ -132,7 +141,8 @@ export function CatalogActivityDetail({
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 8, backgroundColor: colors.background },
-  title: { fontSize: 26, fontWeight: "800", color: colors.text },
+  titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  title: { flex: 1, fontSize: 26, fontWeight: "800", color: colors.text },
   description: { color: colors.textMuted, marginBottom: 8, lineHeight: 22 },
   row: {
     flexDirection: "row",

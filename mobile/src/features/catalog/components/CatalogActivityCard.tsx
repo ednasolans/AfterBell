@@ -10,28 +10,45 @@ import {
   formatAgeRanges,
   formatDateRange,
 } from "../format";
-import { type CatalogActivity } from "../types";
+import { type CatalogCardActivity } from "../types";
 import { activityImage } from "../visuals";
+import { FavouriteButton } from "./FavouriteButton";
 
 type CatalogActivityCardProps = {
-  item: CatalogActivity;
+  activity: CatalogCardActivity;
+  providerName: string | null;
+  isFavourite: boolean;
+  // A favourite that can no longer be opened: marked, and only its heart works
+  unavailable?: boolean;
   onPress: () => void;
 };
 
 export function CatalogActivityCard({
-  item,
+  activity,
+  providerName,
+  isFavourite,
+  unavailable = false,
   onPress,
 }: Readonly<CatalogActivityCardProps>) {
-  const { activity, provider } = item;
   const image = activityImage(activity.category);
   const dates = formatDateRange(activity.startDate, activity.endDate);
 
   return (
     <Pressable
       onPress={onPress}
+      disabled={unavailable}
       accessibilityRole="button"
-      accessibilityLabel={`Open ${activity.title}`}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      accessibilityLabel={
+        unavailable
+          ? `${activity.title}, not available`
+          : `Open ${activity.title}`
+      }
+      accessibilityState={{ disabled: unavailable }}
+      style={({ pressed }) => [
+        styles.card,
+        unavailable && styles.unavailable,
+        pressed && styles.pressed,
+      ]}
     >
       <View style={styles.imageWrap}>
         <Image
@@ -45,25 +62,34 @@ export function CatalogActivityCard({
             {categoryLabel(activity.category)}
           </Text>
         </View>
-        {isFinished(activity) ? (
+        {unavailable ? (
+          <View style={styles.finishedBadge}>
+            <Text style={styles.finishedText}>Not available</Text>
+          </View>
+        ) : null}
+        {!unavailable && isFinished(activity) ? (
           <View style={styles.finishedBadge}>
             <Text style={styles.finishedText}>Finished</Text>
           </View>
         ) : null}
-        <View style={styles.bookmark}>
-          <Ionicons name="heart-outline" size={18} color={colors.text} />
+        <View style={styles.favourite}>
+          <FavouriteButton
+            activityId={activity.id}
+            activityTitle={activity.title}
+            isFavourite={isFavourite}
+          />
         </View>
       </View>
       <View style={styles.body}>
         <Text style={styles.title}>{activity.title}</Text>
-        {provider.contact ? (
+        {providerName ? (
           <View style={styles.providerRow}>
             <Ionicons
               name="business-outline"
               size={15}
               color={colors.primaryDark}
             />
-            <Text style={styles.provider}>{provider.contact.name}</Text>
+            <Text style={styles.provider}>{providerName}</Text>
           </View>
         ) : null}
         {dates ? (
@@ -118,6 +144,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   pressed: { opacity: 0.8 },
+  unavailable: { opacity: 0.6 },
   imageWrap: { height: 148, position: "relative" },
   image: { width: "100%", height: "100%" },
   categoryBadge: {
@@ -140,17 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   finishedText: { color: colors.white, fontSize: 12, fontWeight: "800" },
-  bookmark: {
-    position: "absolute",
-    right: 12,
-    top: 12,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  favourite: { position: "absolute", right: 12, top: 12 },
   body: { padding: 16, gap: 8 },
   title: { fontSize: 18, fontWeight: "800", color: colors.text },
   providerRow: { flexDirection: "row", alignItems: "center", gap: 5 },

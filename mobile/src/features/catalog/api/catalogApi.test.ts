@@ -58,6 +58,8 @@ const activityRow = {
   price_period: "per_month",
   max_participants: 20,
   created_at: "2026-10-01T10:00:00Z",
+  // RLS only embeds the favourites of the logged-in customer
+  favourites: [] as { customer_id: string }[],
 };
 
 const profileRow = {
@@ -375,5 +377,58 @@ describe("fetchCatalogActivity", () => {
     mockTables({ activities: { data: null, error: { message: "boom" } } });
 
     await expect(fetchCatalogActivity("a1")).rejects.toThrow("boom");
+  });
+});
+
+describe("favourites in the catalog", () => {
+  beforeEach(() => {
+    mockFrom.mockReset();
+    mockRpc.mockReset();
+  });
+
+  const savedRow = { ...activityRow, favourites: [{ customer_id: "c1" }] };
+
+  it("says which activities of the list the customer saved, in the same query", async () => {
+    const queries = mockTables({
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      activities: {
+        data: [savedRow, { ...activityRow, id: "a2" }],
+        error: null,
+      },
+      public_provider_contacts: { data: [sheetRow], error: null },
+    });
+
+    const result = await fetchCatalogActivities();
+
+    expect(result.map((item) => [item.activity.id, item.isFavourite])).toEqual([
+      ["a1", true],
+      ["a2", false],
+    ]);
+    expect(queries.activities.calls).toContainEqual([
+      "select",
+      ["*, favourites(customer_id)"],
+    ]);
+  });
+
+  it("says whether the customer saved the activity of the detail", async () => {
+    mockTables({
+      activities: { data: savedRow, error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
+      addresses: { data: addressRow, error: null },
+    });
+
+    expect((await fetchCatalogActivity("a1"))?.isFavourite).toBe(true);
+  });
+
+  it("an activity that is not saved is not a favourite", async () => {
+    mockTables({
+      activities: { data: activityRow, error: null },
+      public_approved_provider_profiles: { data: [profileRow], error: null },
+      public_provider_contacts: { data: [sheetRow], error: null },
+      addresses: { data: addressRow, error: null },
+    });
+
+    expect((await fetchCatalogActivity("a1"))?.isFavourite).toBe(false);
   });
 });

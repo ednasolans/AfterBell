@@ -28,6 +28,7 @@ export default function GroupLayout() {
             options={{ title: "Activity" }}
           />
           <Stack.Screen name="my-requests" options={{ title: "My requests" }} />
+          <Stack.Screen name="favourites" options={{ title: "Favourites" }} />
         </Stack>
       </ActiveProfileProvider>
     </AreaGuard>
