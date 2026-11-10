@@ -19,8 +19,15 @@ export default function GroupLayout() {
             headerRight: CustomerHeaderRight,
           }}
         >
-          <Stack.Screen name="customer-home" options={{ title: "Activities" }} />
-          <Stack.Screen name="activities/[id]" options={{ title: "Activity" }} />
+          <Stack.Screen
+            name="customer-home"
+            options={{ title: "Activities" }}
+          />
+          <Stack.Screen
+            name="activities/[id]"
+            options={{ title: "Activity" }}
+          />
+          <Stack.Screen name="my-requests" options={{ title: "My requests" }} />
         </Stack>
       </ActiveProfileProvider>
     </AreaGuard>
