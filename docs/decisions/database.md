@@ -243,6 +243,43 @@ registration interface and activity management are
 addressed by their respective features.
 
 
+### Tutor offers (C5, #97)
+
+Tutors publish teaching offers using the `tutor_offers`
+table, linked to their account and existing technical sheet.
+
+Subjects and education levels come from the
+`tutor_subjects` and `tutor_levels` catalogues.
+They are validated in PostgreSQL rather than trusted
+from the mobile app.
+
+Offers always belong to the existing `tutoring`
+category.
+
+Offers use the same lowercase status convention as
+activities: `draft` and `published`.
+
+Drafts can be incomplete. Publishing requires:
+- A complete tutor technical sheet
+- A complete structured address
+- A title
+- At least one valid subject
+- At least one valid education level
+- An hourly price
+
+Shared publication requirements are reused from
+`publication_issues()`. Tutor-specific requirements
+are checked by `tutor_offer_missing_fields()`.
+
+RLS restricts offer creation, updates and deletion
+to the owning tutor. Only published offers are
+visible to other authenticated users.
+
+Tutor offers are stored separately from activities
+because #97 does not require the activity-specific
+schedule, age ranges or capacity fields.
+
+
 ### Sprint 2 tables (C11)
 
 | Decision | Why |

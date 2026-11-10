@@ -321,3 +321,44 @@ TableGroup ai_profiles [color: #7c3aed] {
   search_summary_cache
   search_summary_requests
 }
+
+
+Table tutor_subjects {
+  code text [pk]
+  name text [not null, unique]
+
+  Note: 'Catalogue of valid tutor subjects.'
+}
+
+Table tutor_levels {
+  code text [pk]
+  name text [not null, unique]
+
+  Note: 'Catalogue of valid education levels.'
+}
+
+Table tutor_offers {
+  id uuid [pk, default: `gen_random_uuid()`]
+  tutor_id uuid [not null]
+  technical_sheet_id uuid [not null]
+  title text [note: 'Required to publish; max 120']
+  description text [note: 'Optional; max 1000']
+  subject_codes text[] [not null, note: 'Validated against tutor_subjects']
+  level_codes text[] [not null, note: 'Validated against tutor_levels']
+  price_per_hour numeric [note: 'Required to publish']
+  category text [not null, default: 'tutoring']
+  status text [not null, default: 'draft', note: 'draft | published']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    tutor_id
+    status
+  }
+
+  Note: 'Tutors own offers. Customers see only published offers.'
+}
+
+Ref: tutor_offers.tutor_id > accounts.id
+Ref: tutor_offers.technical_sheet_id > technical_sheets.id
+Ref: tutor_offers.category > categories.name
