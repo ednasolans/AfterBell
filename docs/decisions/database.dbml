@@ -148,7 +148,7 @@ Table languages {
 }
 
 Table favourites {
-  customer_id uuid [not null, note: 'FK accounts, ON DELETE CASCADE']
+  customer_id uuid [not null, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE']
   activity_id uuid [not null, note: 'FK activities, ON DELETE CASCADE']
   created_at timestamptz [not null, default: `now()`]
 
@@ -156,7 +156,7 @@ Table favourites {
     (customer_id, activity_id) [pk]
     activity_id
   }
-  Note: 'RLS: only the customer reads, adds and deletes its own favourites, of published activities.'
+  Note: 'RLS: only the customer reads, adds and deletes its own favourites, of published activities. Listed with my_favourites(), which keeps unpublished ones marked as not available.'
 }
 
 Table enrolment_requests {

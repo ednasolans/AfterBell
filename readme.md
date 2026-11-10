@@ -16,7 +16,8 @@ University group project of the Master's in Informatics Engineering (MEINF, Univ
 | Activity catalog for customers | Sprint 1 | — |
 | Temporary activities (backend, provider form, customer view and AI profile) | Sprint 2 | [activities.md](docs/features/activities.md) |
 | Enrolment requests (backend and customer screens; provider screens in progress) | Sprint 2 | [enrolments.md](docs/features/enrolments.md) |
-| Search and filters, events, tutors, recommendations and favourites | Sprint 2 | — |
+| Favourites (save activities, list with unavailable ones marked) | Sprint 2 | [favourites.md](docs/features/favourites.md) |
+| Search and filters, events, tutors and recommendations | Sprint 2 | — |
 
 ## Tech stack
 
