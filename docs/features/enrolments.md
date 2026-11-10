@@ -1,6 +1,6 @@
 # Feature guide: enrolment requests (C9)
 
-Families ask for a place in an activity, and the provider accepts or rejects the request. This guide explains the backend (#117): the API, its rules and the decisions behind them. The screens come with #118 (customers) and #119 (providers).
+Families ask for a place in an activity, and the provider accepts or rejects the request. This guide explains the backend (#117), the customer screens (#118) and the decisions behind them. The provider screens come with #119.
 
 ## 1. Rules
 
@@ -64,7 +64,29 @@ Lists return 20 rows by default and 100 at most.
 - `supabase/tests/enrolment_requests.sql`: every rule, status change and permission, the places and the lists (40 checks, rolled back). Run it as its header explains.
 - `supabase/tests/enrolment_concurrency.sh`: two sessions accept the last place at the same time and only one gets it. It needs two connections, so it commits its own data and deletes it at the end.
 
-## 5. Pending
+## 5. Customer screens (#118)
 
-- Customer screens (#118) and provider screens (#119), including the "No limit" option.
+The code lives in `mobile/src/features/enrolments/`. The activity detail (catalog feature) gets the enrolment part through `renderFooter`, so the two features do not import each other: the screen `app/(customer)/activities/[id].tsx` joins them.
+
+- **Activity detail:** shows the enrolled people and the places left, the family's requests for this activity with their status, and *Request enrolment*. The button is replaced by a message when the activity has finished or is full, when every profile already has a request, or when the family has no profiles (with a link to add one).
+- **Request form:** opens under the button, without leaving the detail. The family chooses one or more profiles (only those without an active request) and can write a message. One request is sent per profile; if one fails, the ones sent before are kept and the error is shown.
+- **My requests** (`/my-requests`, *Requests* in the bottom bar): every request with its activity, profile, date and status, *No longer available* for activities that were unpublished or finished, and *Cancel request* with a confirmation for pending and accepted ones. It reloads when the family comes back to the screen and with pull to refresh.
+- **Statuses** have an icon and a text, so they do not rely on colour alone.
+- **Errors:** only the messages written for the family are shown (`enrolmentErrors.ts`); anything else becomes a generic text.
+
+| File | Content |
+|---|---|
+| `types.ts` | Statuses and labels, `EnrolmentRequest`, `EnrolmentProfile`, the form. |
+| `enrolmentRules.ts` | Whether an activity accepts requests (finished, full) and which profiles can still ask. |
+| `validation.ts` | At least one profile, message up to 1000 characters. |
+| `enrolmentErrors.ts` | Which errors are shown to the family. |
+| `api/` | `fetchEnrolmentProfiles`, `fetchMyEnrolmentRequests`, `sendEnrolmentRequests`, `cancelEnrolmentRequest`. |
+| `hooks/` | Queries, mutations and the form state. |
+| `components/` | `RequestEnrolment`, `EnrolmentRequestForm`, `MyEnrolmentRequestsList`, `EnrolmentStatusBadge`. |
+
+`isFinished` moved from the catalog to `lib/activity.ts`, because both features need it.
+
+## 6. Pending
+
+- Provider screens (#119), including the "No limit" option.
 - `provider_enrolled_family_profiles` (C11) returns only accepted profiles; `provider_enrolment_requests` covers every status.
