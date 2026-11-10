@@ -376,7 +376,7 @@ export type Database = {
         Insert: {
           activity_id: string;
           created_at?: string;
-          customer_id: string;
+          customer_id?: string;
         };
         Update: {
           activity_id?: string;
@@ -643,6 +643,23 @@ export type Database = {
           message: string;
           status: string;
           updated_at: string;
+        }[];
+      };
+      my_favourites: {
+        Args: { p_limit?: number; p_offset?: number };
+        Returns: {
+          activity_id: string;
+          available: boolean;
+          category: string;
+          created_at: string;
+          end_date: string;
+          price: number;
+          price_period: string;
+          provider_name: string;
+          start_date: string;
+          target_age_ranges: string[];
+          title: string;
+          type: string;
         }[];
       };
       provider_enrolled_family_profiles: {
