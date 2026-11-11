@@ -1,4 +1,5 @@
-// generate-profile (#30, #81): technical sheet -> LLM -> provider_profiles.// All the logic lives here, with its dependencies passed in, so it can be
+// generate-profile (#30, #81): technical sheet -> LLM -> provider_profiles.
+// All the logic lives here, with its dependencies passed in, so it can be
 // tested without Supabase or a real LLM. index.ts connects the real ones.
 
 import { LlmError, type LlmResult } from "../_shared/llm.ts";
