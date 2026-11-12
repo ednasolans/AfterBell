@@ -15,7 +15,7 @@ import { useProfileIsOutdated } from "../hooks/useProfileIsOutdated";
 import { useSaveProfile } from "../hooks/useSaveProfile";
 import { OutdatedWarning } from "./OutdatedWarning";
 import { ProfileDraftEditor } from "./ProfileDraftEditor";
-import { type ProfileForm } from "../types";
+import { type ProfileForm, type ProviderProfile } from "../types";
 import { PublishedProfile } from "./PublishedProfile";
 import { colors } from "@/theme/colors";
 
@@ -66,6 +66,86 @@ function GenerateSection({
   );
 }
 
+// Text of the generate button for the current profile
+function generateLabel(profile: ProviderProfile | null): string {
+  if (profile === null) {
+    return "Generate profile with AI";
+  }
+  return profile.status === "draft" ? "Generate again" : "Regenerate profile";
+}
+
+// A draft is only seen by the provider: it is generated again directly.
+// Once a profile has been approved, a new text replaces the published one only
+// after approval: explain it before calling the AI.
+function regenerateAction(
+  profile: ProviderProfile | null,
+  generate: () => void,
+): () => void {
+  if (profile === null || profile.status === "draft") {
+    return generate;
+  }
+  return () =>
+    Alert.alert(
+      "Regenerate your profile?",
+      "The AI will write a new text from your technical sheet. Families will keep seeing your current profile until you approve the new one.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Regenerate", onPress: generate },
+      ],
+    );
+}
+
+type ProfileReviewProps = {
+  profile: ProviderProfile;
+  save: ReturnType<typeof useSaveProfile>;
+  approve: ReturnType<typeof useApproveProfile>;
+  discard: ReturnType<typeof useDiscardProfileChanges>;
+  // Closes the editor of the published profile
+  onClose: () => void;
+};
+
+// Editor of a draft, of a pending version or of the published profile
+function ProfileReview({
+  profile,
+  save,
+  approve,
+  discard,
+  onClose,
+}: ProfileReviewProps) {
+  // Going back to the published text: close the editor of the published
+  // profile, or drop the pending version saved in the database
+  function discardChanges() {
+    if (profile.status === "approved") {
+      onClose();
+    } else {
+      discard.mutate();
+    }
+  }
+
+  // After saving, an edited published profile is pending approval: the
+  // editor stays open as the pending version
+  async function saveChanges(form: ProfileForm) {
+    await save.mutateAsync(form);
+    onClose();
+  }
+
+  return (
+    <ProfileDraftEditor
+      profile={profile}
+      onSave={saveChanges}
+      isSaving={save.isPending}
+      saveFailed={save.isError}
+      onApprove={() => approve.mutate()}
+      isApproving={approve.isPending}
+      approveFailed={approve.isError}
+      // Discarding needs an approved version to go back to
+      onDiscard={profile.approvedHeadline === null ? undefined : discardChanges}
+      isDiscarding={discard.isPending}
+      discardFailed={discard.isError}
+    />
+  );
+}
+
 export function AiProfile() {
   const profile = useMyProfile();
   const sheet = useHasTechnicalSheet();
@@ -94,43 +174,22 @@ export function AiProfile() {
   }
 
   const current = profile.data;
-  // While it loads or if it fails, the warning is simply not shown
-  const isOutdated = current !== null && outdated.data === true;
-
-  // Once a profile has been approved, a new text replaces the published one
-  // only after approval: explain it before calling the AI
-  function confirmRegenerate() {
-    Alert.alert(
-      "Regenerate your profile?",
-      "The AI will write a new text from your technical sheet. Families will keep seeing your current profile until you approve the new one.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Regenerate", onPress: () => generate.mutate() },
-      ],
-    );
-  }
-
-  // A draft is only seen by the provider: it is generated again directly
-  const isDraftOrEmpty = current === null || current.status === "draft";
-  const regenerate = isDraftOrEmpty
-    ? () => generate.mutate()
-    : confirmRegenerate;
-  const generateLabel = isDraftOrEmpty
-    ? "Generate again"
-    : "Regenerate profile";
+  const regenerate = regenerateAction(current, () => generate.mutate());
 
   const generateSection = (
     <GenerateSection
       hasSheet={sheet.data}
-      label={current === null ? "Generate profile with AI" : generateLabel}
+      label={generateLabel(current)}
       isFirst={current === null}
       onPress={regenerate}
       generate={generate}
     />
   );
-  const outdatedWarning = isOutdated ? (
-    <OutdatedWarning onRegenerate={regenerate} />
-  ) : null;
+  // While it loads or if it fails, the warning is simply not shown
+  const outdatedWarning =
+    current !== null && outdated.data === true ? (
+      <OutdatedWarning onRegenerate={regenerate} />
+    ) : null;
 
   if (current?.status === "approved" && !isEditingPublished) {
     return (
@@ -150,23 +209,6 @@ export function AiProfile() {
     );
   }
 
-  // Going back to the published text: close the editor of the published
-  // profile, or drop the pending version saved in the database
-  function discardChanges() {
-    if (current?.status === "approved") {
-      setIsEditingPublished(false);
-    } else {
-      discard.mutate();
-    }
-  }
-
-  // After saving, an edited published profile is pending approval: the
-  // editor stays open as the pending version
-  async function saveChanges(form: ProfileForm) {
-    await save.mutateAsync(form);
-    setIsEditingPublished(false);
-  }
-
   return (
     <View style={styles.container}>
       <Text style={styles.eyebrow}>AI PROFILE</Text>
@@ -179,21 +221,14 @@ export function AiProfile() {
       {outdatedWarning}
 
       {current ? (
-        <ProfileDraftEditor
+        <ProfileReview
           // A new draft (generated again) starts a fresh form
           key={current.generatedAt}
           profile={current}
-          onSave={saveChanges}
-          isSaving={save.isPending}
-          saveFailed={save.isError}
-          onApprove={() => approve.mutate()}
-          isApproving={approve.isPending}
-          approveFailed={approve.isError}
-          onDiscard={
-            current.approvedHeadline === null ? undefined : discardChanges
-          }
-          isDiscarding={discard.isPending}
-          discardFailed={discard.isError}
+          save={save}
+          approve={approve}
+          discard={discard}
+          onClose={() => setIsEditingPublished(false)}
         />
       ) : (
         <View style={styles.infoCard}>
