@@ -18,6 +18,21 @@ describe("useProfileForm", () => {
     expect(result.current.errors).toEqual({});
   });
 
+  it("knows when the text differs from the saved one", async () => {
+    const { result } = await renderForm();
+    expect(result.current.isDirty).toBe(false);
+
+    await act(() => {
+      result.current.updateField("headline", "New headline");
+    });
+    expect(result.current.isDirty).toBe(true);
+
+    await act(() => {
+      result.current.updateField("headline", INITIAL.headline);
+    });
+    expect(result.current.isDirty).toBe(false);
+  });
+
   it("updates one field", async () => {
     const { result } = await renderForm();
     await act(() => {
