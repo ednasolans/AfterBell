@@ -662,6 +662,16 @@ export type Database = {
           type: string;
         }[];
       };
+      provider_activity_capacities: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          activity_id: string;
+          activity_title: string;
+          available_places: number;
+          max_participants: number;
+          taken_places: number;
+        }[];
+      };
       provider_enrolled_family_profiles: {
         Args: { p_activity_id: string };
         Returns: {
