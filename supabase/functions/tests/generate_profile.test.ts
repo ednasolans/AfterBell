@@ -7,7 +7,8 @@ import {
   handleRequest,
   HttpError,
   type ProfileRepository,
-  type SavedDraft,
+  type GeneratedStatus,
+  type SavedProfile,
 } from "../generate-profile/handler.ts";
 
 const SHEET: SheetForPrompt = {
@@ -27,6 +28,7 @@ const NOW = new Date("2026-10-24T10:00:00Z");
 /** Fake database: records what would be saved instead of saving it. */
 class FakeRepo implements ProfileRepository {
   saved: GeneratedProfile[] = [];
+  savedStatus: GeneratedStatus | null = null;
   constructor(
     private readonly options: {
       userId?: string | null;
@@ -47,10 +49,16 @@ class FakeRepo implements ProfileRepository {
   getProfile() {
     return Promise.resolve(this.options.profile ?? null);
   }
-  saveDraft(profile: GeneratedProfile, model: string): Promise<SavedDraft> {
-    this.saved.push(profile);
-    return Promise.resolve({ ...profile, status: "draft", model, generated_at: NOW.toISOString() });
-  }
+    saveProfile(
+      _userId: string,
+      profile: GeneratedProfile,
+      model: string,
+      status: GeneratedStatus,
+    ): Promise<SavedProfile> {
+      this.saved.push(profile);
+      this.savedStatus = status;
+      return Promise.resolve({ ...profile, status, model, generated_at: NOW.toISOString() });
+    }
 }
 
 const answer = (content: string): LlmResult => ({ content, promptTokens: 0, completionTokens: 0, latencyMs: 1 });
@@ -120,11 +128,39 @@ Deno.test("without a technical sheet nothing is generated", async () => {
   assertEquals(body.error.code, "no_technical_sheet");
 });
 
-Deno.test("an approved profile is not regenerated", async () => {
+Deno.test("a first profile is saved as a draft", async () => {
+  const repo = new FakeRepo();
+  const { body } = await call(deps(repo));
+  assertEquals(repo.savedStatus, "draft");
+  assertEquals(body.profile.status, "draft");
+});
+
+Deno.test("a draft is regenerated as a draft", async () => {
+  const repo = new FakeRepo({ profile: { status: "draft", generatedAt: new Date("2026-10-01") } });
+  const { status } = await call(deps(repo));
+  assertEquals(status, 200);
+  assertEquals(repo.savedStatus, "draft");
+});
+
+Deno.test("an approved profile is regenerated pending a new approval", async () => {
   const repo = new FakeRepo({ profile: { status: "approved", generatedAt: new Date("2026-10-01") } });
   const { status, body } = await call(deps(repo));
-  assertEquals(status, 409);
-  assertEquals(body.error.code, "already_approved");
+  assertEquals(status, 200);
+  assertEquals(repo.savedStatus, "pending_approval");
+  assertEquals(body.profile.status, "pending_approval");
+});
+
+Deno.test("a pending profile stays pending when regenerated", async () => {
+  const repo = new FakeRepo({ profile: { status: "pending_approval", generatedAt: new Date("2026-10-01") } });
+  await call(deps(repo));
+  assertEquals(repo.savedStatus, "pending_approval");
+});
+
+Deno.test("an approved profile cannot be regenerated within 30 s either", async () => {
+  const repo = new FakeRepo({ profile: { status: "approved", generatedAt: new Date(NOW.getTime() - 10_000) } });
+  const { status } = await call(deps(repo));
+  assertEquals(status, 429);
+  assertEquals(repo.saved.length, 0);
 });
 
 Deno.test("generating again within 30 s is rejected", async () => {

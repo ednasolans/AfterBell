@@ -599,9 +599,17 @@ export type Database = {
         Args: { p_request_id: string };
         Returns: undefined;
       };
+      discard_profile_changes: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
       is_company: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_family_member: { Args: { group_id: string }; Returns: boolean };
       is_valid_schedule: { Args: { schedule: Json }; Returns: boolean };
+      my_profile_is_outdated: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
       provider_enrolled_family_profiles: {
         Args: { p_activity_id: string };
         Returns: {

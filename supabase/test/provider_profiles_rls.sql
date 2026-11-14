@@ -43,12 +43,17 @@ BEGIN
     SET LOCAL ROLE authenticated;
     SELECT count(*) INTO n FROM public.provider_profiles WHERE status = 'draft';
     IF n <> 0 THEN RAISE EXCEPTION 'FAIL 3a: customer can see drafts'; END IF;
+
+    -- Since C11 customers read approved profiles only through
+    -- public_approved_provider_profiles(), never the row (it may hold pending text)
     SELECT count(*) INTO n FROM public.provider_profiles WHERE provider_id = company_b;
-    IF n <> 1 THEN RAISE EXCEPTION 'FAIL 3b: customer cannot see approved profile'; END IF;
+    IF n <> 0 THEN RAISE EXCEPTION 'FAIL 3b: customer can read the profile row'; END IF;
+    SELECT count(*) INTO n FROM public.public_approved_provider_profiles() WHERE provider_id = company_b;
+    IF n <> 1 THEN RAISE EXCEPTION 'FAIL 3c: customer cannot see approved profile'; END IF;
     BEGIN
         INSERT INTO public.provider_profiles (headline, description, model)
         VALUES ('x', 'y', 'test');
-        RAISE EXCEPTION 'FAIL 3c: customer could insert';
+        RAISE EXCEPTION 'FAIL 3d: customer could insert';
     EXCEPTION WHEN insufficient_privilege THEN NULL;
     END;
     RESET ROLE;
