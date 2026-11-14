@@ -1,4 +1,4 @@
-// generate-profile (#30): technical sheet -> LLM -> draft in provider_profiles.
+// generate-profile (#30, #81): technical sheet -> LLM -> provider_profiles.
 // All the logic lives here, with its dependencies passed in, so it can be
 // tested without Supabase or a real LLM. index.ts connects the real ones.
 
@@ -15,8 +15,14 @@ export interface ExistingProfile {
   generatedAt: Date;
 }
 
-export interface SavedDraft extends GeneratedProfile {
-  status: string;
+/**
+ * How new AI text is saved: a draft before the first approval, and pending
+ * approval afterwards, so customers keep the approved text meanwhile (#81).
+ */
+export type GeneratedStatus = "draft" | "pending_approval";
+
+export interface SavedProfile extends GeneratedProfile {
+  status: GeneratedStatus;
   model: string;
   generated_at: string;
 }
@@ -27,7 +33,12 @@ export interface ProfileRepository {
   isCompany(): Promise<boolean>;
   getSheet(userId: string): Promise<SheetForPrompt | null>;
   getProfile(userId: string): Promise<ExistingProfile | null>;
-  saveDraft(profile: GeneratedProfile, model: string): Promise<SavedDraft>;
+  saveProfile(
+    userId: string,
+    profile: GeneratedProfile,
+    model: string,
+    status: GeneratedStatus,
+  ): Promise<SavedProfile>;
 }
 
 export interface Deps {
@@ -69,17 +80,16 @@ async function loadSheet(repo: ProfileRepository): Promise<{ userId: string; she
   return { userId, sheet };
 }
 
-/** Rejects regenerating an approved profile (Sprint 2) or generating too often. */
-async function checkCanGenerate(deps: Deps, userId: string): Promise<void> {
+/** Rejects generating too often and decides how the new text is saved. */
+async function checkCanGenerate(deps: Deps, userId: string): Promise<GeneratedStatus> {
   const profile = await deps.repo.getProfile(userId);
-  if (!profile) return;
-  if (profile.status === "approved") {
-    throw new HttpError(409, "already_approved", "The profile is already published");
-  }
+  if (!profile) return "draft";
   const now = (deps.now ?? (() => new Date()))();
   if (now.getTime() - profile.generatedAt.getTime() < COOLDOWN_MS) {
     throw new HttpError(429, "too_many_requests", "Wait a few seconds before generating again");
   }
+  // Once a profile has been approved, new text needs a new approval (#81)
+  return profile.status === "draft" ? "draft" : "pending_approval";
 }
 
 function toHttpError(err: LlmError): HttpError {
@@ -112,11 +122,11 @@ export async function handleRequest(req: Request, deps: Deps): Promise<Response>
 
   try {
     const { userId, sheet } = await loadSheet(deps.repo);
-    await checkCanGenerate(deps, userId);
+    const status = await checkCanGenerate(deps, userId);
     const profile = await generate(deps, sheet);
     // Saved only after a valid answer: if the LLM fails, nothing is written.
-    const draft = await deps.repo.saveDraft(profile, deps.model);
-    return json(200, { profile: draft });
+    const saved = await deps.repo.saveProfile(userId, profile, deps.model, status);
+    return json(200, { profile: saved });
   } catch (err) {
     if (err instanceof HttpError) {
       return json(err.status, { error: { code: err.code, message: err.message } });

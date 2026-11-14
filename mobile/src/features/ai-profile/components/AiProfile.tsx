@@ -1,29 +1,38 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import LoadingButton from "@/components/LoadingButton";
 import { LoadingView } from "@/components/LoadingView";
 
 import { useApproveProfile } from "../hooks/useApproveProfile";
+import { useDiscardProfileChanges } from "../hooks/useDiscardProfileChanges";
 import { useGenerateProfile } from "../hooks/useGenerateProfile";
 import { useHasTechnicalSheet } from "../hooks/useHasTechnicalSheet";
 import { useMyProfile } from "../hooks/useMyProfile";
+import { useProfileIsOutdated } from "../hooks/useProfileIsOutdated";
 import { useSaveProfile } from "../hooks/useSaveProfile";
+import { OutdatedWarning } from "./OutdatedWarning";
 import { ProfileDraftEditor } from "./ProfileDraftEditor";
+import { type ProfileForm, type ProviderProfile } from "../types";
 import { PublishedProfile } from "./PublishedProfile";
 import { colors } from "@/theme/colors";
 
 type GenerateSectionProps = {
   hasSheet: boolean;
-  hasDraft: boolean;
+  label: string;
+  isFirst: boolean;
+  onPress: () => void;
   generate: ReturnType<typeof useGenerateProfile>;
 };
 
-// Button to generate (or generate again) the draft with AI
+// Button to generate (or generate again) the profile with AI
 function GenerateSection({
   hasSheet,
-  hasDraft,
+  label,
+  isFirst,
+  onPress,
   generate,
 }: GenerateSectionProps) {
   if (!hasSheet) {
@@ -48,12 +57,92 @@ function GenerateSection({
         </Text>
       ) : null}
       <LoadingButton
-        label={hasDraft ? "Generate again" : "Generate profile with AI"}
-        onPress={() => generate.mutate()}
+        label={label}
+        onPress={onPress}
         loading={generate.isPending}
-        variant={hasDraft ? "outline" : "primary"}
+        variant={isFirst ? "primary" : "outline"}
       />
     </View>
+  );
+}
+
+// Text of the generate button for the current profile
+function generateLabel(profile: ProviderProfile | null): string {
+  if (profile === null) {
+    return "Generate profile with AI";
+  }
+  return profile.status === "draft" ? "Generate again" : "Regenerate profile";
+}
+
+// A draft is only seen by the provider: it is generated again directly.
+// Once a profile has been approved, a new text replaces the published one only
+// after approval: explain it before calling the AI.
+function regenerateAction(
+  profile: ProviderProfile | null,
+  generate: () => void,
+): () => void {
+  if (profile === null || profile.status === "draft") {
+    return generate;
+  }
+  return () =>
+    Alert.alert(
+      "Regenerate your profile?",
+      "The AI will write a new text from your technical sheet. Families will keep seeing your current profile until you approve the new one.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Regenerate", onPress: generate },
+      ],
+    );
+}
+
+type ProfileReviewProps = {
+  profile: ProviderProfile;
+  save: ReturnType<typeof useSaveProfile>;
+  approve: ReturnType<typeof useApproveProfile>;
+  discard: ReturnType<typeof useDiscardProfileChanges>;
+  // Closes the editor of the published profile
+  onClose: () => void;
+};
+
+// Editor of a draft, of a pending version or of the published profile
+function ProfileReview({
+  profile,
+  save,
+  approve,
+  discard,
+  onClose,
+}: ProfileReviewProps) {
+  // Going back to the published text: close the editor of the published
+  // profile, or drop the pending version saved in the database
+  function discardChanges() {
+    if (profile.status === "approved") {
+      onClose();
+    } else {
+      discard.mutate();
+    }
+  }
+
+  // After saving, an edited published profile is pending approval: the
+  // editor stays open as the pending version
+  async function saveChanges(form: ProfileForm) {
+    await save.mutateAsync(form);
+    onClose();
+  }
+
+  return (
+    <ProfileDraftEditor
+      profile={profile}
+      onSave={saveChanges}
+      isSaving={save.isPending}
+      saveFailed={save.isError}
+      onApprove={() => approve.mutate()}
+      isApproving={approve.isPending}
+      approveFailed={approve.isError}
+      // Discarding needs an approved version to go back to
+      onDiscard={profile.approvedHeadline === null ? undefined : discardChanges}
+      isDiscarding={discard.isPending}
+      discardFailed={discard.isError}
+    />
   );
 }
 
@@ -63,6 +152,10 @@ export function AiProfile() {
   const generate = useGenerateProfile();
   const save = useSaveProfile();
   const approve = useApproveProfile();
+  const outdated = useProfileIsOutdated();
+  const discard = useDiscardProfileChanges();
+  // The provider opened the editor of the published profile
+  const [isEditingPublished, setIsEditingPublished] = useState(false);
 
   if (profile.isPending || sheet.isPending) {
     return <LoadingView />;
@@ -80,8 +173,40 @@ export function AiProfile() {
     );
   }
 
-  if (profile.data?.status === "approved") {
-    return <PublishedProfile profile={profile.data} />;
+  const current = profile.data;
+  const regenerate = regenerateAction(current, () => generate.mutate());
+
+  const generateSection = (
+    <GenerateSection
+      hasSheet={sheet.data}
+      label={generateLabel(current)}
+      isFirst={current === null}
+      onPress={regenerate}
+      generate={generate}
+    />
+  );
+  // While it loads or if it fails, the warning is simply not shown
+  const outdatedWarning =
+    current !== null && outdated.data === true ? (
+      <OutdatedWarning onRegenerate={regenerate} />
+    ) : null;
+
+  if (current?.status === "approved" && !isEditingPublished) {
+    return (
+      <View style={styles.container}>
+        {approve.isSuccess ? (
+          <Text style={styles.success} accessibilityRole="alert">
+            Your profile is published.
+          </Text>
+        ) : null}
+        {outdatedWarning}
+        <PublishedProfile
+          profile={current}
+          onEdit={() => setIsEditingPublished(true)}
+        />
+        {generateSection}
+      </View>
+    );
   }
 
   return (
@@ -93,17 +218,17 @@ export function AiProfile() {
       <Text style={styles.subtitle}>
         Let AI help you tell families what makes your organisation special.
       </Text>
-      {profile.data ? (
-        <ProfileDraftEditor
+      {outdatedWarning}
+
+      {current ? (
+        <ProfileReview
           // A new draft (generated again) starts a fresh form
-          key={profile.data.generatedAt}
-          profile={profile.data}
-          onSave={save.mutateAsync}
-          isSaving={save.isPending}
-          saveFailed={save.isError}
-          onApprove={() => approve.mutate()}
-          isApproving={approve.isPending}
-          approveFailed={approve.isError}
+          key={current.generatedAt}
+          profile={current}
+          save={save}
+          approve={approve}
+          discard={discard}
+          onClose={() => setIsEditingPublished(false)}
         />
       ) : (
         <View style={styles.infoCard}>
@@ -118,11 +243,7 @@ export function AiProfile() {
           </Text>
         </View>
       )}
-      <GenerateSection
-        hasSheet={sheet.data}
-        hasDraft={profile.data !== null}
-        generate={generate}
-      />
+      {generateSection}
     </View>
   );
 }
@@ -148,4 +269,5 @@ const styles = StyleSheet.create({
   },
   generate: { marginTop: 8 },
   error: { color: colors.danger, textAlign: "center", marginBottom: 8 },
+  success: { color: colors.primaryDark, fontWeight: "700" },
 });
