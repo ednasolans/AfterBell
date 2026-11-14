@@ -1,6 +1,6 @@
 # Feature guide: enrolment requests (C9)
 
-Families ask for a place in an activity, and the provider accepts or rejects the request. This guide explains the backend (#117), the customer screens (#118) and the decisions behind them. The provider screens come with #119.
+Families ask for a place in an activity, and the provider accepts or rejects the request. This guide explains the backend (#117), the customer screens (#118), the provider screens (#119) and the decisions behind them.
 
 ## 1. Rules
 
@@ -14,7 +14,7 @@ Families ask for a place in an activity, and the provider accepts or rejects the
 
 ### No limit of participants
 
-An activity can have no limit, but only on purpose (team decision): `max_participants` is empty only when `unlimited_participants` is `true`. The flag is `false` by default, so forgetting the maximum is rejected instead of meaning "no limit" (`activities_participant_limit_is_explicit`). Existing activities keep their limit. The form gets a "No limit" option in #119.
+An activity can have no limit, but only on purpose (team decision): `max_participants` is empty only when `unlimited_participants` is `true`. The flag is `false` by default, so forgetting the maximum is rejected instead of meaning "no limit" (`activities_participant_limit_is_explicit`). Existing activities keep their limit. The form has a "No limit of participants" switch (#119).
 
 ## 2. API
 
@@ -29,6 +29,7 @@ Requests cannot be written directly: every change goes through these functions, 
 | `reject_enrolment_request(p_request_id)` | Provider | Rejects a pending request. |
 | `provider_enrolment_requests(p_activity_id?, p_status?, p_limit?, p_offset?)` | Provider | Requests for its activities, pending first, optionally for one activity or one status. |
 | `activity_capacity(p_activity_id)` | Anyone | `max_participants`, `taken_places` and `available_places` (both limits empty when there is no limit). |
+| `provider_activity_capacities()` | Provider | The same for every activity of the provider, with its title, in one call (#119). |
 
 Lists return 20 rows by default and 100 at most.
 
@@ -49,6 +50,7 @@ Lists return 20 rows by default and 100 at most.
 | `Only pending requests can be accepted` / `rejected` | Wrong status change |
 | `Only pending or accepted requests can be cancelled` | Wrong status change |
 | `Not the activity provider` / `Not the requesting customer` | The request belongs to someone else |
+| `There are already N accepted participants` | The provider lowers the maximum below the accepted participants (#119, team decision) |
 
 ## 3. Files
 
@@ -58,10 +60,12 @@ Lists return 20 rows by default and 100 at most.
 | `…_make_participant_limit_explicit.sql` | `unlimited_participants` and the explicit limit. |
 | `…_enrolment_request_rules.sql` | The rules above and the clear messages. |
 | `…_list_enrolment_requests.sql` | `my_enrolment_requests` and `provider_enrolment_requests`. |
+| `…_provider_capacities_and_limit_check.sql` | `provider_activity_capacities` and the trigger that keeps the maximum above the accepted participants (#119). |
 
 ## 4. Tests
 
 - `supabase/tests/enrolment_requests.sql`: every rule, status change and permission, the places and the lists (40 checks, rolled back). Run it as its header explains.
+- `supabase/tests/provider_capacities.sql`: the places of each activity of the provider, who can read them, and every way of changing the maximum (12 checks, rolled back).
 - `supabase/tests/enrolment_concurrency.sh`: two sessions accept the last place at the same time and only one gets it. It needs two connections, so it commits its own data and deletes it at the end.
 
 ## 5. Customer screens (#118)
@@ -86,7 +90,31 @@ The code lives in `mobile/src/features/enrolments/`. The activity detail (catalo
 
 `isFinished` moved from the catalog to `lib/activity.ts`, because both features need it.
 
-## 6. Pending
+## 6. Provider screens (#119)
 
-- Provider screens (#119), including the "No limit" option.
+The provider part also lives in `features/enrolments/`. The list of activities (activities feature) gets the counter through `renderCardFooter`; the screen `app/(provider)/activities/index.tsx` joins the two features.
+
+- **Enrolment requests** (`/requests`, a card on the provider home): every request received, pending first. Each one shows the first name and age of the profile (or its age range), the activity with its places ("8 / 12" or "3 (no limit)"), the email of the family, the date, the message and the status.
+- **Filters** by status (All by default) and by activity, as chips. Filtering by an activity shows its places on top ("Places taken: 8 / 12 · Full").
+- **Accept / Reject** only for pending requests, after a confirmation. When the activity is full, *Accept* is disabled and the card says why; *Reject* still works. If the last place was taken in the meantime, the message of the server is shown.
+- **After answering**, the request and the counter change at once in the cache (`useAnswerEnrolmentRequest`), and then everything is read again in the background, without a loading screen. Changing a filter keeps the current list on screen while the new one loads.
+- **My activities:** each card shows "Places: 8 / 12" (and *Full*). Pressing it opens the requests filtered by that activity.
+- Loading, empty ("No requests match these filters" when filtering) and error states with *Try again*; pull to refresh; it reloads when the provider comes back to the screen.
+
+| File | Content |
+|---|---|
+| `api/fetchReceivedEnrolmentRequests.ts`, `toReceivedEnrolmentRequest.ts` | The received requests, with the filters. |
+| `api/fetchActivityPlaces.ts` | `provider_activity_capacities`. |
+| `api/answerEnrolmentRequest.ts` | Accept or reject. |
+| `enrolmentRules.ts` | `formatPlaces`, `isFullActivity`, `formatProfileAge`. |
+| `hooks/useReceivedEnrolmentRequests.ts`, `useActivityPlaces.ts`, `useAnswerEnrolmentRequest.ts` | Queries and the mutation that updates the cache. |
+| `components/ReceivedRequestsList.tsx`, `ActivityPlacesCounter.tsx` | The screen and the counter of the cards. |
+
+### Maximum participants in the activity form
+
+- **No limit of participants** is a switch next to the maximum. When it is on, the field is hidden and the activity is saved with `unlimited_participants = true` and no maximum. A saved activity without maximum opens with the switch on.
+- The maximum cannot be lower than the accepted participants: the trigger `activities_participant_limit_above_accepted` rejects it with `There are already N accepted participants`, and the form shows that message.
+
+## 7. Pending
+
 - `provider_enrolled_family_profiles` (C11) returns only accepted profiles; `provider_enrolment_requests` covers every status.

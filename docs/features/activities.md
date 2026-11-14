@@ -190,7 +190,7 @@ All of them passed.
 
 - [ ] **End-to-end test on a phone once login works:** a `company` user creates, edits and deletes an activity, and a `customer` user cannot.
 - [ ] The `(provider)` layout must block customers (auth issue).
-- [ ] Enrollments: count enrolled people per activity and block enrolling when `max_participants` is reached (enrollments issue).
+- [x] Enrollments: count enrolled people per activity and block enrolling when `max_participants` is reached (C9, see [enrolments.md](enrolments.md)). The form has a "No limit of participants" switch, and the maximum cannot go below the accepted participants (#119).
 - [ ] Filters by category and city (Sprint 2).
 - [ ] Publishing and unpublishing from the app (#87, #88): until then, new activities stay as drafts and customers do not see them.
 - [ ] Activities with an older address keep working, but the app cannot complete that address yet, so they cannot change a checked field or be published again.
