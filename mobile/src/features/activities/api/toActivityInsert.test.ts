@@ -13,6 +13,7 @@ const VALID_FORM: ActivityForm = {
   price: 30,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  unlimitedParticipants: false,
   addressId: "address-1",
 };
 
@@ -94,5 +95,21 @@ describe("toActivityInsert", () => {
 
     expect(row.start_date).toBeNull();
     expect(row.end_date).toBeNull();
+  });
+
+  it("sends no maximum when there is no limit", () => {
+    const row = toActivityInsert({
+      ...VALID_FORM,
+      maxParticipants: 12,
+      unlimitedParticipants: true,
+    });
+    expect(row.max_participants).toBeNull();
+    expect(row.unlimited_participants).toBe(true);
+  });
+
+  it("needs a maximum when there is a limit", () => {
+    expect(() =>
+      toActivityInsert({ ...VALID_FORM, maxParticipants: null }),
+    ).toThrow("The activity must be validated before saving it");
   });
 });

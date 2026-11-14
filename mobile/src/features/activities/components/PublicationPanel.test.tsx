@@ -149,7 +149,7 @@ describe("PublicationPanel", () => {
     );
   });
 
-  it("shows why the status could not be changed", async () => {
+  it("hides technical errors when the status cannot be changed", async () => {
     jest
       .mocked(changeActivityStatus)
       .mockRejectedValue(new Error("Network request failed"));
@@ -160,10 +160,42 @@ describe("PublicationPanel", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(
-          "The status could not be changed: Network request failed",
-        ),
+        screen.getByText("The status could not be changed. Please try again."),
       ).toBeOnTheScreen(),
     );
+    expect(screen.queryByText(/Network request failed/)).toBeNull();
+  });
+
+  it("shows the messages written for the provider", async () => {
+    jest
+      .mocked(changeActivityStatus)
+      .mockRejectedValue(
+        new Error("A complete structured address is required to publish"),
+      );
+    await renderPanel(PUBLISHED);
+
+    await fireEvent.press(screen.getByRole("button", { name: "Unpublish" }));
+    pressAlertButton("Unpublish");
+
+    expect(
+      await screen.findByText(
+        "A complete structured address is required to publish",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("does not publish while the form has unsaved changes", async () => {
+    jest.mocked(fetchPublicationIssues).mockResolvedValue([]);
+    await render(<PublicationPanel activity={ACTIVITY} hasUnsavedChanges />, {
+      wrapper: createQueryClientWrapper(createTestQueryClient()),
+    });
+
+    const publish = await screen.findByRole("button", { name: "Publish" });
+    expect(publish).toBeDisabled();
+    expect(
+      screen.getByText("Save your changes before publishing."),
+    ).toBeOnTheScreen();
+    await fireEvent.press(publish);
+    expect(Alert.alert).not.toHaveBeenCalled();
   });
 });

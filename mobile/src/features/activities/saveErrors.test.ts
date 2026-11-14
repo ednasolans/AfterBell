@@ -16,4 +16,16 @@ describe("toSaveErrorMessage", () => {
       "The activity could not be saved. Please try again.",
     );
   });
+
+  it("shows how many participants are already accepted", () => {
+    const message = "There are already 8 accepted participants";
+
+    expect(toSaveErrorMessage(new Error(message))).toBe(message);
+  });
+
+  it("uses the generic message it is given", () => {
+    expect(
+      toSaveErrorMessage(new Error("boom"), "The status could not be changed."),
+    ).toBe("The status could not be changed.");
+  });
 });

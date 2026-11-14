@@ -101,4 +101,22 @@ describe("EditActivity", () => {
       await screen.findByDisplayValue("Swimming for kids"),
     ).toBeOnTheScreen();
   });
+
+  it("blocks publishing after a change until it is saved", async () => {
+    jest.mocked(fetchActivity).mockResolvedValue(ACTIVITY);
+    await renderEdit();
+
+    expect(
+      await screen.findByRole("button", { name: "Publish" }),
+    ).toBeEnabled();
+    await fireEvent.changeText(
+      await screen.findByLabelText("Title"),
+      "Swimming for teens",
+    );
+
+    expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
+    expect(
+      screen.getByText("Save your changes before publishing."),
+    ).toBeOnTheScreen();
+  });
 });
