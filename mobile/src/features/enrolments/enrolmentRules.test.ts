@@ -1,7 +1,10 @@
 import {
   activeRequestsFor,
+  formatPlaces,
+  formatProfileAge,
   getAvailability,
   isActiveStatus,
+  isFullActivity,
   profilesThatCanAsk,
 } from "./enrolmentRules";
 import { type EnrolmentRequest } from "./types";
@@ -81,5 +84,48 @@ describe("requests of an activity", () => {
     expect(
       profilesThatCanAsk(profiles, requests, "a1").map((p) => p.id),
     ).toEqual(["pau", "marc"]);
+  });
+});
+
+describe("places of an activity", () => {
+  it("shows the places taken against the maximum", () => {
+    expect(formatPlaces({ takenPlaces: 8, maxParticipants: 12 })).toBe(
+      "8 / 12",
+    );
+  });
+
+  it("shows the places taken of an activity without limit", () => {
+    expect(formatPlaces({ takenPlaces: 3, maxParticipants: null })).toBe(
+      "3 (no limit)",
+    );
+  });
+
+  it("is full when no place is left, never without limit", () => {
+    expect(isFullActivity({ availablePlaces: 0 })).toBe(true);
+    expect(isFullActivity({ availablePlaces: 2 })).toBe(false);
+    expect(isFullActivity({ availablePlaces: null })).toBe(false);
+  });
+});
+
+describe("formatProfileAge", () => {
+  it("prefers the age from the date of birth", () => {
+    expect(
+      formatProfileAge({ familyProfileAge: 8, familyProfileAgeRange: "7-9" }),
+    ).toBe("8 years old");
+  });
+
+  it("uses the age range when there is no date of birth", () => {
+    expect(
+      formatProfileAge({
+        familyProfileAge: null,
+        familyProfileAgeRange: "7-9",
+      }),
+    ).toBe("Age 7-9");
+  });
+
+  it("returns nothing when there is neither", () => {
+    expect(
+      formatProfileAge({ familyProfileAge: null, familyProfileAgeRange: null }),
+    ).toBeNull();
   });
 });

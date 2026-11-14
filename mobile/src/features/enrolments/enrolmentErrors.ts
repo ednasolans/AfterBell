@@ -6,6 +6,9 @@ const KNOWN_ERRORS = [
   "This activity is full",
   "Family profile is not accessible",
   "Only pending or accepted requests can be cancelled",
+  "There are no places left in this activity",
+  "Only pending requests can be accepted",
+  "Only pending requests can be rejected",
 ];
 
 export function toEnrolmentErrorMessage(

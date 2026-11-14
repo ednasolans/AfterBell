@@ -44,3 +44,37 @@ export const EMPTY_ENROLMENT_REQUEST_FORM: EnrolmentRequestForm = {
   profileIds: [],
   message: "",
 };
+
+// A request received by the logged-in provider. Only what the provider needs:
+// the first name and age of the profile, and the email of the family.
+export interface ReceivedEnrolmentRequest {
+  id: string;
+  activityId: string;
+  activityTitle: string;
+  familyProfileName: string;
+  // From the date of birth; null when the profile only has an age range
+  familyProfileAge: number | null;
+  familyProfileAgeRange: string | null;
+  customerEmail: string;
+  message: string | null;
+  status: EnrolmentStatus;
+  createdAt: string;
+}
+
+// The places of one activity of the provider
+export interface ActivityPlaces {
+  activityId: string;
+  activityTitle: string;
+  // Null when the activity has no limit
+  maxParticipants: number | null;
+  takenPlaces: number;
+  availablePlaces: number | null;
+}
+
+// Null shows every activity or every status
+export interface ReceivedRequestFilters {
+  activityId: string | null;
+  status: EnrolmentStatus | null;
+}
+
+export type EnrolmentAnswer = "accept" | "reject";

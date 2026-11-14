@@ -1,9 +1,11 @@
 import { type Activity, isFinished } from "@/lib/activity";
 
 import {
+  type ActivityPlaces,
   type EnrolmentProfile,
   type EnrolmentRequest,
   type EnrolmentStatus,
+  type ReceivedEnrolmentRequest,
 } from "./types";
 
 // Same rules as send_enrolment_request. Unpublished activities never reach the
@@ -64,4 +66,34 @@ export function profilesThatCanAsk(
     ),
   );
   return profiles.filter((profile) => !taken.has(profile.id));
+}
+
+// "8 / 12" or "3 (no limit)"
+export function formatPlaces({
+  takenPlaces,
+  maxParticipants,
+}: Pick<ActivityPlaces, "takenPlaces" | "maxParticipants">): string {
+  return maxParticipants === null
+    ? `${takenPlaces} (no limit)`
+    : `${takenPlaces} / ${maxParticipants}`;
+}
+
+export function isFullActivity({
+  availablePlaces,
+}: Pick<ActivityPlaces, "availablePlaces">): boolean {
+  return availablePlaces !== null && availablePlaces <= 0;
+}
+
+// Age if the profile has a date of birth, otherwise its age range
+export function formatProfileAge({
+  familyProfileAge,
+  familyProfileAgeRange,
+}: Pick<
+  ReceivedEnrolmentRequest,
+  "familyProfileAge" | "familyProfileAgeRange"
+>): string | null {
+  if (familyProfileAge !== null) {
+    return `${familyProfileAge} years old`;
+  }
+  return familyProfileAgeRange ? `Age ${familyProfileAgeRange}` : null;
 }
