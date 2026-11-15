@@ -22,6 +22,35 @@ function validateDetails(form: ActivityForm, errors: ActivityErrors): void {
   }
 }
 
+function validateLanguages(
+  form: ActivityForm,
+  isPublished: boolean,
+  errors: ActivityErrors,
+): void {
+  if (form.category !== "language") return;
+
+  if (isPublished && form.languages.length === 0) {
+    errors.languages = "Add at least one language and level.";
+    return;
+  }
+
+  const pairs = new Set<string>();
+  for (const pair of form.languages) {
+    const language = pair.language.trim();
+    const level = pair.level.trim();
+    if (!language || !level) {
+      errors.languages = "Enter a language and level for each entry.";
+      return;
+    }
+    const key = JSON.stringify([language, level]);
+    if (pairs.has(key)) {
+      errors.languages = "Enter each language and level combination once.";
+      return;
+    }
+    pairs.add(key);
+  }
+}
+
 function validateAudience(form: ActivityForm, errors: ActivityErrors): void {
   if (form.targetAgeRanges.length === 0) {
     errors.targetAgeRanges = "Choose at least one age range";
@@ -99,9 +128,11 @@ export function validateActivity(
   form: ActivityForm,
   original: ActivityForm = EMPTY_ACTIVITY_FORM,
   today: string = toIsoDate(new Date()),
+  isPublished = false,
 ): ActivityErrors {
   const errors: ActivityErrors = {};
   validateDetails(form, errors);
+  validateLanguages(form, isPublished, errors);
   validateAudience(form, errors);
   validatePlace(form, errors);
   validateSchedule(form, errors);

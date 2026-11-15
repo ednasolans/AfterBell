@@ -32,6 +32,7 @@ export function EditActivity({ id, onSaved }: EditActivityProps) {
   return (
     <ActivityForm
       initialForm={toActivityForm(activity.data)}
+      isPublished={activity.data.status === "published"}
       submitLabel="Save changes"
       onSubmit={(form) => updateActivity.mutateAsync({ id, form })}
       isSaving={updateActivity.isPending}

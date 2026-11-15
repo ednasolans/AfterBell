@@ -86,6 +86,29 @@ describe("EditActivity", () => {
     );
   });
 
+  it("loads saved pairs and requires one when editing a published language activity", async () => {
+    jest.mocked(fetchActivity).mockResolvedValue({
+      ...ACTIVITY,
+      category: "language",
+      status: "published",
+      isTutor: true,
+      languages: [{ language: "English", level: "B1" }],
+    });
+    jest.mocked(updateActivity).mockResolvedValue(undefined);
+    await renderEdit();
+
+    expect(await screen.findByDisplayValue("English")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Private tutoring").props.value).toBe(true);
+    await fireEvent.press(
+      screen.getByRole("button", { name: "Remove language 1" }),
+    );
+    await fireEvent.press(screen.getByRole("button", { name: "Save changes" }));
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Add at least one language and level.",
+    );
+    expect(updateActivity).not.toHaveBeenCalled();
+  });
+
   it("shows an error when the activity cannot be loaded and tries again", async () => {
     jest
       .mocked(fetchActivity)
