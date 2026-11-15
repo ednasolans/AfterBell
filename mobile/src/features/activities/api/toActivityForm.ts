@@ -7,6 +7,8 @@ export function toActivityForm(activity: Activity): ActivityForm {
     title: activity.title,
     description: activity.description ?? "",
     category: activity.category,
+    isTutor: activity.isTutor,
+    languages: activity.languages,
     type: activity.type,
     startDate: activity.startDate,
     endDate: activity.endDate,

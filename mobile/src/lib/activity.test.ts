@@ -33,6 +33,8 @@ describe("toActivity", () => {
       title: "Swimming for kids",
       description: null,
       category: "swimming",
+      isTutor: false,
+      languages: [],
       type: "whole_year",
       startDate: null,
       endDate: null,

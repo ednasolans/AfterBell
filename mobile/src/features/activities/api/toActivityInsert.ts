@@ -24,6 +24,7 @@ export function toActivityInsert(form: ActivityForm): ActivityInsert {
     title: form.title.trim(),
     description: emptyToNull(form.description),
     category,
+    is_tutor: form.isTutor,
     type: form.type,
     // The database rejects dates on a whole-year activity, so changing the
     // type to whole-year must clear them

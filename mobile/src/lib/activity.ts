@@ -4,6 +4,8 @@ import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
 
+export type LanguagePair = { language: string; level: string };
+
 export interface Activity {
   id: string;
   providerId: string;
@@ -11,6 +13,8 @@ export interface Activity {
   title: string;
   description: string | null;
   category: string;
+  isTutor: boolean;
+  languages: LanguagePair[];
   type: "whole_year" | "event" | "temporary";
   // Only activities with dates have them: never whole-year ones
   startDate: string | null;
@@ -26,7 +30,9 @@ export interface Activity {
 
 export type ActivityRow = Tables<"activities">;
 
-export function toActivity(row: ActivityRow): Activity {
+export function toActivity(
+  row: ActivityRow & { languages?: LanguagePair[] },
+): Activity {
   return {
     id: row.id,
     providerId: row.provider_id,
@@ -34,6 +40,14 @@ export function toActivity(row: ActivityRow): Activity {
     title: row.title,
     description: row.description,
     category: row.category,
+    isTutor: row.is_tutor,
+    languages: (row.languages ?? [])
+      .map(({ language, level }) => ({ language, level }))
+      .sort(
+        (a, b) =>
+          a.language.localeCompare(b.language) ||
+          a.level.localeCompare(b.level),
+      ),
     type: row.type as Activity["type"],
     startDate: row.start_date,
     endDate: row.end_date,
