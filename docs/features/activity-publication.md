@@ -46,7 +46,7 @@ per missing requirement:
 | `technical_sheet` | A technical sheet with a name and an email or phone number |
 | `address` | A complete structured address (street, number, postal code, city, province, country) |
 | `dates` | Valid start and end dates for a temporary activity |
-| `language` | A language and level for language or tutor activities |
+| `language` | At least one language/level pair in `public.languages` for the `language` category, regardless of `activities.is_tutor` |
 
 It is used by:
 

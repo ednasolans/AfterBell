@@ -215,7 +215,7 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | Decision | Why |
 |---|---|
 | **`categories` is a table**, referenced by `activities.category` | Each category has a type (`individual` or `collective`). Names cannot be changed or deleted, because `technical_sheets` and `family_profiles` store them in arrays, checked by a trigger. |
-| **`languages` belongs to an activity** | Language and tutor activities need their languages and levels to be published. |
+| **`languages` belongs to an activity** | Publication requires at least one `public.languages` row with a language and level for activities in the `language` category. `activities.is_tutor` identifies private tutoring independently of this rule. |
 | **`enrolment_requests` can only be changed through functions** (`send_`, `accept_`, `reject_` and `cancel_enrolment_request`) | The functions check who is calling and lock the activity row, so two acceptances cannot go over `max_participants`. |
 | **`search_summary_cache` and `search_summary_requests` have no client access** | Only the backend uses them, and they store no search text linked to a person. |
 
