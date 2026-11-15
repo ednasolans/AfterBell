@@ -264,8 +264,17 @@ describe("fetchCatalogActivity", () => {
   });
 
   it("returns the published activity with its profile, contact details and address", async () => {
-    mockTables({
-      activities: { data: activityRow, error: null },
+    const languages = [{ language: "Catalan", level: "C1" }];
+    const queries = mockTables({
+      activities: {
+        data: {
+          ...activityRow,
+          category: "language",
+          is_tutor: true,
+          languages,
+        },
+        error: null,
+      },
       public_approved_provider_profiles: { data: [profileRow], error: null },
       public_provider_contacts: { data: [sheetRow], error: null },
       addresses: { data: addressRow, error: null },
@@ -273,7 +282,15 @@ describe("fetchCatalogActivity", () => {
 
     const result = await fetchCatalogActivity("a1");
 
-    expect(result?.activity.id).toBe("a1");
+    expect(queries.activities.calls).toContainEqual([
+      "select",
+      ["*, languages(language, level)"],
+    ]);
+    expect(result?.activity).toMatchObject({
+      id: "a1",
+      isTutor: true,
+      languages,
+    });
     expect(result?.provider).toEqual(provider);
     expect(result?.address).toBe("Main Street 1, Lleida");
   });
