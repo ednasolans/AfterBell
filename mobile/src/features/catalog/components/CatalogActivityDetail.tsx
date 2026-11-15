@@ -58,9 +58,7 @@ export function CatalogActivityDetail({
     );
   }
 
-  const { activity, provider, address, enrolledCount, isFavourite } =
-    query.data;
-  const dates = formatDateRange(activity.startDate, activity.endDate);
+  const { activity, isFavourite } = query.data;
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.titleRow}>
@@ -75,6 +73,20 @@ export function CatalogActivityDetail({
         <Text style={styles.description}>{activity.description}</Text>
       ) : null}
 
+      <ActivityFacts detail={query.data} />
+      <ProviderSection provider={query.data.provider} />
+
+      {renderFooter?.(query.data)}
+    </ScrollView>
+  );
+}
+
+// Type, dates, ages, schedule, price, category, address and places
+function ActivityFacts({ detail }: Readonly<{ detail: Detail }>) {
+  const { activity, address, enrolledCount } = detail;
+  const dates = formatDateRange(activity.startDate, activity.endDate);
+  return (
+    <>
       {activity.type === "temporary" ? (
         <Text style={styles.typeLabel}>Temporary activity</Text>
       ) : null}
@@ -102,40 +114,63 @@ export function CatalogActivityDetail({
       <DetailRow label="Category" value={categoryLabel(activity.category)} />
       {address ? <DetailRow label="Address" value={address} /> : null}
       {enrolledCount === null ? null : (
-        <DetailRow
-          label="Enrolled"
-          value={
-            activity.maxParticipants === null
-              ? `${enrolledCount} (no limit)`
-              : `${enrolledCount} of ${activity.maxParticipants}`
-          }
+        <EnrolmentRows
+          enrolledCount={enrolledCount}
+          maxParticipants={activity.maxParticipants}
         />
       )}
-      {enrolledCount !== null && activity.maxParticipants !== null ? (
-        <DetailRow
-          label="Places left"
-          value={String(Math.max(0, activity.maxParticipants - enrolledCount))}
-        />
-      ) : null}
+    </>
+  );
+}
 
+type EnrolmentRowsProps = {
+  enrolledCount: number;
+  maxParticipants: number | null;
+};
+
+// "Enrolled: 3 of 10" and "Places left: 7", or "3 (no limit)"
+function EnrolmentRows({
+  enrolledCount,
+  maxParticipants,
+}: Readonly<EnrolmentRowsProps>) {
+  if (maxParticipants === null) {
+    return <DetailRow label="Enrolled" value={`${enrolledCount} (no limit)`} />;
+  }
+  return (
+    <>
+      <DetailRow
+        label="Enrolled"
+        value={`${enrolledCount} of ${maxParticipants}`}
+      />
+      <DetailRow
+        label="Places left"
+        value={String(Math.max(0, maxParticipants - enrolledCount))}
+      />
+    </>
+  );
+}
+
+// The approved profile of the provider and its contact details
+function ProviderSection({
+  provider,
+}: Readonly<{ provider: Detail["provider"] }>) {
+  const { contact } = provider;
+  return (
+    <>
       <Text style={styles.sectionTitle}>Provider</Text>
-      {provider.contact ? (
-        <Text style={styles.providerName}>{provider.contact.name}</Text>
-      ) : null}
+      {contact ? <Text style={styles.providerName}>{contact.name}</Text> : null}
       <Text style={styles.headline}>{provider.headline}</Text>
       <Text style={styles.description}>{provider.description}</Text>
-      {provider.contact?.email ? (
-        <DetailRow label="Email" value={provider.contact.email} />
+      {contact?.email ? (
+        <DetailRow label="Email" value={contact.email} />
       ) : null}
-      {provider.contact?.phoneNumber ? (
-        <DetailRow label="Phone" value={provider.contact.phoneNumber} />
+      {contact?.phoneNumber ? (
+        <DetailRow label="Phone" value={contact.phoneNumber} />
       ) : null}
-      {provider.contact?.website ? (
-        <DetailRow label="Website" value={provider.contact.website} />
+      {contact?.website ? (
+        <DetailRow label="Website" value={contact.website} />
       ) : null}
-
-      {renderFooter?.(query.data)}
-    </ScrollView>
+    </>
   );
 }
 
