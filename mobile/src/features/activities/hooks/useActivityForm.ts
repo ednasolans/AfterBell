@@ -8,19 +8,23 @@ import { validateActivity } from "../validation";
 type UseActivityFormOptions = {
   // Starting values: empty to create, the saved activity to edit
   initialForm?: ActivityForm;
+  isPublished?: boolean;
   // Saves the form; it must throw if saving fails
   onSubmit: (form: ActivityForm) => Promise<unknown>;
 };
 
 export function useActivityForm({
   initialForm = EMPTY_ACTIVITY_FORM,
+  isPublished = false,
   onSubmit,
 }: UseActivityFormOptions) {
   const [form, setForm] = useState<ActivityForm>(initialForm);
   const [submitted, setSubmitted] = useState(false);
 
   // Errors are only shown after the first attempt to save, then they update while typing
-  const errors = submitted ? validateActivity(form, initialForm) : {};
+  const errors = submitted
+    ? validateActivity(form, initialForm, undefined, isPublished)
+    : {};
 
   function updateField<K extends keyof ActivityForm>(
     field: K,
@@ -38,7 +42,9 @@ export function useActivityForm({
   // Returns true when the activity has been saved
   async function submit(): Promise<boolean> {
     setSubmitted(true);
-    if (hasErrors(validateActivity(form, initialForm))) {
+    if (
+      hasErrors(validateActivity(form, initialForm, undefined, isPublished))
+    ) {
       return false;
     }
     try {
