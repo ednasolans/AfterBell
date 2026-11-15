@@ -37,7 +37,7 @@ export async function fetchCatalogActivity(
 ): Promise<CatalogActivityDetail | null> {
   const { data, error } = await supabase
     .from("activities")
-    .select("*")
+    .select("*, languages(language, level)")
     .eq("id", id)
     .eq("status", "published")
     .maybeSingle();

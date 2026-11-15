@@ -62,6 +62,9 @@ export function CatalogActivityDetail({
       {activity.type === "temporary" ? (
         <Text style={styles.typeLabel}>Temporary activity</Text>
       ) : null}
+      {activity.isTutor ? (
+        <Text style={styles.typeLabel}>Private tutoring</Text>
+      ) : null}
       {isFinished(activity) ? (
         <Text style={styles.finished}>This activity has finished</Text>
       ) : null}
@@ -84,6 +87,14 @@ export function CatalogActivityDetail({
         value={formatActivityPrice(activity.price, activity.pricePeriod)}
       />
       <DetailRow label="Category" value={categoryLabel(activity.category)} />
+      {activity.category === "language" && activity.languages.length > 0 ? (
+        <DetailRow
+          label="Languages"
+          value={activity.languages
+            .map(({ language, level }) => `${language} (${level})`)
+            .join(", ")}
+        />
+      ) : null}
       {address ? <DetailRow label="Address" value={address} /> : null}
       {enrolledCount === null ? null : (
         <DetailRow

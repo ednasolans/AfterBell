@@ -54,6 +54,28 @@ describe("CatalogActivityDetail", () => {
     expect(getByText("https://club.example.com")).toBeTruthy();
   });
 
+  it("shows tutoring and the saved language levels in the activity detail", async () => {
+    mockFetch.mockResolvedValue(
+      makeDetail({
+        activity: makeActivity({
+          category: "language",
+          isTutor: true,
+          languages: [
+            { language: "English", level: "B1" },
+            { language: "Catalan", level: "C1" },
+          ],
+        }),
+      }),
+    );
+
+    const { findByText, getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    expect(await findByText("Private tutoring")).toBeTruthy();
+    expect(getByText("English (B1), Catalan (C1)")).toBeTruthy();
+  });
+
   it("shows the label and the dates of a temporary activity", async () => {
     mockFetch.mockResolvedValue(
       makeDetail({
