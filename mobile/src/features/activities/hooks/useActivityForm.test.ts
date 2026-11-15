@@ -4,6 +4,8 @@ import { EMPTY_ACTIVITY_FORM, type ActivityForm } from "../types";
 import { useActivityForm } from "./useActivityForm";
 
 const VALID_ACTIVITY: ActivityForm = {
+  isTutor: false,
+  languages: [],
   title: "Swimming for kids",
   description: "",
   category: "swimming",

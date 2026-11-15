@@ -14,7 +14,7 @@ import { toActivityInsert } from "./toActivityInsert";
 
 // Replace the real client: tests must not need a database
 jest.mock("@/lib/supabase", () => ({
-  supabase: { from: jest.fn(), auth: { getUser: jest.fn() } },
+  supabase: { rpc: jest.fn(), from: jest.fn(), auth: { getUser: jest.fn() } },
 }));
 
 const ROW: ActivityRow = {
@@ -40,6 +40,8 @@ const ROW: ActivityRow = {
 };
 
 const FORM: ActivityForm = {
+  isTutor: false,
+  languages: [],
   title: "Swimming for kids",
   description: "",
   category: "swimming",
@@ -109,12 +111,15 @@ describe("fetchMyActivities", () => {
 
 describe("fetchActivity", () => {
   it("returns the activity with the given id", async () => {
-    const query = mockQuery({ data: ROW, error: null });
+    const languages = [{ language: "Catalan", level: "C1" }];
+    const row = { ...ROW, is_tutor: true, languages };
+    const query = mockQuery({ data: row, error: null });
 
     const activity = await fetchActivity("activity-1");
 
     expect(query.eq).toHaveBeenCalledWith("id", "activity-1");
-    expect(activity).toEqual(toActivity(ROW));
+    expect(query.select).toHaveBeenCalledWith("*, languages(language, level)");
+    expect(activity).toMatchObject({ isTutor: true, languages });
   });
 
   it("throws when the database returns an error", async () => {
@@ -125,33 +130,54 @@ describe("fetchActivity", () => {
 });
 
 describe("updateActivity", () => {
-  it("updates the activity with the mapped values", async () => {
-    const query = mockQuery({ data: [{ id: "activity-1" }], error: null });
+  const rpc = jest.mocked(supabase.rpc);
 
-    await updateActivity({ id: "activity-1", form: FORM });
+  it("updates the activity and its pairs together", async () => {
+    rpc.mockResolvedValue({ error: null } as Awaited<
+      ReturnType<typeof supabase.rpc>
+    >);
+    const form = {
+      ...FORM,
+      category: "language",
+      languages: [{ language: "Catalan", level: "C1" }],
+    };
 
-    expect(query.update).toHaveBeenCalledWith(toActivityInsert(FORM));
-    expect(query.update.mock.calls[0][0]).toMatchObject({
-      type: "whole_year",
-      start_date: null,
-      end_date: null,
+    await updateActivity({ id: "activity-1", form });
+
+    expect(rpc).toHaveBeenCalledWith("save_activity_with_languages", {
+      p_activity_id: "activity-1",
+      p_activity: toActivityInsert(form),
+      p_languages: form.languages,
     });
   });
 
-  it("throws when no row was updated (another provider's activity)", async () => {
-    mockQuery({ data: [], error: null });
+  it("does not send hidden pairs for other categories", async () => {
+    rpc.mockResolvedValue({ error: null } as Awaited<
+      ReturnType<typeof supabase.rpc>
+    >);
+    const form = {
+      ...FORM,
+      isTutor: true,
+      languages: [{ language: "Catalan", level: "C1" }],
+    };
+
+    await updateActivity({ id: "activity-1", form });
+
+    expect(rpc).toHaveBeenCalledWith("save_activity_with_languages", {
+      p_activity_id: "activity-1",
+      p_activity: expect.objectContaining({ is_tutor: true }),
+      p_languages: [],
+    });
+  });
+
+  it("throws when the caller cannot update the activity", async () => {
+    rpc.mockResolvedValue({
+      error: { message: "The activity does not exist or you cannot edit it" },
+    } as Awaited<ReturnType<typeof supabase.rpc>>);
 
     await expect(
       updateActivity({ id: "activity-1", form: FORM }),
     ).rejects.toThrow("cannot edit");
-  });
-
-  it("throws when the database returns an error", async () => {
-    mockQuery({ data: null, error: DATABASE_ERROR });
-
-    await expect(
-      updateActivity({ id: "activity-1", form: FORM }),
-    ).rejects.toThrow("database error");
   });
 });
 

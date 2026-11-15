@@ -10,6 +10,8 @@ import { type CatalogActivity, type CatalogProvider } from "./types";
 
 export function makeActivity(overrides: Partial<Activity> = {}): Activity {
   return {
+    isTutor: false,
+    languages: [],
     id: "a1",
     providerId: "p1",
     addressId: "ad1",

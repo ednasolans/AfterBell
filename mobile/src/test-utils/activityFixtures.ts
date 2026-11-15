@@ -8,6 +8,8 @@ export const ACTIVITY: Activity = {
   title: "Swimming for kids",
   description: "Small groups",
   category: "swimming",
+  isTutor: false,
+  languages: [],
   type: "whole_year",
   startDate: null,
   endDate: null,
