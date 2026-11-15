@@ -453,6 +453,9 @@ isOneToOne: false
 "reject_enrolment_request":
 { Args: { "p_request_id": string }; Returns: undefined
                            },
+"save_activity_with_languages":
+{ Args: { "p_activity": Json,"p_activity_id"?: string,"p_languages": Json }; Returns: string
+                           },
 "search_activities":
 { Args: { "p_category"?: string,"p_city"?: string,"p_limit"?: number,"p_offset"?: number,"p_price_max"?: number,"p_price_min"?: number,"p_query"?: string }; Returns: {
               "address_id": string,
