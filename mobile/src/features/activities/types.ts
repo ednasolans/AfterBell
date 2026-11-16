@@ -1,4 +1,4 @@
-import { type Activity } from "@/lib/activity";
+import { type Activity, type LanguagePair } from "@/lib/activity";
 import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
@@ -15,11 +15,15 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   event: "Event",
 };
 
+export type ActivityLanguageField = LanguagePair & { id: number };
+
 // What the user fills in: null means "not chosen yet"
 export interface ActivityForm {
   title: string;
   description: string;
   category: string | null;
+  isTutor: boolean;
+  languages: LanguagePair[];
   type: ActivityType;
   // ISO dates (YYYY-MM-DD)
   startDate: string | null;
@@ -39,6 +43,8 @@ export const EMPTY_ACTIVITY_FORM: ActivityForm = {
   title: "",
   description: "",
   category: null,
+  isTutor: false,
+  languages: [],
   type: "whole_year",
   startDate: null,
   endDate: null,

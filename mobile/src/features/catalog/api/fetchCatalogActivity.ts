@@ -38,7 +38,7 @@ export async function fetchCatalogActivity(
 ): Promise<CatalogActivityDetail | null> {
   const { data, error } = await supabase
     .from("activities")
-    .select("*, favourites(customer_id)")
+    .select("*, languages(language, level), favourites(customer_id)")
     .eq("id", id)
     .eq("status", "published")
     .maybeSingle();

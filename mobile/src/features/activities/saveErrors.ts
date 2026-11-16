@@ -9,6 +9,7 @@ const KNOWN_SAVE_ERRORS = [
   "A complete structured address is required to publish",
   "Temporary activities require valid start and end dates",
   "Language or tutor activities require language and level",
+  "Add at least one language and level to a published language activity",
   "The activity does not exist or you cannot edit it",
   "The activity does not exist or you cannot change it",
 ];

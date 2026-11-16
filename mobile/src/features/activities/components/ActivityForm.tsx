@@ -31,6 +31,7 @@ import {
   type ActivityType,
 } from "../types";
 
+import { ActivityLanguages } from "./ActivityLanguages";
 import { AddressSelect } from "./AddressSelect";
 import { colors } from "@/theme/colors";
 
@@ -52,6 +53,7 @@ const ACTIVITY_TYPE_OPTIONS: SelectOption<ActivityType>[] =
 type ActivityFormProps = {
   // Starting values: empty to create, the saved activity to edit
   initialForm?: ActivityFormValues;
+  isPublished?: boolean;
   submitLabel: string;
   // Saves the activity (e.g. mutateAsync of a mutation); it must throw if saving fails
   onSubmit: (form: ActivityFormValues) => Promise<unknown>;
@@ -65,6 +67,7 @@ type ActivityFormProps = {
 
 export function ActivityForm({
   initialForm,
+  isPublished,
   submitLabel,
   onSubmit,
   isSaving,
@@ -73,11 +76,8 @@ export function ActivityForm({
   header,
 }: ActivityFormProps) {
   const categories = useCategories();
-  const { form, updateField, errors, submit, hasUnsavedChanges } =
-    useActivityForm({
-      initialForm,
-      onSubmit,
-    });
+  const { form, updateField, addLanguage, errors, submit, hasUnsavedChanges } =
+    useActivityForm({ initialForm, isPublished, onSubmit });
 
   async function handleSave() {
     const saved = await submit();
@@ -135,6 +135,22 @@ export function ActivityForm({
         onChange={(value) => updateField("category", value)}
         error={errors.category}
       />
+      <View style={styles.tutoring}>
+        <Text style={styles.tutoringLabel}>Private tutoring</Text>
+        <Switch
+          accessibilityLabel="Private tutoring"
+          value={form.isTutor}
+          onValueChange={(value) => updateField("isTutor", value)}
+        />
+      </View>
+      {form.category === "language" ? (
+        <ActivityLanguages
+          pairs={form.languages}
+          onAdd={addLanguage}
+          onChange={(pairs) => updateField("languages", pairs)}
+          error={errors.languages}
+        />
+      ) : null}
       <MultiSelect
         label="Age ranges"
         placeholder="Choose age ranges"
@@ -302,6 +318,13 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 20,
   },
+  tutoring: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  tutoringLabel: { fontWeight: "600", color: colors.text },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
