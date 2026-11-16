@@ -17,6 +17,8 @@ export function toActivityForm(activity: Activity): ActivityForm {
     price: activity.price,
     pricePeriod: activity.pricePeriod,
     maxParticipants: activity.maxParticipants,
+    // The database only allows an empty maximum when it is "no limit"
+    unlimitedParticipants: activity.maxParticipants === null,
     addressId: activity.addressId,
   };
 }

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
@@ -22,6 +23,8 @@ type ActivityCardProps = {
   onEdit: () => void;
   onDelete: () => void;
   isDeleting: boolean;
+  // Extra content under the details, e.g. the places taken (another feature)
+  footer?: ReactNode;
 };
 
 export function ActivityCard({
@@ -30,6 +33,7 @@ export function ActivityCard({
   onEdit,
   onDelete,
   isDeleting,
+  footer,
 }: ActivityCardProps) {
   return (
     <View style={styles.card}>
@@ -103,6 +107,7 @@ export function ActivityCard({
         <Text style={styles.detail}>
           {formatActivityPrice(activity.price, activity.pricePeriod)}
         </Text>
+        {footer}
       </View>
 
       <View style={styles.actions}>

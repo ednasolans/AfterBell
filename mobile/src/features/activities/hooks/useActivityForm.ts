@@ -31,11 +31,21 @@ export function useActivityForm({
     languages: initialForm.languages.map((pair, id) => ({ ...pair, id })),
   }));
   const nextLanguageId = useRef(initialForm.languages.length);
+  // The values last saved: what the database has now
+  const [savedForm, setSavedForm] = useState<ActivityForm>(initialForm);
   const [submitted, setSubmitted] = useState(false);
+  const values: ActivityForm = {
+    ...form,
+    languages: form.languages.map(({ language, level }) => ({
+      language,
+      level,
+    })),
+  };
+  const hasUnsavedChanges = !isSameForm(values, savedForm);
 
   // Errors are only shown after the first attempt to save, then they update while typing
   const errors = submitted
-    ? validateActivity(form, initialForm, undefined, isPublished)
+    ? validateActivity(values, savedForm, undefined, isPublished)
     : {};
 
   function updateField<K extends keyof ActivityFormFields>(
@@ -43,11 +53,16 @@ export function useActivityForm({
     value: ActivityFormFields[K],
   ) {
     setForm((previous) => {
-      const next = { ...previous, [field]: value };
+      let next = { ...previous, [field]: value };
       // A whole-year activity has no dates
-      return next.type === "whole_year"
-        ? { ...next, startDate: null, endDate: null }
-        : next;
+      if (next.type === "whole_year") {
+        next = { ...next, startDate: null, endDate: null };
+      }
+      // "No limit" has no maximum
+      if (next.unlimitedParticipants) {
+        next = { ...next, maxParticipants: null };
+      }
+      return next;
     });
   }
 
@@ -63,23 +78,25 @@ export function useActivityForm({
   async function submit(): Promise<boolean> {
     setSubmitted(true);
     if (
-      hasErrors(validateActivity(form, initialForm, undefined, isPublished))
+      hasErrors(validateActivity(values, savedForm, undefined, isPublished))
     ) {
       return false;
     }
     try {
-      await onSubmit({
-        ...form,
-        languages: form.languages.map(({ language, level }) => ({
-          language,
-          level,
-        })),
-      });
+      await onSubmit(values);
+      setSavedForm(values);
       return true;
     } catch {
       return false;
     }
   }
 
-  return { form, updateField, addLanguage, errors, submit };
+  return { form, updateField, addLanguage, errors, submit, hasUnsavedChanges };
+}
+
+// Field by field, so the order of the keys does not matter
+function isSameForm(a: ActivityForm, b: ActivityForm): boolean {
+  return (Object.keys(a) as (keyof ActivityForm)[]).every(
+    (field) => JSON.stringify(a[field]) === JSON.stringify(b[field]),
+  );
 }

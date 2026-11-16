@@ -7,15 +7,21 @@ import { colors } from "@/theme/colors";
 
 import { useChangeActivityStatus } from "../hooks/useChangeActivityStatus";
 import { usePublicationIssues } from "../hooks/usePublicationIssues";
+import { toSaveErrorMessage } from "../saveErrors";
 import { PUBLICATION_ISSUE_LABELS } from "../types";
 
 type PublicationPanelProps = {
   activity: Activity;
+  // Publishing uses the saved activity, so the form must be saved first
+  hasUnsavedChanges?: boolean;
 };
 
 // Shows whether customers can see the activity and lets the provider publish
 // or unpublish it. Before publishing, it lists everything that is missing.
-export function PublicationPanel({ activity }: PublicationPanelProps) {
+export function PublicationPanel({
+  activity,
+  hasUnsavedChanges = false,
+}: PublicationPanelProps) {
   const changeStatus = useChangeActivityStatus();
   const isPublished = activity.status === "published";
 
@@ -83,6 +89,7 @@ export function PublicationPanel({ activity }: PublicationPanelProps) {
           activityId={activity.id}
           onPublish={confirmPublish}
           isPublishing={changeStatus.isPending}
+          hasUnsavedChanges={hasUnsavedChanges}
         />
       )}
 
@@ -95,7 +102,10 @@ export function PublicationPanel({ activity }: PublicationPanelProps) {
       ) : null}
       {changeStatus.isError ? (
         <Text style={styles.error}>
-          {`The status could not be changed: ${changeStatus.error.message}`}
+          {toSaveErrorMessage(
+            changeStatus.error,
+            "The status could not be changed. Please try again.",
+          )}
         </Text>
       ) : null}
     </View>
@@ -106,6 +116,7 @@ type DraftContentProps = {
   activityId: string;
   onPublish: () => void;
   isPublishing: boolean;
+  hasUnsavedChanges: boolean;
 };
 
 // A draft can be published only when nothing is missing
@@ -113,6 +124,7 @@ function DraftContent({
   activityId,
   onPublish,
   isPublishing,
+  hasUnsavedChanges,
 }: DraftContentProps) {
   const issues = usePublicationIssues(activityId);
 
@@ -164,7 +176,11 @@ function DraftContent({
         label="Publish"
         onPress={onPublish}
         loading={isPublishing}
+        disabled={hasUnsavedChanges}
       />
+      {hasUnsavedChanges ? (
+        <Text style={styles.hint}>Save your changes before publishing.</Text>
+      ) : null}
     </>
   );
 }

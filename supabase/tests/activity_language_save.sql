@@ -60,8 +60,24 @@ BEGIN
     PERFORM public.save_activity_with_languages(form || '{"category":"football"}', '[]', saved_id);
     UPDATE public.activities SET status = 'published' WHERE id = saved_id;
 
+    PERFORM public.save_activity_with_languages(
+        form || '{"category":"football","max_participants":null,"unlimited_participants":true}',
+        '[]', saved_id);
+    IF NOT EXISTS (
+        SELECT 1 FROM public.activities
+        WHERE id = saved_id AND unlimited_participants AND max_participants IS NULL
+    ) THEN
+        RAISE EXCEPTION 'Expected unlimited places to be saved';
+    END IF;
+
     -- Changing a published activity to Language checks the new pairs.
     PERFORM public.save_activity_with_languages(form, pairs, saved_id);
+    IF NOT EXISTS (
+        SELECT 1 FROM public.activities
+        WHERE id = saved_id AND NOT unlimited_participants AND max_participants = 12
+    ) THEN
+        RAISE EXCEPTION 'Expected a participant limit to be restored';
+    END IF;
     IF (SELECT count(*) FROM public.languages WHERE activity_id = saved_id) <> 2 THEN
         RAISE EXCEPTION 'Expected both language pairs to be saved';
     END IF;

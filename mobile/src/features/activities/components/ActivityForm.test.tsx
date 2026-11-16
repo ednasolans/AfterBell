@@ -288,4 +288,74 @@ describe("ActivityForm", () => {
       screen.getByText("The start date cannot be in the past"),
     ).toBeOnTheScreen();
   });
+
+  it("hides the maximum and saves no limit when the provider chooses it", async () => {
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+    await render(
+      <ActivityForm
+        initialForm={TEMPORARY_FORM}
+        submitLabel="Save"
+        onSubmit={onSubmit}
+        isSaving={false}
+        saveError={null}
+      />,
+    );
+
+    expect(screen.getByLabelText("Maximum participants")).toBeOnTheScreen();
+    await fireEvent(
+      screen.getByLabelText("No limit of participants"),
+      "valueChange",
+      true,
+    );
+    expect(screen.queryByLabelText("Maximum participants")).toBeNull();
+
+    await fireEvent.press(screen.getByRole("button", { name: "Save" }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxParticipants: null,
+        unlimitedParticipants: true,
+      }),
+    );
+  });
+
+  it("shows no limit for a saved activity without maximum", async () => {
+    await render(
+      <ActivityForm
+        initialForm={{
+          ...TEMPORARY_FORM,
+          maxParticipants: null,
+          unlimitedParticipants: true,
+        }}
+        submitLabel="Save"
+        onSubmit={jest.fn()}
+        isSaving={false}
+        saveError={null}
+      />,
+    );
+
+    expect(screen.getByLabelText("No limit of participants")).toHaveProp(
+      "value",
+      true,
+    );
+    expect(screen.queryByLabelText("Maximum participants")).toBeNull();
+  });
+
+  it("gives the header whether there are unsaved changes", async () => {
+    await render(
+      <ActivityForm
+        initialForm={TEMPORARY_FORM}
+        submitLabel="Save"
+        onSubmit={jest.fn()}
+        isSaving={false}
+        saveError={null}
+        header={({ hasUnsavedChanges }) => (
+          <Text>{hasUnsavedChanges ? "Changed" : "Saved"}</Text>
+        )}
+      />,
+    );
+
+    expect(screen.getByText("Saved")).toBeOnTheScreen();
+    await fireEvent.changeText(screen.getByLabelText("Title"), "Other camp");
+    expect(screen.getByText("Changed")).toBeOnTheScreen();
+  });
 });

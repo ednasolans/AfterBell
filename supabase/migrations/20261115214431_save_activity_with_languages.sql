@@ -17,12 +17,13 @@ BEGIN
     IF saved_id IS NULL THEN
         INSERT INTO public.activities (
             title, description, category, is_tutor, type, start_date, end_date,
-            target_age_ranges, schedule, price, price_period, max_participants, address_id
+            target_age_ranges, schedule, price, price_period, max_participants,
+            unlimited_participants, address_id
         ) VALUES (
             details.title, details.description, details.category, details.is_tutor,
             details.type, details.start_date, details.end_date, details.target_age_ranges,
             details.schedule, details.price, details.price_period, details.max_participants,
-            details.address_id
+            COALESCE(details.unlimited_participants, false), details.address_id
         )
         RETURNING id INTO saved_id;
     ELSE
@@ -67,6 +68,7 @@ BEGIN
             price = details.price,
             price_period = details.price_period,
             max_participants = details.max_participants,
+            unlimited_participants = COALESCE(details.unlimited_participants, false),
             address_id = details.address_id
         WHERE a.id = saved_id;
 

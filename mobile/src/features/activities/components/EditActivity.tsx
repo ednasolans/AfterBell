@@ -38,7 +38,12 @@ export function EditActivity({ id, onSaved }: EditActivityProps) {
       isSaving={updateActivity.isPending}
       saveError={updateActivity.error}
       onSaved={onSaved}
-      header={<PublicationPanel activity={activity.data} />}
+      header={({ hasUnsavedChanges }) => (
+        <PublicationPanel
+          activity={activity.data}
+          hasUnsavedChanges={hasUnsavedChanges}
+        />
+      )}
     />
   );
 }

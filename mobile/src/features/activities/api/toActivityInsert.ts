@@ -9,13 +9,15 @@ export type ActivityInsert = TablesInsert<"activities">;
 // Used to create and to update: the type and the dates can be changed later.
 // provider_id is not sent: the database fills it with the logged-in user.
 export function toActivityInsert(form: ActivityForm): ActivityInsert {
-  const { price, pricePeriod, addressId, category, maxParticipants } = form;
+  const { price, pricePeriod, addressId, category, unlimitedParticipants } =
+    form;
+  const maxParticipants = unlimitedParticipants ? null : form.maxParticipants;
   if (
     price === null ||
     pricePeriod === null ||
     addressId === null ||
     category === null ||
-    maxParticipants === null
+    (!unlimitedParticipants && maxParticipants === null)
   ) {
     throw new Error("The activity must be validated before saving it");
   }
@@ -38,7 +40,9 @@ export function toActivityInsert(form: ActivityForm): ActivityInsert {
     })),
     price,
     price_period: pricePeriod,
+    // An empty maximum is only accepted together with "no limit"
     max_participants: maxParticipants,
+    unlimited_participants: unlimitedParticipants,
     address_id: addressId,
   };
 }

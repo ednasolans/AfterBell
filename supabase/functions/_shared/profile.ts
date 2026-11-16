@@ -22,7 +22,7 @@ export function countWords(text: string): number {
 }
 
 /** Removes ```json fences that some models add. */
-function stripCodeFence(raw: string): string {
+export function stripCodeFence(raw: string): string {
   const match = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(raw.trim());
   return match ? match[1] : raw.trim();
 }

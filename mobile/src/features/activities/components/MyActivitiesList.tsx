@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { type ReactNode } from "react";
 import {
   Alert,
   FlatList,
@@ -22,9 +23,15 @@ import { colors } from "@/theme/colors";
 type MyActivitiesListProps = {
   onCreate: () => void;
   onEdit: (id: string) => void;
+  // Extra content in each card, e.g. the places taken (another feature)
+  renderCardFooter?: (activity: Activity) => ReactNode;
 };
 
-export function MyActivitiesList({ onCreate, onEdit }: MyActivitiesListProps) {
+export function MyActivitiesList({
+  onCreate,
+  onEdit,
+  renderCardFooter,
+}: MyActivitiesListProps) {
   const activities = useMyActivities();
   const deleteActivity = useDeleteActivity();
   // Only used to show where each activity takes place: while they load,
@@ -121,6 +128,7 @@ export function MyActivitiesList({ onCreate, onEdit }: MyActivitiesListProps) {
           isDeleting={
             deleteActivity.isPending && deleteActivity.variables === item.id
           }
+          footer={renderCardFooter?.(item)}
         />
       )}
     />

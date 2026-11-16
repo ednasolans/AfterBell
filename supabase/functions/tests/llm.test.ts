@@ -37,3 +37,19 @@ Deno.test("empty answer becomes an LlmError", async () => {
   );
   assertEquals(err.code, "empty");
 });
+
+
+Deno.test("a shorter timeout can be given", async () => {
+  // Never answers: only the timeout can end the request
+  const waitForAbort: typeof fetch = (_url, init) =>
+    new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+    });
+  const started = performance.now();
+  const err = await assertRejects(
+    () => chatCompletion(config, [], waitForAbort, 50),
+    LlmError,
+  );
+  assertEquals(err.code, "timeout");
+  assertEquals(performance.now() - started < 5_000, true);
+});

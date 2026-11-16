@@ -4,7 +4,11 @@ import { render } from "@testing-library/react-native";
 
 import { type Activity } from "@/lib/activity";
 
-import { type CatalogActivity, type CatalogProvider } from "./types";
+import {
+  type CatalogActivity,
+  type CatalogProvider,
+  type FavouriteActivity,
+} from "./types";
 
 // Shared by the tests of the catalog
 
@@ -55,6 +59,19 @@ export function makeCatalogActivity(
   return {
     activity: makeActivity(),
     provider: makeProvider(),
+    isFavourite: false,
+    ...overrides,
+  };
+}
+
+export function makeFavourite(
+  overrides: Partial<FavouriteActivity> = {},
+): FavouriteActivity {
+  return {
+    activity: makeActivity(),
+    providerName: "Sports Club",
+    available: true,
+    savedAt: "2026-11-01T10:00:00Z",
     ...overrides,
   };
 }

@@ -21,6 +21,14 @@ export default function ProviderHomeScreen() {
         </Text>
       </View>
       <View style={styles.card}>
+        <Link href="/requests" style={styles.link}>
+          Enrolment requests
+        </Link>
+        <Text style={styles.cardText}>
+          Accept or reject the families that want to join.
+        </Text>
+      </View>
+      <View style={styles.card}>
         <Link href="/ai-profile" style={styles.link}>
           AI profile
         </Link>

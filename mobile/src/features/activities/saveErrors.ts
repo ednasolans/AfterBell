@@ -11,15 +11,25 @@ const KNOWN_SAVE_ERRORS = [
   "Language or tutor activities require language and level",
   "Add at least one language and level to a published language activity",
   "The activity does not exist or you cannot edit it",
+  "The activity does not exist or you cannot change it",
+];
+
+// Messages with a number in them
+const KNOWN_SAVE_ERROR_PATTERNS = [
+  /^There are already \d+ accepted participants$/,
 ];
 
 const GENERIC_SAVE_ERROR = "The activity could not be saved. Please try again.";
 
-export function toSaveErrorMessage(error: Error | null): string | null {
+export function toSaveErrorMessage(
+  error: Error | null,
+  genericMessage: string = GENERIC_SAVE_ERROR,
+): string | null {
   if (!error) {
     return null;
   }
-  return KNOWN_SAVE_ERRORS.includes(error.message)
-    ? error.message
-    : GENERIC_SAVE_ERROR;
+  const isKnown =
+    KNOWN_SAVE_ERRORS.includes(error.message) ||
+    KNOWN_SAVE_ERROR_PATTERNS.some((pattern) => pattern.test(error.message));
+  return isKnown ? error.message : genericMessage;
 }
