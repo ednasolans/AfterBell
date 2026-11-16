@@ -782,6 +782,10 @@ export type Database = {
         Args: { p_request_id: string };
         Returns: undefined;
       };
+      save_activity_with_languages: {
+        Args: { p_activity: Json; p_activity_id?: string; p_languages: Json };
+        Returns: string;
+      };
       search_activities: {
         Args: {
           p_category?: string;

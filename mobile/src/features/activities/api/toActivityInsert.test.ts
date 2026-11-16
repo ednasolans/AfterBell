@@ -2,6 +2,8 @@ import { type ActivityForm } from "../types";
 import { toActivityInsert } from "./toActivityInsert";
 
 const VALID_FORM: ActivityForm = {
+  isTutor: true,
+  languages: [],
   title: "  Swimming for kids ",
   description: "   ",
   category: "swimming",
@@ -23,6 +25,7 @@ describe("toActivityInsert", () => {
       title: "Swimming for kids",
       description: null,
       category: "swimming",
+      is_tutor: true,
       type: "whole_year",
       start_date: null,
       end_date: null,

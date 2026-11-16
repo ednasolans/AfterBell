@@ -216,7 +216,7 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | Decision | Why |
 |---|---|
 | **`categories` is a table**, referenced by `activities.category` | Each category has a type (`individual` or `collective`). Names cannot be changed or deleted, because `technical_sheets` and `family_profiles` store them in arrays, checked by a trigger. |
-| **`languages` belongs to an activity** | Language and tutor activities need their languages and levels to be published. |
+| **`languages` belongs to an activity** | Publication requires at least one `public.languages` row with a language and level for activities in the `language` category. `activities.is_tutor` identifies private tutoring independently of this rule. |
 | **An activity can have no limit of participants, but only on purpose** (`unlimited_participants`) | A `NULL` maximum meaning "no limit" / no limit at all | Team decision: an empty maximum must not mean "no limit" just because someone forgot it. The flag is `false` by default, so a missing maximum is rejected. |
 | **One family profile per request; a full activity does not accept requests** | Several profiles per request / pending requests on a full activity | Each child is accepted or rejected on its own, and a request that can never be accepted would only confuse the family. See [`enrolments.md`](../features/enrolments.md). |
 | **The maximum cannot go below the accepted participants** (trigger `activities_participant_limit_above_accepted`) | Letting the activity be "overbooked" | Team decision (#119): the provider gets a clear message instead of an activity with more people than places. It locks the same row as `accept_enrolment_request`, so the two cannot cross. |

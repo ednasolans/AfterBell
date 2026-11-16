@@ -46,7 +46,7 @@ per missing requirement:
 | `technical_sheet` | A technical sheet with a name and an email or phone number |
 | `address` | A complete structured address (street, number, postal code, city, province, country) |
 | `dates` | Valid start and end dates for a temporary activity |
-| `language` | A language and level for language or tutor activities |
+| `language` | At least one language/level pair in `public.languages` for the `language` category, regardless of `activities.is_tutor` |
 
 It is used by:
 
@@ -112,3 +112,22 @@ In the app:
   shows activities of providers with an approved profile. The team has to
   decide whether it should be a publication requirement; if so, add an
   `ai_profile` code to `publication_issues()`.
+## Private tutoring and languages (C5.2)
+
+The existing activity form includes a **Private tutoring** switch for every
+category. For **Language** activities, providers can add, edit or remove
+language and level pairs. A draft can be saved without pairs. The publication
+panel lists a missing pair before offering to publish. A published Language
+activity must keep at least one pair when edited.
+
+The app saves the activity and its pairs through `save_activity_with_languages`
+in one transaction under existing ownership policies. When a provider changes
+category, saved pairs are kept and become editable again if the provider
+switches back to Language. Customers see the tutoring label and, for published
+Language activities, the saved pairs in the activity detail.
+
+To check the flow in the app, create a Language draft without pairs and open
+its publication panel. Add a pair and save, then publish and confirm it appears
+in the customer detail. Edit the level and confirm the updated value appears.
+Mark an activity in a different category as Private tutoring and verify it can
+be published when the other publication requirements are met.

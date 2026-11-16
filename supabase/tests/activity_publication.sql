@@ -131,18 +131,55 @@ SELECT pg_temp.expect_value('fixing the address removes it from the list',
     $q$SELECT public.activity_publication_issues('a1000000-0000-0000-0000-000000000002')::text$q$,
     '{language}');
 
+SELECT pg_temp.expect_detail('a language activity without tutoring still needs a pair',
+    $q$UPDATE public.activities SET status = 'published'
+       WHERE id = 'a1000000-0000-0000-0000-000000000002'$q$,
+    'Missing: language');
+
+UPDATE public.activities SET is_tutor = true
+WHERE id IN ('a1000000-0000-0000-0000-000000000001',
+             'a1000000-0000-0000-0000-000000000002');
+
+SELECT pg_temp.expect_value('tutoring in another category needs no language pair',
+    $q$SELECT public.activity_publication_issues('a1000000-0000-0000-0000-000000000001')::text$q$,
+    '{}');
+
+SELECT pg_temp.expect_detail('a language activity with tutoring still needs a pair',
+    $q$UPDATE public.activities SET status = 'published'
+       WHERE id = 'a1000000-0000-0000-0000-000000000002'$q$,
+    'Missing: language');
+
+SELECT pg_temp.expect_value('can_publish_activity rejects language tutoring without a pair',
+    $q$SELECT public.can_publish_activity('a1000000-0000-0000-0000-000000000002')::text$q$,
+    'false');
+
 INSERT INTO public.languages (activity_id, language, level)
 VALUES ('a1000000-0000-0000-0000-000000000002', 'English', 'B1');
 
-SELECT pg_temp.expect_value('adding the language empties the list',
+SELECT pg_temp.expect_value('adding the language pair empties the list',
     $q$SELECT public.activity_publication_issues('a1000000-0000-0000-0000-000000000002')::text$q$,
     '{}');
+
+SELECT pg_temp.expect('a language activity with tutoring publishes with a pair',
+    $q$UPDATE public.activities SET status = 'published'
+       WHERE id = 'a1000000-0000-0000-0000-000000000002'$q$);
+
+UPDATE public.activities SET status = 'draft', is_tutor = false
+WHERE id = 'a1000000-0000-0000-0000-000000000002';
+
+SELECT pg_temp.expect('a language activity without tutoring publishes with a pair',
+    $q$UPDATE public.activities SET status = 'published'
+       WHERE id = 'a1000000-0000-0000-0000-000000000002'$q$);
+
+-- Restore the draft used by the visibility checks below.
+UPDATE public.activities SET status = 'draft'
+WHERE id = 'a1000000-0000-0000-0000-000000000002';
 
 -- ============================================================
 -- Club A: publish and unpublish
 -- ============================================================
 
-SELECT pg_temp.expect('the owner publishes a complete activity',
+SELECT pg_temp.expect('the owner publishes a non-language tutoring activity without a pair',
     $q$UPDATE public.activities SET status = 'published'
        WHERE id = 'a1000000-0000-0000-0000-000000000001'$q$);
 
