@@ -112,4 +112,20 @@ describe("validateActivity", () => {
       ).toBe("The start date cannot be in the past");
     });
   });
+
+  it("does not ask for a maximum when there is no limit", () => {
+    const errors = validateActivity({
+      ...VALID,
+      maxParticipants: null,
+      unlimitedParticipants: true,
+    });
+    expect(errors.maxParticipants).toBeUndefined();
+  });
+
+  it("asks for a maximum when there is a limit", () => {
+    const errors = validateActivity({ ...VALID, maxParticipants: null });
+    expect(errors.maxParticipants).toBe(
+      "Enter between 1 and 1000 participants",
+    );
+  });
 });

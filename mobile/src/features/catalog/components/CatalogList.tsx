@@ -42,7 +42,9 @@ export function CatalogList({ onOpen }: Readonly<CatalogListProps>) {
       }
       renderItem={({ item }) => (
         <CatalogActivityCard
-          item={item}
+          activity={item.activity}
+          providerName={item.provider.contact?.name ?? null}
+          isFavourite={item.isFavourite}
           onPress={() => onOpen(item.activity.id)}
         />
       )}

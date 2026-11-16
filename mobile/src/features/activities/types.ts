@@ -29,6 +29,8 @@ export interface ActivityForm {
   price: number | null;
   pricePeriod: PricePeriod | null;
   maxParticipants: number | null;
+  // Chosen on purpose: then there is no maximum
+  unlimitedParticipants: boolean;
   // One of the addresses of the provider, entered in its technical sheet
   addressId: string | null;
 }
@@ -45,6 +47,7 @@ export const EMPTY_ACTIVITY_FORM: ActivityForm = {
   price: null,
   pricePeriod: null,
   maxParticipants: null,
+  unlimitedParticipants: false,
   addressId: null,
 };
 

@@ -107,7 +107,8 @@ Table activities {
   schedule jsonb [note: 'list of { day, startTime, endTime }, checked by is_valid_schedule(); required if whole_year']
   price "numeric(8,2)" [not null, note: '>= 0']
   price_period text [not null, note: 'per_hour | per_day | per_week | per_month | per_term | per_year']
-  max_participants integer [not null, note: '1 to 1000']
+  max_participants integer [note: '1 to 1000; empty only when unlimited_participants; never below the accepted participants (trigger)']
+  unlimited_participants boolean [not null, default: false, note: 'no limit, only on purpose']
   search_normalized text [not null, default: `''`, note: 'set by a trigger']
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`, note: 'set by a trigger']
@@ -147,7 +148,7 @@ Table languages {
 }
 
 Table favourites {
-  customer_id uuid [not null, note: 'FK accounts, ON DELETE CASCADE']
+  customer_id uuid [not null, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE']
   activity_id uuid [not null, note: 'FK activities, ON DELETE CASCADE']
   created_at timestamptz [not null, default: `now()`]
 
@@ -155,7 +156,7 @@ Table favourites {
     (customer_id, activity_id) [pk]
     activity_id
   }
-  Note: 'RLS: only the customer reads, adds and deletes its own favourites, of published activities.'
+  Note: 'RLS: only the customer reads, adds and deletes its own favourites, of published activities. Listed with my_favourites(), which keeps unpublished ones marked as not available.'
 }
 
 Table enrolment_requests {

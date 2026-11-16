@@ -12,6 +12,8 @@ type Props = {
   label: string;
   onPress: () => void;
   loading?: boolean;
+  // Cannot be pressed, without the spinner
+  disabled?: boolean;
   variant?: "primary" | "outline";
   style?: StyleProp<ViewStyle>;
 };
@@ -20,6 +22,7 @@ export default function LoadingButton({
   label,
   onPress,
   loading = false,
+  disabled = false,
   variant = "primary",
   style,
 }: Readonly<Props>) {
@@ -30,12 +33,13 @@ export default function LoadingButton({
       style={[
         styles.base,
         isPrimary ? styles.primary : styles.outline,
-        loading && styles.disabled,
+        (loading || disabled) && styles.disabled,
         style,
       ]}
       onPress={onPress}
-      disabled={loading}
+      disabled={loading || disabled}
       accessibilityRole="button"
+      accessibilityState={{ disabled: loading || disabled, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator

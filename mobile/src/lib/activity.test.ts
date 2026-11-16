@@ -1,4 +1,9 @@
-import { type Activity, toActivity, type ActivityRow } from "./activity";
+import {
+  type Activity,
+  isFinished,
+  toActivity,
+  type ActivityRow,
+} from "./activity";
 
 const ROW: ActivityRow = {
   id: "activity-1",
@@ -13,6 +18,7 @@ const ROW: ActivityRow = {
   price: 30,
   price_period: "per_month",
   max_participants: 12,
+  unlimited_participants: false,
   created_at: "2026-10-20T08:00:00Z",
   start_date: null,
   end_date: null,
@@ -61,5 +67,31 @@ describe("toActivity", () => {
 
   it("uses an empty schedule when the activity has none", () => {
     expect(toActivity({ ...ROW, schedule: null }).schedule).toEqual([]);
+  });
+
+  it("reads an activity without a limit of participants", () => {
+    expect(
+      toActivity({
+        ...ROW,
+        max_participants: null,
+        unlimited_participants: true,
+      }).maxParticipants,
+    ).toBeNull();
+  });
+});
+
+describe("isFinished", () => {
+  const TODAY = "2027-07-15";
+
+  it("is false without an end date", () => {
+    expect(isFinished({ endDate: null }, TODAY)).toBe(false);
+  });
+
+  it("is false during the last day", () => {
+    expect(isFinished({ endDate: TODAY }, TODAY)).toBe(false);
+  });
+
+  it("is true the day after the end date", () => {
+    expect(isFinished({ endDate: "2027-07-14" }, TODAY)).toBe(true);
   });
 });

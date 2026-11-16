@@ -103,8 +103,11 @@ In the app:
 
 ## Known limitations
 
-- The panel checks the saved activity: unsaved changes in the form are not
-  taken into account until they are saved.
+- The panel checks the saved activity. While the form has unsaved changes,
+  *Publish* is disabled with "Save your changes before publishing." (#119).
+- Errors when changing the status go through `toSaveErrorMessage`: only the
+  messages written for the provider are shown, anything else becomes "The
+  status could not be changed. Please try again." (#119).
 - Publishing does not require an approved AI profile, but the catalogue only
   shows activities of providers with an approved profile. The team has to
   decide whether it should be a publication requirement; if so, add an

@@ -66,14 +66,28 @@ export default function CustomerHomeScreen() {
             />
             <Text style={styles.navText}>Family</Text>
           </Pressable>
-          <View style={styles.navItem}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open my requests"
+            onPress={() => router.push("/my-requests")}
+            style={styles.navItem}
+          >
             <Ionicons
-              name="bookmark-outline"
+              name="document-text-outline"
               size={21}
               color={colors.textMuted}
             />
-            <Text style={styles.navText}>Saved</Text>
-          </View>
+            <Text style={styles.navText}>Requests</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open favourites"
+            onPress={() => router.push("/favourites")}
+            style={styles.navItem}
+          >
+            <Ionicons name="heart-outline" size={21} color={colors.textMuted} />
+            <Text style={styles.navText}>Favourites</Text>
+          </Pressable>
           <LogoutButton />
         </View>
       </View>

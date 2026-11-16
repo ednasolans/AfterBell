@@ -84,6 +84,9 @@ function validateParticipants(
   form: ActivityForm,
   errors: ActivityErrors,
 ): void {
+  if (form.unlimitedParticipants) {
+    return;
+  }
   if (
     form.maxParticipants === null ||
     !Number.isInteger(form.maxParticipants) ||

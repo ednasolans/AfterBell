@@ -4,6 +4,8 @@ import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
 
+import { toIsoDate } from "./dates";
+
 export interface Activity {
   id: string;
   providerId: string;
@@ -19,7 +21,8 @@ export interface Activity {
   schedule: TimeSlot[];
   price: number;
   pricePeriod: PricePeriod;
-  maxParticipants: number;
+  // Null only when the provider chose "no limit"
+  maxParticipants: number | null;
   status: ActivityStatus; // Only published activities are visible to customers
   createdAt: string;
 }
@@ -46,4 +49,12 @@ export function toActivity(row: ActivityRow): Activity {
     status: row.status as ActivityStatus,
     createdAt: row.created_at,
   };
+}
+
+// An activity is still on during its last day. ISO dates compare as text.
+export function isFinished(
+  { endDate }: Pick<Activity, "endDate">,
+  today: string = toIsoDate(new Date()),
+): boolean {
+  return endDate !== null && endDate < today;
 }

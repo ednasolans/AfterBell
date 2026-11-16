@@ -1,17 +1,20 @@
+import { type ReactNode } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import { categoryLabel } from "@/lib/activityCategories";
 import { LoadingView } from "@/components/LoadingView";
+import { isFinished } from "@/lib/activity";
 import { colors } from "@/theme/colors";
 
 import {
   formatActivityPrice,
   formatAgeRanges,
   formatDateRange,
-  isFinished,
 } from "../format";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
+import { type CatalogActivityDetail as Detail } from "../types";
+import { FavouriteButton } from "./FavouriteButton";
 
 type DetailRowProps = { label: string; value: string };
 
@@ -24,10 +27,15 @@ function DetailRow({ label, value }: Readonly<DetailRowProps>) {
   );
 }
 
-type CatalogActivityDetailProps = { id: string };
+type CatalogActivityDetailProps = {
+  id: string;
+  // Extra content under the activity, e.g. the enrolment request (another feature)
+  renderFooter?: (detail: Detail) => ReactNode;
+};
 
 export function CatalogActivityDetail({
   id,
+  renderFooter,
 }: Readonly<CatalogActivityDetailProps>) {
   const query = useCatalogActivity(id);
 
@@ -50,15 +58,35 @@ export function CatalogActivityDetail({
     );
   }
 
-  const { activity, provider, address, enrolledCount } = query.data;
-  const dates = formatDateRange(activity.startDate, activity.endDate);
+  const { activity, isFavourite } = query.data;
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{activity.title}</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{activity.title}</Text>
+        <FavouriteButton
+          activityId={activity.id}
+          activityTitle={activity.title}
+          isFavourite={isFavourite}
+        />
+      </View>
       {activity.description ? (
         <Text style={styles.description}>{activity.description}</Text>
       ) : null}
 
+      <ActivityFacts detail={query.data} />
+      <ProviderSection provider={query.data.provider} />
+
+      {renderFooter?.(query.data)}
+    </ScrollView>
+  );
+}
+
+// Type, dates, ages, schedule, price, category, address and places
+function ActivityFacts({ detail }: Readonly<{ detail: Detail }>) {
+  const { activity, address, enrolledCount } = detail;
+  const dates = formatDateRange(activity.startDate, activity.endDate);
+  return (
+    <>
       {activity.type === "temporary" ? (
         <Text style={styles.typeLabel}>Temporary activity</Text>
       ) : null}
@@ -86,34 +114,70 @@ export function CatalogActivityDetail({
       <DetailRow label="Category" value={categoryLabel(activity.category)} />
       {address ? <DetailRow label="Address" value={address} /> : null}
       {enrolledCount === null ? null : (
-        <DetailRow
-          label="Enrolled"
-          value={`${enrolledCount} of ${activity.maxParticipants}`}
+        <EnrolmentRows
+          enrolledCount={enrolledCount}
+          maxParticipants={activity.maxParticipants}
         />
       )}
+    </>
+  );
+}
 
+type EnrolmentRowsProps = {
+  enrolledCount: number;
+  maxParticipants: number | null;
+};
+
+// "Enrolled: 3 of 10" and "Places left: 7", or "3 (no limit)"
+function EnrolmentRows({
+  enrolledCount,
+  maxParticipants,
+}: Readonly<EnrolmentRowsProps>) {
+  if (maxParticipants === null) {
+    return <DetailRow label="Enrolled" value={`${enrolledCount} (no limit)`} />;
+  }
+  return (
+    <>
+      <DetailRow
+        label="Enrolled"
+        value={`${enrolledCount} of ${maxParticipants}`}
+      />
+      <DetailRow
+        label="Places left"
+        value={String(Math.max(0, maxParticipants - enrolledCount))}
+      />
+    </>
+  );
+}
+
+// The approved profile of the provider and its contact details
+function ProviderSection({
+  provider,
+}: Readonly<{ provider: Detail["provider"] }>) {
+  const { contact } = provider;
+  return (
+    <>
       <Text style={styles.sectionTitle}>Provider</Text>
-      {provider.contact ? (
-        <Text style={styles.providerName}>{provider.contact.name}</Text>
-      ) : null}
+      {contact ? <Text style={styles.providerName}>{contact.name}</Text> : null}
       <Text style={styles.headline}>{provider.headline}</Text>
       <Text style={styles.description}>{provider.description}</Text>
-      {provider.contact?.email ? (
-        <DetailRow label="Email" value={provider.contact.email} />
+      {contact?.email ? (
+        <DetailRow label="Email" value={contact.email} />
       ) : null}
-      {provider.contact?.phoneNumber ? (
-        <DetailRow label="Phone" value={provider.contact.phoneNumber} />
+      {contact?.phoneNumber ? (
+        <DetailRow label="Phone" value={contact.phoneNumber} />
       ) : null}
-      {provider.contact?.website ? (
-        <DetailRow label="Website" value={provider.contact.website} />
+      {contact?.website ? (
+        <DetailRow label="Website" value={contact.website} />
       ) : null}
-    </ScrollView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 8, backgroundColor: colors.background },
-  title: { fontSize: 26, fontWeight: "800", color: colors.text },
+  titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  title: { flex: 1, fontSize: 26, fontWeight: "800", color: colors.text },
   description: { color: colors.textMuted, marginBottom: 8, lineHeight: 22 },
   row: {
     flexDirection: "row",
