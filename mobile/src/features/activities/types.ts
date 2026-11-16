@@ -15,6 +15,8 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   event: "Event",
 };
 
+export type ActivityLanguageField = LanguagePair & { id: number };
+
 // What the user fills in: null means "not chosen yet"
 export interface ActivityForm {
   title: string;

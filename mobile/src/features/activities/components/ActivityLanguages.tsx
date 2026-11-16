@@ -5,16 +5,24 @@ import { TextField } from "@/components/TextField";
 import { type LanguagePair } from "@/lib/activity";
 import { colors } from "@/theme/colors";
 
+import { type ActivityLanguageField } from "../types";
+
 type Props = {
-  pairs: LanguagePair[];
-  onChange: (pairs: LanguagePair[]) => void;
+  pairs: ActivityLanguageField[];
+  onChange: (pairs: ActivityLanguageField[]) => void;
+  onAdd: () => void;
   error?: string;
 };
 
-export function ActivityLanguages({ pairs, onChange, error }: Readonly<Props>) {
-  function updatePair(index: number, changes: Partial<LanguagePair>) {
+export function ActivityLanguages({
+  pairs,
+  onChange,
+  onAdd,
+  error,
+}: Readonly<Props>) {
+  function updatePair(id: number, changes: Partial<LanguagePair>) {
     onChange(
-      pairs.map((pair, i) => (i === index ? { ...pair, ...changes } : pair)),
+      pairs.map((pair) => (pair.id === id ? { ...pair, ...changes } : pair)),
     );
   }
 
@@ -24,20 +32,20 @@ export function ActivityLanguages({ pairs, onChange, error }: Readonly<Props>) {
         Languages and levels
       </Text>
       {pairs.map((pair, index) => (
-        <View key={index} style={styles.pair}>
+        <View key={pair.id} style={styles.pair}>
           <TextField
             label={`Language ${index + 1}`}
             value={pair.language}
-            onChangeText={(language) => updatePair(index, { language })}
+            onChangeText={(language) => updatePair(pair.id, { language })}
           />
           <TextField
             label={`Level ${index + 1}`}
             value={pair.level}
-            onChangeText={(level) => updatePair(index, { level })}
+            onChangeText={(level) => updatePair(pair.id, { level })}
           />
           <LoadingButton
             label={`Remove language ${index + 1}`}
-            onPress={() => onChange(pairs.filter((_, i) => i !== index))}
+            onPress={() => onChange(pairs.filter(({ id }) => id !== pair.id))}
             variant="outline"
           />
         </View>
@@ -47,11 +55,7 @@ export function ActivityLanguages({ pairs, onChange, error }: Readonly<Props>) {
           {error}
         </Text>
       ) : null}
-      <LoadingButton
-        label="Add language"
-        onPress={() => onChange([...pairs, { language: "", level: "" }])}
-        variant="outline"
-      />
+      <LoadingButton label="Add language" onPress={onAdd} variant="outline" />
     </View>
   );
 }

@@ -12,6 +12,7 @@ import {
   isFinished,
 } from "../format";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
+import { type CatalogProvider } from "../types";
 
 type DetailRowProps = { label: string; value: string };
 
@@ -103,6 +104,16 @@ export function CatalogActivityDetail({
         />
       )}
 
+      <ProviderDetails provider={provider} />
+    </ScrollView>
+  );
+}
+
+function ProviderDetails({
+  provider,
+}: Readonly<{ provider: CatalogProvider }>) {
+  return (
+    <>
       <Text style={styles.sectionTitle}>Provider</Text>
       {provider.contact ? (
         <Text style={styles.providerName}>{provider.contact.name}</Text>
@@ -118,7 +129,7 @@ export function CatalogActivityDetail({
       {provider.contact?.website ? (
         <DetailRow label="Website" value={provider.contact.website} />
       ) : null}
-    </ScrollView>
+    </>
   );
 }
 

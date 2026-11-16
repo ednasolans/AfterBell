@@ -75,7 +75,7 @@ export function ActivityForm({
   header,
 }: ActivityFormProps) {
   const categories = useCategories();
-  const { form, updateField, errors, submit } = useActivityForm({
+  const { form, updateField, addLanguage, errors, submit } = useActivityForm({
     initialForm,
     isPublished,
     onSubmit,
@@ -148,6 +148,7 @@ export function ActivityForm({
       {form.category === "language" ? (
         <ActivityLanguages
           pairs={form.languages}
+          onAdd={addLanguage}
           onChange={(pairs) => updateField("languages", pairs)}
           error={errors.languages}
         />

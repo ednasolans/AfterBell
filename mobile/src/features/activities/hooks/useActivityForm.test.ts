@@ -38,6 +38,32 @@ describe("useActivityForm", () => {
     expect(result.current.form).toEqual(VALID_ACTIVITY);
   });
 
+  it("keeps language IDs stable when removing, editing and adding rows", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({
+        initialForm: {
+          ...VALID_ACTIVITY,
+          category: "language",
+          languages: [
+            { language: "English", level: "B1" },
+            { language: "Catalan", level: "C1" },
+          ],
+        },
+        onSubmit: jest.fn(),
+      }),
+    );
+    const [removed, retained] = result.current.form.languages;
+
+    await act(() => {
+      result.current.updateField("languages", [{ ...retained, level: "C2" }]);
+      result.current.addLanguage();
+    });
+
+    const [edited, added] = result.current.form.languages;
+    expect(edited).toEqual({ ...retained, level: "C2" });
+    expect([removed.id, retained.id]).not.toContain(added.id);
+  });
+
   it("does not submit an invalid form and shows its errors", async () => {
     const onSubmit = jest.fn();
     const { result } = await renderHook(() => useActivityForm({ onSubmit }));
