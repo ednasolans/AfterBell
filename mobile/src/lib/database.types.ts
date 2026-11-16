@@ -157,6 +157,7 @@ export type Database = {
           door: string | null;
           floor: string | null;
           id: string;
+          location: unknown;
           number: string | null;
           postal_code: string | null;
           provider_id: string;
@@ -172,6 +173,7 @@ export type Database = {
           door?: string | null;
           floor?: string | null;
           id?: string;
+          location?: unknown;
           number?: string | null;
           postal_code?: string | null;
           provider_id?: string;
@@ -186,6 +188,7 @@ export type Database = {
           door?: string | null;
           floor?: string | null;
           id?: string;
+          location?: unknown;
           number?: string | null;
           postal_code?: string | null;
           provider_id?: string;
@@ -313,17 +316,23 @@ export type Database = {
       };
       family_groups: {
         Row: {
+          city: string | null;
           created_at: string;
           id: string;
+          location: unknown;
         };
         ComputedFields: never;
         Insert: {
+          city?: string | null;
           created_at?: string;
           id?: string;
+          location?: unknown;
         };
         Update: {
+          city?: string | null;
           created_at?: string;
           id?: string;
+          location?: unknown;
         };
         Relationships: [];
       };
@@ -631,6 +640,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      family_location_grid: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       is_company: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_family_member: { Args: { group_id: string }; Returns: boolean };
       is_valid_schedule: { Args: { schedule: Json }; Returns: boolean };
@@ -828,6 +841,10 @@ export type Database = {
           p_message?: string;
         };
         Returns: string;
+      };
+      set_family_location: {
+        Args: { p_city: string; p_latitude: number; p_longitude: number };
+        Returns: undefined;
       };
     };
     Enums: {
