@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { type ReactNode } from "react";
 
 import { useFamilyProfiles } from "../hooks/useFamilyProfiles";
 import { colors } from "@/theme/colors";
@@ -18,6 +19,8 @@ type Props = Readonly<{
   onEdit: (id: string) => void;
   onDelete: (id: string) => Promise<void>;
   isDeleting?: boolean;
+  // Shown under the title, e.g. where the family lives
+  header?: ReactNode;
 }>;
 
 export function FamilyProfilesList({
@@ -26,6 +29,7 @@ export function FamilyProfilesList({
   onEdit,
   onDelete,
   isDeleting = false,
+  header,
 }: Props) {
   const {
     data: profiles,
@@ -92,6 +96,8 @@ export function FamilyProfilesList({
       <Text style={styles.subtitle}>
         Add profiles to discover activities that fit everyone.
       </Text>
+
+      {header}
 
       {profiles?.length === 0 ? (
         <View style={styles.empty}>
