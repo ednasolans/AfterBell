@@ -19,7 +19,7 @@ first, and the summary appears when it is ready or does not appear at all.
 ## Edge Function `summarize-search`
 
 `POST` with `{ query, category, city, priceMin, priceMax }` (all optional).
-Text is at most 100 characters and prices are numbers ≥ 0.
+Text is at most 100 characters (the search text also has at least 2, like `search_activities`) and prices are numbers ≥ 0.
 
 | Status | Meaning | App |
 |---|---|---|

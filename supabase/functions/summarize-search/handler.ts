@@ -27,6 +27,8 @@ export const SUMMARY_TIMEOUT_MS = 8_000;
 /** Identical searches reuse the summary for this long. */
 export const CACHE_TTL_MS = 30 * 60_000;
 const TEXT_MAX_CHARS = 100;
+// Same minimum as search_activities, which rejects shorter texts with an error
+const QUERY_MIN_CHARS = 2;
 
 /** A search result with its id, so the cache key changes when results change. */
 export interface SearchResult extends ResultForSummary {
@@ -126,8 +128,12 @@ export async function parseFilters(req: Request): Promise<SearchFilters> {
     throw new HttpError(400, "invalid_request", "The body must be a JSON object");
   }
   const input = body as Record<string, unknown>;
+  const query = optionalText(input.query, "query", TEXT_MAX_CHARS);
+  if (query !== null && query.length < QUERY_MIN_CHARS) {
+    throw new HttpError(400, "invalid_request", `"query" must have at least ${QUERY_MIN_CHARS} characters`);
+  }
   return {
-    query: optionalText(input.query, "query", TEXT_MAX_CHARS),
+    query,
     category: optionalText(input.category, "category", TEXT_MAX_CHARS),
     city: optionalText(input.city, "city", TEXT_MAX_CHARS),
     priceMin: optionalPrice(input.priceMin, "priceMin"),
