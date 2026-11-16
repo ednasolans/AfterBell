@@ -47,8 +47,8 @@ CREATE INDEX activities_published_created_idx
 --     'search_query_too_long' (SQLSTATE 22023), so the app shows a clear message.
 --   * Each word of the text must appear in some searched field (AND), in any order.
 --   * LIKE wildcards typed by the user (% _ \) are escaped: they are plain text.
---   * Relevance: points per word (title 3, category 2, provider 2, description 1)
---     plus 2 when the title starts with the whole text. Ties: newest first.
+--   * Relevance: points per word (title 3, category 2, provider 2, description 1).
+--     Ties: newest first.
 --   * Only published activities. SECURITY INVOKER, so RLS also applies.
 CREATE OR REPLACE FUNCTION public.search_activities(
     p_query text DEFAULT NULL, p_category text DEFAULT NULL,
@@ -99,10 +99,7 @@ BEGIN
           + (CASE WHEN lower(extensions.unaccent(a.category)) LIKE term THEN 2 ELSE 0 END)
           + (CASE WHEN n.provider_n LIKE term THEN 2 ELSE 0 END)
           + (CASE WHEN lower(extensions.unaccent(coalesce(a.description, ''))) LIKE term THEN 1 ELSE 0 END)
-        ), 0) FROM unnest(v_terms) AS term)
-        + (CASE WHEN v_text <> '' AND n.title_n LIKE
-              replace(replace(replace(v_text, '\', '\\'), '%', '\%'), '_', '\_') || '%'
-           THEN 2 ELSE 0 END) DESC,
+        ), 0) FROM unnest(v_terms) AS term) DESC,
         a.created_at DESC, a.id
     LIMIT greatest(1, least(coalesce(p_limit, 20), 100))
     OFFSET greatest(0, coalesce(p_offset, 0));

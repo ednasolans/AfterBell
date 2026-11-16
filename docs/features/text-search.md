@@ -37,9 +37,8 @@ An empty text is **ignored** (browse everything); 1 character is **rejected**.
   `lower(unaccent(...))`, so "MUSICA" finds "Música".
 - **Words:** the text is split in at most 5 words; every word must appear in
   some searched field, in any order ("nens musica" finds "Música per a nens").
-- **Relevance:** per word, title 3, category 2, provider name 2, description 1;
-  +2 when the title starts with the whole text. Ties: newest first, then `id`
-  so pages never repeat or skip rows.
+- **Relevance:** per word, title 3, category 2, provider name 2, description 1.
+  Ties: newest first, then `id` so pages never repeat or skip rows.
 - **Published only:** `status = 'published'`, and RLS applies too
   (`SECURITY INVOKER`). Tutor offers are activities with `is_tutor = true`, so
   the published ones are included with no extra rule.
