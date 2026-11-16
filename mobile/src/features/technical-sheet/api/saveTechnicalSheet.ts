@@ -1,4 +1,5 @@
-import { toAddressInsert } from "@/lib/addresses";
+import { addressSearchText, toAddressInsert } from "@/lib/addresses";
+import { type Coordinates, findCoordinates } from "@/lib/location";
 
 import { supabase } from "../../../lib/supabase";
 import { type TechnicalSheetForm } from "../types";
@@ -11,12 +12,13 @@ export async function saveTechnicalSheet(
   sheet: TechnicalSheetForm,
 ): Promise<void> {
   const [mainAddress, ...otherAddresses] = sheet.addresses;
+  const [mainPoint, ...otherPoints] = await locateAddresses(sheet.addresses);
 
   // The main address is inserted on its own to know its id for sure:
   // the order of the rows returned by a multiple insert is not guaranteed.
   const { data: main, error: mainError } = await supabase
     .from("addresses")
-    .insert(toAddressInsert(mainAddress))
+    .insert(toAddressInsert(mainAddress, mainPoint))
     .select("id")
     .single();
   if (mainError) {
@@ -27,7 +29,11 @@ export async function saveTechnicalSheet(
   if (otherAddresses.length > 0) {
     const { data: others, error: othersError } = await supabase
       .from("addresses")
-      .insert(otherAddresses.map(toAddressInsert))
+      .insert(
+        otherAddresses.map((address, index) =>
+          toAddressInsert(address, otherPoints[index]),
+        ),
+      )
       .select("id");
     if (othersError) {
       await deleteAddresses(savedIds);
@@ -43,6 +49,19 @@ export async function saveTechnicalSheet(
     await deleteAddresses(savedIds);
     throw new Error(error.message);
   }
+}
+
+// The point of each address, for recommendations by distance. One after the
+// other, so the location permission is asked only once. An address that
+// cannot be found is saved without a point: it never blocks saving the sheet.
+async function locateAddresses(
+  addresses: TechnicalSheetForm["addresses"],
+): Promise<(Coordinates | null)[]> {
+  const points: (Coordinates | null)[] = [];
+  for (const address of addresses) {
+    points.push(await findCoordinates(addressSearchText(address)));
+  }
+  return points;
 }
 
 // Best effort: if this also fails, the original error is the one reported

@@ -8,11 +8,17 @@ import { type TechnicalSheetForm } from "../types";
 import { saveTechnicalSheet } from "./saveTechnicalSheet";
 import { toTechnicalSheetInsert } from "./toTechnicalSheetInsert";
 import { toAddressInsert } from "@/lib/addresses";
+import { findCoordinates } from "@/lib/location";
 import { MAIN_ADDRESS, SECOND_ADDRESS } from "@/test-utils/addressFixtures";
 
 // Replace the real client: tests must not need a database or environment variables
 jest.mock("../../../lib/supabase", () => ({
   supabase: { from: jest.fn() },
+}));
+// By default no address is found on the map
+jest.mock("@/lib/location", () => ({
+  ...jest.requireActual("@/lib/location"),
+  findCoordinates: jest.fn().mockResolvedValue(null),
 }));
 
 const mockedFrom = jest.mocked(supabase.from);
@@ -48,6 +54,7 @@ function mockQueries(...builders: QueryBuilderMock[]) {
 
 beforeEach(() => {
   mockedFrom.mockReset();
+  jest.mocked(findCoordinates).mockReset().mockResolvedValue(null);
 });
 
 describe("saveTechnicalSheet", () => {
@@ -126,5 +133,48 @@ describe("saveTechnicalSheet", () => {
       "row-level security",
     );
     expect(cleanUp.in).toHaveBeenCalledWith("id", ["main", "other"]);
+  });
+
+  it("saves the point of each address it finds on the map", async () => {
+    jest
+      .mocked(findCoordinates)
+      .mockResolvedValueOnce({ latitude: 41.6142, longitude: 0.6262 })
+      .mockResolvedValueOnce({ latitude: 41.79, longitude: 0.81 });
+    const main = createQueryBuilderMock({ data: { id: "main" }, error: null });
+    const others = createQueryBuilderMock({
+      data: [{ id: "other" }],
+      error: null,
+    });
+    mockQueries(main, others, createQueryBuilderMock(OK));
+
+    await saveTechnicalSheet(SHEET);
+
+    expect(findCoordinates).toHaveBeenNthCalledWith(
+      1,
+      "C/ Major 1, 25001 Lleida, Lleida, Spain",
+    );
+    expect(findCoordinates).toHaveBeenNthCalledWith(
+      2,
+      "Av. Catalunya 5, 25600 Balaguer, Lleida, Spain",
+    );
+    expect(main.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        location: "SRID=4326;POINT(0.6262 41.6142)",
+      }),
+    );
+    expect(others.insert).toHaveBeenCalledWith([
+      expect.objectContaining({ location: "SRID=4326;POINT(0.81 41.79)" }),
+    ]);
+  });
+
+  it("saves an address that cannot be found on the map without a point", async () => {
+    const main = createQueryBuilderMock({ data: { id: "main" }, error: null });
+    mockQueries(main, createQueryBuilderMock(OK));
+
+    await saveTechnicalSheet(ONE_ADDRESS_SHEET);
+
+    expect(main.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ location: null }),
+    );
   });
 });

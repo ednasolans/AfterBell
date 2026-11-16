@@ -9,6 +9,7 @@ const BUILDER_METHODS = [
   "in",
   "order",
   "single",
+  "maybeSingle",
 ] as const;
 
 export type QueryBuilderMock = Record<
