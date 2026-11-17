@@ -92,11 +92,21 @@ export function ActivityForm({
       {header}
       <Text style={styles.eyebrow}>ACTIVITY SETUP</Text>
       <Text style={styles.title} accessibilityRole="header">
-        Create an activity
+        {initialForm ? "Edit" : "Create"} an{" "}
+        {form.type === "event" ? "event" : "activity"}
       </Text>
       <Text style={styles.subtitle}>
         Share the details families need to find and choose your activity.
       </Text>
+
+      <Select
+        label="Activity type"
+        placeholder="Choose a type"
+        options={ACTIVITY_TYPE_OPTIONS}
+        value={form.type}
+        onChange={(value) => updateField("type", value)}
+        error={errors.type}
+      />
 
       <View style={styles.sectionHeader}>
         <View style={styles.sectionIcon}>
@@ -170,20 +180,12 @@ export function ActivityForm({
           />
         </View>
         <Text style={styles.sectionTitle} accessibilityRole="header">
-          Schedule
+          Weekly schedule (
+          {form.type === "whole_year" ? "required" : "optional"})
         </Text>
       </View>
 
-      <Select
-        label="Activity type"
-        placeholder="Choose a type"
-        options={ACTIVITY_TYPE_OPTIONS}
-        value={form.type}
-        onChange={(value) => updateField("type", value)}
-        error={errors.type}
-      />
-
-      {form.type === "temporary" ? (
+      {form.type !== "whole_year" ? (
         <>
           <DateField
             label="Start date"
@@ -204,6 +206,7 @@ export function ActivityForm({
       ) : null}
 
       <ScheduleEditor
+        key={form.type}
         schedule={form.schedule}
         onChange={(schedule) => updateField("schedule", schedule)}
         error={errors.schedule}
