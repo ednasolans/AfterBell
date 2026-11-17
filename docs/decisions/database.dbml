@@ -78,6 +78,7 @@ Table addresses {
   city text [not null, note: 'not blank, max 100']
   province text [note: 'max 100; required in new rows']
   country text [note: 'max 100; required in new rows']
+  location "extensions.geography(Point, 4326)" [note: 'optional; found by geocoding the address in the app (#139)']
   created_at timestamptz [not null, default: `now()`]
 
   Indexes {
@@ -201,6 +202,8 @@ Table search_summary_requests {
 
 Table family_groups {
   id uuid [pk, default: `gen_random_uuid()`]
+  city text [note: 'optional, not blank, max 100 (#139)']
+  location "extensions.geography(Point, 4326)" [note: 'only with a city; blurred to a 0.015 degree grid; written only through set_family_location()']
   created_at timestamptz [not null, default: `now()`]
   Note: '''
   Created automatically for every new customer account (trigger on accounts).

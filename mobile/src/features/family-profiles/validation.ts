@@ -46,3 +46,18 @@ export function hasFamilyProfileErrors(
 ): boolean {
   return Object.values(errors).some(Boolean);
 }
+
+// Same limit as family_groups.city
+export const CITY_MAX_LENGTH = 100;
+
+// The town of the family, measured without surrounding spaces, as it is saved
+export function validateFamilyCity(city: string): string | null {
+  const trimmed = city.trim();
+  if (!trimmed) {
+    return "Enter your city or town";
+  }
+  if (trimmed.length > CITY_MAX_LENGTH) {
+    return `The city name must be ${CITY_MAX_LENGTH} characters or less`;
+  }
+  return null;
+}

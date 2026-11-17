@@ -70,6 +70,7 @@ erDiagram
         text city "max 100"
         text province "max 100"
         text country "max 100"
+        geography location "Point 4326, optional"
         timestamptz created_at
     }
     ACTIVITIES {
@@ -133,6 +134,8 @@ erDiagram
 
     FAMILY_GROUPS {
         uuid id PK
+        text city "optional, max 100"
+        geography location "Point 4326, blurred to about 1-2 km"
         timestamptz created_at
     }
     FAMILY_GROUP_MEMBERS {
@@ -235,6 +238,7 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **`family_profiles` store a first name, an optional date of birth, an age range and interests** | Full name / age as a number | The children are minors: store the minimum. C11 added `date_of_birth`, agreed with the client, so the age does not go out of date. `age_range` stays until the form uses the date. Interests use the activity categories. |
 | **Family data is visible only to the members of the group** | Visible to providers | Nobody else needs it. When a family signs up for an activity, the enrollment will store what the provider needs. |
 | **Membership checks use a `SECURITY DEFINER` helper** (`is_family_member(group_id)`) | A subquery on `family_group_members` inside its own policy | A policy on `family_group_members` that reads `family_group_members` calls itself and fails with *infinite recursion*. The helper reads the table without RLS and returns only `true` or `false`. |
+| **The family location is a town and a point blurred to about 1-2 km, stored in `family_groups` and written only through `set_family_location`** (#139) | The exact position / a location per profile | Recommendations by distance need it, but a family's home must never be stored. See [`location.md`](../features/location.md). |
 | **Protect the first family profile from deletion** | Adding an `is_main` column or allowing every profile to be deleted | The first profile in a family group is considered the main profile, determined by `created_at ASC, id ASC`. The database does not store an `is_main` column. A `BEFORE DELETE` trigger prevents deleting this profile, ensuring that a family with at least one profile cannot become empty through profile deletion. |
 
 ### AI profiles

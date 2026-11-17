@@ -6,6 +6,7 @@ import {
   View,
 } from "react-native";
 
+import { FamilyLocationCard } from "@/features/family-profiles/components/FamilyLocationCard";
 import { FamilyProfilesList } from "@/features/family-profiles/components/FamilyProfilesList";
 import { useFamilyUser } from "@/features/family-profiles/hooks/useFamilyUser";
 import { useDeleteFamilyProfile } from "@/features/family-profiles/hooks/useFamilyProfiles";
@@ -44,6 +45,7 @@ export default function FamilyProfilesScreen() {
         await deleteMutation.mutateAsync(id);
       }}
       isDeleting={deleteMutation.isPending}
+      header={<FamilyLocationCard />}
     />
   );
 }

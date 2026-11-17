@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react-native";
 
-import { Alert } from "react-native";
+import { Alert, Text } from "react-native";
 
 import { useFamilyProfiles } from "../hooks/useFamilyProfiles";
 import { FamilyProfilesList } from "./FamilyProfilesList";
@@ -282,5 +282,21 @@ describe("FamilyProfilesList deletion", () => {
     expect(
       screen.queryByLabelText("Delete Anna"),
     ).toBeNull();
+  });
+
+  it("shows the content given above the profiles, e.g. the location", async () => {
+    mockQueryResult({ data: [PROFILE], isPending: false, isError: false });
+
+    await render(
+      <FamilyProfilesList
+        userId="user-1"
+        onCreate={jest.fn()}
+        onEdit={jest.fn()}
+        onDelete={jest.fn().mockResolvedValue(undefined)}
+        header={<Text>Your location</Text>}
+      />,
+    );
+
+    expect(screen.getByText("Your location")).toBeTruthy();
   });
 });

@@ -1,3 +1,4 @@
+import { type Coordinates, toPoint } from "./location";
 import { emptyToNull } from "./text";
 import { type Tables, type TablesInsert } from "./database.types";
 import { isBlank } from "./validation";
@@ -135,7 +136,11 @@ export function formatAddress({
 
 // Converts a validated address into a database row, without surrounding spaces.
 // provider_id is not sent: the database fills it with the logged-in user.
-export function toAddressInsert(form: AddressForm): TablesInsert<"addresses"> {
+// `coordinates` is the point found by geocoding the address, if any
+export function toAddressInsert(
+  form: AddressForm,
+  coordinates: Coordinates | null = null,
+): TablesInsert<"addresses"> {
   return {
     street: form.street.trim(),
     number: form.number.trim(),
@@ -145,5 +150,22 @@ export function toAddressInsert(form: AddressForm): TablesInsert<"addresses"> {
     city: form.city.trim(),
     province: form.province.trim(),
     country: form.country.trim(),
+    location: coordinates ? toPoint(coordinates) : null,
   };
+}
+
+// The address as one line, to find its point on the map:
+// "C/ Major 1, 25001 Lleida, Lleida, Spain"
+export function addressSearchText(form: AddressForm): string {
+  const street = [form.street, form.number]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
+  const town = [form.postalCode, form.city]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
+  return [street, town, form.province.trim(), form.country.trim()]
+    .filter(Boolean)
+    .join(", ");
 }

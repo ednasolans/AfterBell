@@ -88,6 +88,7 @@ const addressRow: Tables<"addresses"> = {
   city: "Lleida",
   province: null,
   country: null,
+  location: null,
   created_at: "2026-10-01T10:00:00Z",
 };
 
