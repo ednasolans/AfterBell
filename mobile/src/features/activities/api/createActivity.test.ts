@@ -50,4 +50,29 @@ describe("createActivity", () => {
 
     await expect(createActivity(FORM)).rejects.toThrow("row-level security");
   });
+  it.each([{ schedule: [] }, { schedule: FORM.schedule }])(
+    "creates an event through activities with optional slots (%j)",
+    async ({ schedule }) => {
+      insert.mockResolvedValue({ error: null });
+
+      await createActivity({
+        ...FORM,
+        type: "event",
+        startDate: "2027-07-01",
+        endDate: "2027-07-15",
+        schedule,
+      });
+
+      expect(supabase.from).toHaveBeenCalledWith("activities");
+      expect(insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "event",
+          start_date: "2027-07-01",
+          end_date: "2027-07-15",
+          schedule: schedule.length === 0 ? null : schedule,
+        }),
+      );
+      expect(insert.mock.calls[0][0]).not.toHaveProperty("status");
+    },
+  );
 });
