@@ -2,7 +2,10 @@
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import type { SearchFilters } from "../_shared/searchSummary.ts";
-import type { RateLimiter, SearchResult, SummaryCache, SummaryRepository } from "./handler.ts";
+import { HttpError, type RateLimiter, type SearchResult, type SummaryCache, type SummaryRepository } from "./handler.ts";
+
+// SQLSTATE of the errors search_activities raises for invalid filters
+const INVALID_PARAMETER = "22023";
 
 interface ActivityRow {
   id: string;
@@ -29,13 +32,19 @@ export class SupabaseSummaryRepository implements SummaryRepository {
   async search(filters: SearchFilters, limit: number): Promise<SearchResult[]> {
     const { data, error } = await this.client.rpc("search_activities", {
       p_query: filters.query,
-      p_category: filters.category,
+      p_categories: filters.categories,
+      p_age_min: filters.ageMin,
+      p_age_max: filters.ageMax,
       p_city: filters.city,
+      p_postal_code: filters.postalCode,
       p_price_min: filters.priceMin,
       p_price_max: filters.priceMax,
+      p_price_period: filters.pricePeriod,
       p_limit: limit,
       p_offset: 0,
     });
+    // Invalid filters (e.g. an unknown category) are the caller's mistake, not ours
+    if (error?.code === INVALID_PARAMETER) throw new HttpError(400, "invalid_request", error.message);
     if (error) throw new Error(`search_activities failed: ${error.message}`);
     const activities = (data ?? []) as ActivityRow[];
     if (activities.length === 0) return [];

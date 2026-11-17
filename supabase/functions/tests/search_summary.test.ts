@@ -13,10 +13,14 @@ import {
 
 const FILTERS: SearchFilters = {
   query: "swimming",
-  category: null,
+  categories: null,
+  ageMin: null,
+  ageMax: null,
   city: "Lleida",
+  postalCode: null,
   priceMin: null,
   priceMax: 50,
+  pricePeriod: "per_month",
 };
 
 const RESULT: ResultForSummary = {
@@ -44,19 +48,22 @@ Deno.test("sends only the fields the summary needs", () => {
   }]);
   assertEquals(data.search, {
     text: "swimming",
-    category: null,
+    categories: null,
+    age_min: null,
+    age_max: null,
     city: "Lleida",
     price_min: null,
     price_max: 50,
+    price_period: "per month",
   });
 });
 
 Deno.test("translates categories into English labels", () => {
   const data = toSummaryData(
-    { ...FILTERS, category: "language" },
+    { ...FILTERS, categories: ["language", "music"] },
     [{ ...RESULT, category: "language" }, { ...RESULT, category: "board_games" }],
   );
-  assertEquals(data.search.category, "languages");
+  assertEquals(data.search.categories, ["languages", "music"]);
   assertEquals(data.activities.map((a) => a.category), ["languages", "board games"]);
 });
 

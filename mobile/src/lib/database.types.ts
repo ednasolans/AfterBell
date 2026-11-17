@@ -801,12 +801,16 @@ export type Database = {
       };
       search_activities: {
         Args: {
-          p_category?: string;
+          p_age_max?: number;
+          p_age_min?: number;
+          p_categories?: string[];
           p_city?: string;
           p_limit?: number;
           p_offset?: number;
+          p_postal_code?: string;
           p_price_max?: number;
           p_price_min?: number;
+          p_price_period?: string;
           p_query?: string;
         };
         Returns: {
