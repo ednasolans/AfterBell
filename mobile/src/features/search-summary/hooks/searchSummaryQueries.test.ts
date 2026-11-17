@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react-native";
 
+import { NO_SEARCH_FILTERS } from "@/lib/searchFilters";
 import {
   createQueryClientWrapper,
   createTestQueryClient,
@@ -15,11 +16,9 @@ jest.mock("../api/fetchSearchSummary", () => ({
 }));
 
 const SWIMMING: SearchSummaryFilters = {
+  ...NO_SEARCH_FILTERS,
   query: "swimming",
-  category: null,
   city: "Lleida",
-  priceMin: null,
-  priceMax: null,
 };
 const MUSIC: SearchSummaryFilters = { ...SWIMMING, query: "music" };
 

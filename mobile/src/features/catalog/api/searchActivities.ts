@@ -1,4 +1,5 @@
 import { type Activity, toActivity } from "@/lib/activity";
+import { NO_SEARCH_FILTERS, type SearchFilters } from "@/lib/searchFilters";
 import { supabase } from "@/lib/supabase";
 
 export const SEARCH_MIN_LENGTH = 2;
@@ -7,6 +8,21 @@ export const SEARCH_PAGE_SIZE = 20;
 
 export const SEARCH_TOO_SHORT_MESSAGE = `Type at least ${SEARCH_MIN_LENGTH} characters to search.`;
 export const SEARCH_TOO_LONG_MESSAGE = `The search can have at most ${SEARCH_MAX_LENGTH} characters.`;
+
+// The message for each error that search_activities raises for invalid values
+export const SEARCH_ERROR_MESSAGES: Record<string, string> = {
+  search_query_too_short: SEARCH_TOO_SHORT_MESSAGE,
+  search_query_too_long: SEARCH_TOO_LONG_MESSAGE,
+  search_unknown_category: "One of the selected categories does not exist.",
+  search_negative_age: "Ages cannot be negative.",
+  search_invalid_age_range:
+    "The minimum age cannot be higher than the maximum age.",
+  search_negative_price: "Prices cannot be negative.",
+  search_invalid_price_range:
+    "The minimum price cannot be higher than the maximum price.",
+  search_unknown_price_period: "The price period is not valid.",
+  search_price_period_required: "Choose a price period to filter by price.",
+};
 
 // The text of the search with the spaces removed from both ends; '' means
 // "no text", so every published activity is returned
@@ -27,33 +43,72 @@ export function validateSearchQuery(query: string): string | null {
   return length > SEARCH_MAX_LENGTH ? SEARCH_TOO_LONG_MESSAGE : null;
 }
 
-function toSearchError(message: string): Error {
-  if (message === "search_query_too_short") {
-    return new Error(SEARCH_TOO_SHORT_MESSAGE);
+// Error code when the minimum or maximum is negative, or the minimum is higher
+function validateRange(
+  min: number | null,
+  max: number | null,
+  codes: { negative: string; invalid: string },
+): string | null {
+  if ((min !== null && min < 0) || (max !== null && max < 0)) {
+    return codes.negative;
   }
-  if (message === "search_query_too_long") {
-    return new Error(SEARCH_TOO_LONG_MESSAGE);
+  return min !== null && max !== null && min > max ? codes.invalid : null;
+}
+
+// null when the filters can be sent, otherwise the message for the customer.
+// The database checks the same rules, and also that the categories exist.
+export function validateSearchFilters(filters: SearchFilters): string | null {
+  const code =
+    validateRange(filters.ageMin, filters.ageMax, {
+      negative: "search_negative_age",
+      invalid: "search_invalid_age_range",
+    }) ??
+    validateRange(filters.priceMin, filters.priceMax, {
+      negative: "search_negative_price",
+      invalid: "search_invalid_price_range",
+    });
+  if (code) {
+    return SEARCH_ERROR_MESSAGES[code];
   }
-  return new Error(message);
+  const hasPrice = filters.priceMin !== null || filters.priceMax !== null;
+  return hasPrice && filters.pricePeriod === null
+    ? SEARCH_ERROR_MESSAGES.search_price_period_required
+    : null;
+}
+
+// Blank text is no filter: sent as undefined, so it is left out of the request
+function textFilter(value: string | null): string | undefined {
+  const text = value?.trim() ?? "";
+  return text === "" ? undefined : text;
 }
 
 // One page of published activities (tutor offers included) that match the
-// text, most relevant first. Page 0 is the first page.
+// text and every filter, most relevant first. Page 0 is the first page.
 export async function searchActivities(
   query: string,
+  filters: SearchFilters = NO_SEARCH_FILTERS,
   page = 0,
 ): Promise<Activity[]> {
-  const invalid = validateSearchQuery(query);
+  const invalid = validateSearchQuery(query) ?? validateSearchFilters(filters);
   if (invalid) {
     throw new Error(invalid);
   }
   const { data, error } = await supabase.rpc("search_activities", {
     p_query: trimSearchQuery(query),
+    p_categories:
+      filters.categories.length > 0 ? filters.categories : undefined,
+    p_age_min: filters.ageMin ?? undefined,
+    p_age_max: filters.ageMax ?? undefined,
+    p_city: textFilter(filters.city),
+    p_postal_code: textFilter(filters.postalCode),
+    p_price_min: filters.priceMin ?? undefined,
+    p_price_max: filters.priceMax ?? undefined,
+    p_price_period: filters.pricePeriod ?? undefined,
     p_limit: SEARCH_PAGE_SIZE,
     p_offset: page * SEARCH_PAGE_SIZE,
   });
   if (error) {
-    throw toSearchError(error.message);
+    throw new Error(SEARCH_ERROR_MESSAGES[error.message] ?? error.message);
   }
   return data.map((row) => toActivity(row));
 }

@@ -1,11 +1,9 @@
+import { type SearchFilters } from "@/lib/searchFilters";
+
 // Filters sent to the summarize-search Edge Function. They are the same
 // filters as the search, so the function can run the same search again.
-export type SearchSummaryFilters = {
+export type SearchSummaryFilters = SearchFilters & {
   query: string | null;
-  category: string | null;
-  city: string | null;
-  priceMin: number | null;
-  priceMax: number | null;
 };
 
 // READY: there is a summary. The other statuses hide the block.
@@ -22,10 +20,9 @@ export function normalizeSummaryFilters(
     return clean === "" ? null : clean;
   };
   return {
+    ...filters,
     query: text(filters.query),
-    category: text(filters.category),
     city: text(filters.city),
-    priceMin: filters.priceMin,
-    priceMax: filters.priceMax,
+    postalCode: text(filters.postalCode),
   };
 }
