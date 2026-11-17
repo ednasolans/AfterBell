@@ -94,4 +94,45 @@ describe("toActivityInsert", () => {
     expect(row.start_date).toBeNull();
     expect(row.end_date).toBeNull();
   });
+  describe.each(["event", "temporary"] as const)("%s persistence", (type) => {
+    const form: ActivityForm = {
+      ...VALID_FORM,
+      type,
+      startDate: "2027-07-01",
+      endDate: "2027-07-15",
+    };
+
+    it("preserves the type, dates and weekly slots", () => {
+      expect(toActivityInsert(form)).toMatchObject({
+        type,
+        start_date: "2027-07-01",
+        end_date: "2027-07-15",
+        schedule: form.schedule,
+      });
+    });
+
+    it("sends NULL when there are no weekly slots", () => {
+      const withoutSchedule = { ...form, schedule: [] };
+      const before = JSON.parse(JSON.stringify(withoutSchedule));
+
+      expect(toActivityInsert(withoutSchedule)).toMatchObject({
+        type,
+        start_date: form.startDate,
+        end_date: form.endDate,
+        schedule: null,
+      });
+      expect(withoutSchedule).toEqual(before);
+    });
+
+    it("clears dates when switching to a whole-year activity", () => {
+      expect(toActivityInsert({ ...form, type: "whole_year" })).toMatchObject({
+        type: "whole_year",
+        start_date: null,
+        end_date: null,
+        schedule: form.schedule,
+      });
+      expect(form.startDate).toBe("2027-07-01");
+      expect(form.endDate).toBe("2027-07-15");
+    });
+  });
 });
