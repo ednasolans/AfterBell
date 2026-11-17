@@ -7,12 +7,12 @@ which the filters of #102 are added. The "endpoint" is the database function
 
 ## API: `search_activities`
 
-| Argument                                             | Meaning                                                                    |
-| ---------------------------------------------------- | -------------------------------------------------------------------------- |
-| `p_query`                                            | Text to search. `NULL` or blank: no text filter (every published activity) |
-| `p_category`, `p_city`, `p_price_min`, `p_price_max` | Filters that already existed (more in #102)                                |
-| `p_limit`                                            | Page size: 1–100, default 20                                               |
-| `p_offset`                                           | Rows to skip (`page * p_limit`)                                            |
+| Argument                                                                                                            | Meaning                                                                    |
+| ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `p_query`                                                                                                           | Text to search. `NULL` or blank: no text filter (every published activity) |
+| `p_categories`, `p_age_min`, `p_age_max`, `p_city`, `p_postal_code`, `p_price_min`, `p_price_max`, `p_price_period` | Filters of #102: see [search-filters.md](search-filters.md)                |
+| `p_limit`                                                                                                           | Page size: 1–100, default 20                                               |
+| `p_offset`                                                                                                          | Rows to skip (`page * p_limit`)                                            |
 
 Returns rows of `activities`, most relevant first. Only the customer's
 session can call it (`authenticated`; anonymous users get _permission denied_).
@@ -79,5 +79,5 @@ An empty text is **ignored** (browse everything); 1 character is **rejected**.
 
 ## Pending
 
-- The search screen (UI) and the filters of #102 are not part of this issue.
+- The search screen (UI) is not part of this issue. The filters are in #102 ([search-filters.md](search-filters.md)).
 - `search_activities` does not say whether each result is a favourite yet (see `favourites.md`).

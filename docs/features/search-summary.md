@@ -18,7 +18,7 @@ first, and the summary appears when it is ready or does not appear at all.
 
 ## Edge Function `summarize-search`
 
-`POST` with `{ query, category, city, priceMin, priceMax }` (all optional).
+`POST` with `{ query, categories, ageMin, ageMax, city, postalCode, priceMin, priceMax, pricePeriod }` (all optional; the same filters as `search_activities`, see [search-filters.md](search-filters.md)). Filters that the search rejects are answered with `400 invalid_request`.
 Text is at most 100 characters (the search text also has at least 2, like `search_activities`) and prices are numbers ≥ 0.
 
 | Status | Meaning | App |
