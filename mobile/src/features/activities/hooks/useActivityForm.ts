@@ -28,10 +28,16 @@ export function useActivityForm({
   ) {
     setForm((previous) => {
       const next = { ...previous, [field]: value };
-      // A whole-year activity has no dates
-      return next.type === "whole_year"
-        ? { ...next, startDate: null, endDate: null }
-        : next;
+      // Dates never apply to whole-year activities. Start with empty dates
+      // when leaving that type, including forms loaded with stale dates.
+      if (
+        next.type === "whole_year" ||
+        (field === "type" && previous.type === "whole_year")
+      ) {
+        return { ...next, startDate: null, endDate: null };
+      }
+      // Saved weekly slots are valid for every type.
+      return next;
     });
   }
 
