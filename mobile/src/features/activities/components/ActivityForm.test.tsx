@@ -131,7 +131,7 @@ describe("ActivityForm", () => {
     );
 
     await fireEvent.press(
-      screen.getByRole("button", { name: "Activity type: Whole year" }),
+      screen.getByRole("button", { name: "Activity type: Activity" }),
     );
     await fireEvent.press(screen.getByRole("radio", { name: /Temporary/ }));
 
@@ -153,7 +153,7 @@ describe("ActivityForm", () => {
     expect(screen.queryByText("Start date")).not.toBeOnTheScreen();
 
     await fireEvent.press(
-      screen.getByRole("button", { name: "Activity type: Whole year" }),
+      screen.getByRole("button", { name: "Activity type: Activity" }),
     );
     await fireEvent.press(screen.getByRole("radio", { name: /Temporary/ }));
 
