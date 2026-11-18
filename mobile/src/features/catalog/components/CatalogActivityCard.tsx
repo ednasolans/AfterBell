@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "@/theme/colors";
+import { ACTIVITY_TYPE_LABELS } from "@/lib/activityTypes";
 import { categoryLabel } from "@/lib/activityCategories";
 
 import {
@@ -56,6 +57,11 @@ export function CatalogActivityCard({
       </View>
       <View style={styles.body}>
         <Text style={styles.title}>{activity.title}</Text>
+        {activity.type === "event" ? (
+          <Text style={styles.typeLabel}>
+            {ACTIVITY_TYPE_LABELS[activity.type]}
+          </Text>
+        ) : null}
         {provider.contact ? (
           <View style={styles.providerRow}>
             <Ionicons
@@ -153,6 +159,7 @@ const styles = StyleSheet.create({
   },
   body: { padding: 16, gap: 8 },
   title: { fontSize: 18, fontWeight: "800", color: colors.text },
+  typeLabel: { color: colors.primaryDark, fontWeight: "700" },
   providerRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   provider: { color: colors.primaryDark, fontWeight: "700" },
   metaRow: { flexDirection: "row", gap: 14, flexWrap: "wrap" },

@@ -1,4 +1,4 @@
-import { act, fireEvent, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, waitFor, within } from "@testing-library/react-native";
 
 import { formatDate } from "@/lib/dates";
 
@@ -172,5 +172,41 @@ describe("CatalogList", () => {
     });
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe("events in the customer catalogue", () => {
+  beforeEach(() => mockFetch.mockReset());
+
+  it("renders an event alongside an activity and opens the event by its existing id", async () => {
+    const onOpen = jest.fn();
+    mockFetch.mockResolvedValue([
+      makeCatalogActivity(),
+      makeCatalogActivity({
+        activity: makeActivity({
+          id: "event-1",
+          title: "Summer event",
+          type: "event",
+          startDate: "2099-07-01",
+          endDate: "2099-07-15",
+          schedule: [],
+        }),
+      }),
+    ]);
+
+    const { findByRole, getByText } = await renderWithQuery(
+      <CatalogList onOpen={onOpen} />,
+    );
+
+    const card = await findByRole("button", { name: "Open Summer event" });
+    expect(getByText("Saturday workshop")).toBeOnTheScreen();
+    expect(within(card).getByText("Event")).toBeOnTheScreen();
+    expect(
+      within(card).getByText(
+        `${formatDate("2099-07-01")} – ${formatDate("2099-07-15")}`,
+      ),
+    ).toBeOnTheScreen();
+    await fireEvent.press(card);
+    expect(onOpen).toHaveBeenCalledWith("event-1");
   });
 });

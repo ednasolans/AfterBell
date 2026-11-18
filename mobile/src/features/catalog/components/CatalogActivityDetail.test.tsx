@@ -221,4 +221,32 @@ describe("CatalogActivityDetail", () => {
       expect(getByText("The activity could not be loaded.")).toBeTruthy(),
     );
   });
+  it.each(["2099-07-01", "2099-07-15"])(
+    "opens existing event details with dates through %s and no weekly schedule",
+    async (endDate) => {
+      mockFetch.mockResolvedValue(
+        makeDetail({
+          activity: makeActivity({
+            id: "event-1",
+            type: "event",
+            startDate: "2099-07-01",
+            endDate,
+            schedule: [],
+          }),
+        }),
+      );
+
+      const { findByText, queryByText } = await renderWithQuery(
+        <CatalogActivityDetail id="event-1" />,
+      );
+      const expected =
+        endDate === "2099-07-01"
+          ? formatDate(endDate)
+          : `${formatDate("2099-07-01")} – ${formatDate(endDate)}`;
+
+      expect(await findByText(expected)).toBeOnTheScreen();
+      expect(mockFetch).toHaveBeenCalledWith("event-1");
+      expect(queryByText("Schedule")).not.toBeOnTheScreen();
+    },
+  );
 });
