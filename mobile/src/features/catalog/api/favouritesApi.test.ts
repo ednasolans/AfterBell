@@ -7,11 +7,27 @@ type Result = {
   error: { message: string; code?: string } | null;
 };
 
+const PROFILE_ID = "family-profile-1";
+const TARGET = { familyProfileId: PROFILE_ID, activityId: "a1" };
+
 const mockInsert = jest.fn();
 const mockDelete = jest.fn();
 const mockEq = jest.fn();
 const mockRpc = jest.fn();
 const mockFrom = jest.fn();
+
+// delete().eq().eq(): every eq is recorded, and awaiting gives mockDelete's result
+function mockDeleteBuilder() {
+  const builder = {
+    eq: (column: string, value: unknown) => {
+      mockEq(column, value);
+      return builder;
+    },
+    then: (resolve: (value: unknown) => unknown) =>
+      Promise.resolve(mockDelete()).then(resolve),
+  };
+  return builder;
+}
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {
@@ -19,12 +35,7 @@ jest.mock("@/lib/supabase", () => ({
       mockFrom(table);
       return {
         insert: (row: unknown) => mockInsert(row),
-        delete: () => {
-          mockDelete();
-          return {
-            eq: (column: string, value: unknown) => mockEq(column, value),
-          };
-        },
+        delete: () => mockDeleteBuilder(),
       };
     },
     rpc: (name: string, args: unknown) => mockRpc(name, args),
@@ -51,13 +62,16 @@ describe("favourites API", () => {
     jest.clearAllMocks();
   });
 
-  it("saves an activity without sending the customer: the database fills it in", async () => {
+  it("saves an activity for a family profile", async () => {
     mockInsert.mockResolvedValue({ error: null } satisfies Result);
 
-    await addFavourite("a1");
+    await addFavourite(TARGET);
 
     expect(mockFrom).toHaveBeenCalledWith("favourites");
-    expect(mockInsert).toHaveBeenCalledWith({ activity_id: "a1" });
+    expect(mockInsert).toHaveBeenCalledWith({
+      family_profile_id: PROFILE_ID,
+      activity_id: "a1",
+    });
   });
 
   it("an activity saved twice is not an error", async () => {
@@ -65,7 +79,7 @@ describe("favourites API", () => {
       error: { message: "duplicate key", code: "23505" },
     } satisfies Result);
 
-    await expect(addFavourite("a1")).resolves.toBeUndefined();
+    await expect(addFavourite(TARGET)).resolves.toBeUndefined();
   });
 
   it("fails when the activity cannot be saved", async () => {
@@ -76,32 +90,36 @@ describe("favourites API", () => {
       },
     } satisfies Result);
 
-    await expect(addFavourite("a1")).rejects.toThrow(
+    await expect(addFavourite(TARGET)).rejects.toThrow(
       "new row violates row-level security policy",
     );
   });
 
-  it("removes one activity from the favourites", async () => {
-    mockEq.mockResolvedValue({ error: null } satisfies Result);
+  it("removes one activity from the favourites of that profile only", async () => {
+    mockDelete.mockReturnValue({ error: null } satisfies Result);
 
-    await removeFavourite("a1");
+    await removeFavourite(TARGET);
 
     expect(mockDelete).toHaveBeenCalled();
+    expect(mockEq).toHaveBeenCalledWith("family_profile_id", PROFILE_ID);
     expect(mockEq).toHaveBeenCalledWith("activity_id", "a1");
   });
 
   it("fails when the favourite cannot be removed", async () => {
-    mockEq.mockResolvedValue({ error: { message: "boom" } } satisfies Result);
+    mockDelete.mockReturnValue({ error: { message: "boom" } } satisfies Result);
 
-    await expect(removeFavourite("a1")).rejects.toThrow("boom");
+    await expect(removeFavourite(TARGET)).rejects.toThrow("boom");
   });
 
   it("lists the favourites with what the card needs", async () => {
     mockRpc.mockResolvedValue({ data: [favouriteRow], error: null });
 
-    const result = await fetchFavourites();
+    const result = await fetchFavourites(PROFILE_ID);
 
-    expect(mockRpc).toHaveBeenCalledWith("my_favourites", { p_limit: 100 });
+    expect(mockRpc).toHaveBeenCalledWith("my_favourites", {
+      p_family_profile_id: PROFILE_ID,
+      p_limit: 100,
+    });
     expect(result).toEqual([
       {
         activity: {
@@ -137,7 +155,7 @@ describe("favourites API", () => {
       error: null,
     });
 
-    const [favourite] = await fetchFavourites();
+    const [favourite] = await fetchFavourites(PROFILE_ID);
 
     expect(favourite.available).toBe(false);
     expect(favourite.activity.startDate).toBeNull();
@@ -147,6 +165,6 @@ describe("favourites API", () => {
   it("fails when the favourites cannot be read", async () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: "boom" } });
 
-    await expect(fetchFavourites()).rejects.toThrow("boom");
+    await expect(fetchFavourites(PROFILE_ID)).rejects.toThrow("boom");
   });
 });

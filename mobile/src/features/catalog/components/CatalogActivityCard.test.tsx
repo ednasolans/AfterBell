@@ -27,4 +27,19 @@ describe("CatalogActivityCard", () => {
     await fireEvent.press(card);
     expect(onPress).toHaveBeenCalled();
   });
+
+  it("has no heart without a family profile", async () => {
+    const screen = await renderWithQuery(
+      <CatalogActivityCard
+        activity={makeActivity({ title: "Piano" })}
+        providerName="Sports Club"
+        isFavourite={false}
+        onPress={jest.fn()}
+      />,
+      null,
+    );
+
+    expect(screen.getByLabelText("Open Piano")).toBeTruthy();
+    expect(screen.queryByLabelText("Save Piano in favourites")).toBeNull();
+  });
 });

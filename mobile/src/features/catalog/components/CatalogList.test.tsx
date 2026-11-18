@@ -8,6 +8,7 @@ import {
   makeCatalogActivity,
   makeProvider,
   renderWithQuery,
+  TEST_PROFILE_ID,
 } from "../testFixtures";
 import { CatalogList } from "./CatalogList";
 
@@ -21,10 +22,10 @@ const mockAddFavourite = jest.fn();
 const mockRemoveFavourite = jest.fn();
 
 jest.mock("../api/addFavourite", () => ({
-  addFavourite: (id: string) => mockAddFavourite(id),
+  addFavourite: (target: unknown) => mockAddFavourite(target),
 }));
 jest.mock("../api/removeFavourite", () => ({
-  removeFavourite: (id: string) => mockRemoveFavourite(id),
+  removeFavourite: (target: unknown) => mockRemoveFavourite(target),
 }));
 
 describe("CatalogList", () => {
@@ -212,7 +213,10 @@ describe("CatalogList", () => {
       expect(
         await findByLabelText("Remove Saturday workshop from favourites"),
       ).toBeTruthy();
-      expect(mockAddFavourite).toHaveBeenCalledWith("a1");
+      expect(mockAddFavourite).toHaveBeenCalledWith({
+        familyProfileId: TEST_PROFILE_ID,
+        activityId: "a1",
+      });
     });
 
     it("does not open the activity when the heart is pressed", async () => {

@@ -33,7 +33,7 @@ erDiagram
     CATEGORIES ||--o{ ACTIVITIES : "category (name)"
     ACTIVITIES ||--o{ LANGUAGES : "activity_id"
     ACTIVITIES ||--o{ FAVOURITES : "activity_id"
-    ACCOUNTS ||--o{ FAVOURITES : "customer_id"
+    FAMILY_PROFILES ||--o{ FAVOURITES : "family_profile_id"
     ACTIVITIES ||--o{ ENROLMENT_REQUESTS : "activity_id"
     ACCOUNTS ||--o{ ENROLMENT_REQUESTS : "customer_id"
 
@@ -107,7 +107,7 @@ erDiagram
         text level
     }
     FAVOURITES {
-        uuid customer_id PK
+        uuid family_profile_id PK
         uuid activity_id PK
         timestamptz created_at
     }
@@ -224,7 +224,8 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **One family profile per request; a full activity does not accept requests** | Several profiles per request / pending requests on a full activity | Each child is accepted or rejected on its own, and a request that can never be accepted would only confuse the family. See [`enrolments.md`](../features/enrolments.md). |
 | **The maximum cannot go below the accepted participants** (trigger `activities_participant_limit_above_accepted`) | Letting the activity be "overbooked" | Team decision (#119): the provider gets a clear message instead of an activity with more people than places. It locks the same row as `accept_enrolment_request`, so the two cannot cross. |
 | **`enrolment_requests` can only be changed through functions** (`send_`, `accept_`, `reject_` and `cancel_enrolment_request`) | The functions check who is calling and lock the activity row, so two acceptances cannot go over `max_participants`. |
-| **Favourites are read through `my_favourites`**, and `favourites.customer_id` defaults to `auth.uid()` | Customers cannot read unpublished activities, so a plain query would hide them. The function keeps them in the list marked as not available. See [`favourites.md`](../features/favourites.md). |
+| **Favourites are read through `my_favourites(p_family_profile_id)`** | Customers cannot read unpublished activities, so a plain query would hide them. The function keeps them in the list marked as not available. See [`favourites.md`](../features/favourites.md). |
+| **Favourites belong to a family profile** (`favourites.family_profile_id`), not to the account (changed in #104) | Each child has their own list: with favourites of the account (#116), saving for one child saved for every child. The members of the family share them, like the profiles. The favourites saved until then were deleted: they did not say for whom they were saved. |
 | **`search_summary_cache` and `search_summary_requests` have no client access** | Only the backend uses them, and they store no search text linked to a person. |
 
 ### Families

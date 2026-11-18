@@ -7,12 +7,19 @@ import { fetchContacts } from "./fetchContacts";
 import { searchActivities } from "./searchActivities";
 import { toCatalogProvider } from "./toCatalogProvider";
 
-// Ids of the given activities that the customer saved. RLS only returns the
-// customer's own favourites.
-async function fetchSavedIds(activityIds: string[]): Promise<Set<string>> {
+// Ids of the given activities that the family profile saved. Without a
+// profile, nothing is saved.
+async function fetchSavedIds(
+  activityIds: string[],
+  familyProfileId: string | null,
+): Promise<Set<string>> {
+  if (!familyProfileId) {
+    return new Set();
+  }
   const { data, error } = await supabase
     .from("favourites")
     .select("activity_id")
+    .eq("family_profile_id", familyProfileId)
     .in("activity_id", activityIds);
   if (error) {
     throw new Error(error.message);
@@ -21,12 +28,13 @@ async function fetchSavedIds(activityIds: string[]): Promise<Set<string>> {
 }
 
 // One page of the search, each activity with its provider and whether the
-// customer saved it, so the results use the same card as the catalog list.
-// The order is the relevance of searchActivities.
+// family profile saved it, so the results use the same card as the catalog
+// list. The order is the relevance of searchActivities.
 export async function searchCatalogActivities(
   query: string,
   filters: SearchFilters = NO_SEARCH_FILTERS,
   page = 0,
+  familyProfileId: string | null = null,
 ): Promise<CatalogActivity[]> {
   const activities = await searchActivities(query, filters, page);
   if (activities.length === 0) {
@@ -39,7 +47,10 @@ export async function searchCatalogActivities(
   const [profiles, contacts, saved] = await Promise.all([
     fetchApprovedProfiles(providerIds),
     fetchContacts(providerIds),
-    fetchSavedIds(activities.map((activity) => activity.id)),
+    fetchSavedIds(
+      activities.map((activity) => activity.id),
+      familyProfileId,
+    ),
   ]);
 
   // The search already requires an approved profile, but an activity is never

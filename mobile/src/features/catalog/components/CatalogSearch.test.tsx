@@ -11,6 +11,7 @@ import {
   makeActivity,
   makeCatalogActivity,
   renderWithQuery,
+  TEST_PROFILE_ID,
 } from "../testFixtures";
 import { CatalogSearch, SEARCH_DEBOUNCE_MS } from "./CatalogSearch";
 
@@ -24,8 +25,18 @@ const mockCount = jest.fn();
 jest.mock("../api/fetchCatalogActivities", () => ({
   fetchCatalogActivities: () => mockList(),
 }));
+const mockSearchProfile = jest.fn();
+// The family profile is checked on its own, so the other checks stay short
 jest.mock("../api/searchCatalogActivities", () => ({
-  searchCatalogActivities: (...args: unknown[]) => mockSearch(...args),
+  searchCatalogActivities: (
+    query: string,
+    filters: unknown,
+    page: number,
+    profileId: string | null,
+  ) => {
+    mockSearchProfile(profileId);
+    return mockSearch(query, filters, page);
+  },
 }));
 jest.mock("../api/fetchAvailableFilters", () => ({
   fetchAvailableFilters: () =>
@@ -98,6 +109,17 @@ describe("CatalogSearch", () => {
 
     await waitFor(() => expect(mockSearch).toHaveBeenCalledTimes(1));
     expect(mockSearch).toHaveBeenCalledWith("mus", NO_SEARCH_FILTERS, 0);
+  });
+
+  it("searches with the active family profile, to mark its favourites", async () => {
+    mockSearch.mockResolvedValue([]);
+    const screen = await renderSearch();
+
+    await type(screen, "music");
+
+    await waitFor(() =>
+      expect(mockSearchProfile).toHaveBeenCalledWith(TEST_PROFILE_ID),
+    );
   });
 
   it("searches at once when the text is submitted", async () => {

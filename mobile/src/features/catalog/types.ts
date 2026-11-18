@@ -58,3 +58,6 @@ export interface FavouriteActivity {
   available: boolean;
   savedAt: string;
 }
+
+// One activity in the favourites of one family profile
+export type FavouriteTarget = { familyProfileId: string; activityId: string };

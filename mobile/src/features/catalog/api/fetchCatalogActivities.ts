@@ -8,26 +8,36 @@ import { toCatalogProvider } from "./toCatalogProvider";
 
 // The published activities of the providers that have an approved profile,
 // newest first, each with the profile and contact details of its provider and
-// whether the customer saved it. RLS only returns the customer's own
-// favourites, so the embedded list is empty or has one row.
-export async function fetchCatalogActivities(): Promise<CatalogActivity[]> {
+// whether the family profile saved it. The embedded favourites are filtered by
+// that profile, so the list is empty or has one row. Without a profile,
+// nothing is saved.
+export async function fetchCatalogActivities(
+  familyProfileId: string | null,
+): Promise<CatalogActivity[]> {
   const profiles = await fetchApprovedProfiles();
   if (profiles.size === 0) {
     return [];
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("activities")
-    .select("*, favourites(customer_id)")
+    .select("*, favourites(activity_id)")
     .in("provider_id", Array.from(profiles.keys()))
-    .eq("status", "published")
-    .order("created_at", { ascending: false });
+    .eq("status", "published");
+  if (familyProfileId) {
+    query = query.eq("favourites.family_profile_id", familyProfileId);
+  }
+  const { data, error } = await query.order("created_at", {
+    ascending: false,
+  });
   if (error) {
     throw new Error(error.message);
   }
 
   const favourites = new Set(
-    data.filter((row) => row.favourites.length > 0).map((row) => row.id),
+    familyProfileId
+      ? data.filter((row) => row.favourites.length > 0).map((row) => row.id)
+      : [],
   );
   const activities = data.map(toActivity);
   const contacts = await fetchContacts(

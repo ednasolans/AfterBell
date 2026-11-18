@@ -36,6 +36,8 @@ beforeEach(() => {
   mockContacts.mockResolvedValue(new Map([["p1", CONTACT]]));
 });
 
+const PROFILE_ID = "family-profile-1";
+
 describe("searchCatalogActivities", () => {
   it("adds the provider and the favourite to each result, in the search order", async () => {
     mockSearch.mockResolvedValue([
@@ -48,11 +50,17 @@ describe("searchCatalogActivities", () => {
     });
     mockFrom.mockReturnValue(favourites);
 
-    const result = await searchCatalogActivities("club", NO_SEARCH_FILTERS, 1);
+    const result = await searchCatalogActivities(
+      "club",
+      NO_SEARCH_FILTERS,
+      1,
+      PROFILE_ID,
+    );
 
     expect(mockSearch).toHaveBeenCalledWith("club", NO_SEARCH_FILTERS, 1);
     expect(mockProfiles).toHaveBeenCalledWith(["p1"]);
     expect(mockFrom).toHaveBeenCalledWith("favourites");
+    expect(favourites.eq).toHaveBeenCalledWith("family_profile_id", PROFILE_ID);
     expect(favourites.in).toHaveBeenCalledWith("activity_id", ["a2", "a1"]);
     expect(
       result.map((item) => [
@@ -93,6 +101,17 @@ describe("searchCatalogActivities", () => {
       createQueryBuilderMock({ data: null, error: { message: "boom" } }),
     );
 
-    await expect(searchCatalogActivities("club")).rejects.toThrow("boom");
+    await expect(
+      searchCatalogActivities("club", NO_SEARCH_FILTERS, 0, PROFILE_ID),
+    ).rejects.toThrow("boom");
+  });
+
+  it("marks nothing as saved without a family profile, without reading favourites", async () => {
+    mockSearch.mockResolvedValue([makeActivity({ id: "a1" })]);
+
+    const result = await searchCatalogActivities("club");
+
+    expect(result.map((item) => item.isFavourite)).toEqual([false]);
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 });
