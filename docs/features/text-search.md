@@ -17,6 +17,11 @@ which the filters of #102 are added. The "endpoint" is the database function
 Returns rows of `activities`, most relevant first. Only the customer's
 session can call it (`authenticated`; anonymous users get _permission denied_).
 
+`count_search_activities` takes the same arguments without `p_limit` and
+`p_offset` and returns how many activities the search finds across every page
+(#103). Both share `search_activity_matches`, which validates the arguments,
+applies the filters and computes the relevance, so they always agree.
+
 | Error                    | SQLSTATE | When                       | App message                                   |
 | ------------------------ | -------- | -------------------------- | --------------------------------------------- |
 | `search_query_too_short` | 22023    | 1 character after trimming | "Type at least 2 characters to search."       |
@@ -40,7 +45,8 @@ An empty text is **ignored** (browse everything); 1 character is **rejected**.
 - **Relevance:** per word, title 3, category 2, provider name 2, description 1.
   Ties: newest first, then `id` so pages never repeat or skip rows.
 - **Published only:** `status = 'published'`, and RLS applies too
-  (`SECURITY INVOKER`). Tutor offers are activities with `is_tutor = true`, so
+  (`SECURITY INVOKER`). Since #103 the provider must also have an approved
+  profile (`public_approved_provider_profiles()`), as in the catalog list. Tutor offers are activities with `is_tutor = true`, so
   the published ones are included with no extra rule.
 - **Escaping:** the text is always a bound parameter (no SQL injection).
   `%`, `_` and `\` are escaped, so they are searched as plain characters and
@@ -60,12 +66,13 @@ An empty text is **ignored** (browse everything); 1 character is **rejected**.
 
 ## Files
 
-| File                                                            | What it does                                           |
-| --------------------------------------------------------------- | ------------------------------------------------------ |
-| `supabase/migrations/20261116100000_text_search_activities.sql` | Trigger, indexes and the new `search_activities`       |
-| `supabase/tests/text_search.sql`                                | SQL tests (rolled back)                                |
-| `features/catalog/api/searchActivities.ts`                      | Trim, validate, call the function, map errors and rows |
-| `features/catalog/api/searchActivities.test.ts`                 | Jest tests of the above                                |
+| File                                                                         | What it does                                                                         |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `supabase/migrations/20261116100000_text_search_activities.sql`              | Trigger, indexes and the new `search_activities`                                     |
+| `supabase/migrations/20261118120000_count_search_and_approved_providers.sql` | `search_activity_matches`, `count_search_activities`, approved providers only (#103) |
+| `supabase/tests/text_search.sql`                                             | SQL tests (rolled back)                                                              |
+| `features/catalog/api/searchActivities.ts`                                   | Trim, validate, call the function, map errors and rows                               |
+| `features/catalog/api/searchActivities.test.ts`                              | Jest tests of the above                                                              |
 
 ## How to test
 
@@ -77,7 +84,36 @@ An empty text is **ignored** (browse everything); 1 character is **rejected**.
    texts and anonymous users.
 3. In `mobile/`: `npx jest src/features/catalog/api/searchActivities`.
 
+## Search screen (#103)
+
+The search bar is above the activities of the customer home
+(`features/catalog/components/CatalogSearch.tsx`):
+
+- **When it searches:** after a pause of 300 ms without typing
+  (`useDebouncedValue`), or at once with the keyboard's search key. An empty
+  box shows the full catalog list at once; one character shows the "too short"
+  message under the bar and keeps the full list.
+- **Results:** the same card as the catalog (`CatalogActivityCard`), tutor
+  offers included. `searchCatalogActivities` adds the provider and whether the
+  activity is a favourite to each row of `search_activities`.
+- **Count:** "N activities found" above the results, from
+  `count_search_activities` (`useSearchCount`).
+- **Pagination:** infinite scroll with `useInfiniteQuery`
+  (`useSearchActivities`): the next page is loaded at the end of the list while
+  the last page was full (20 rows). The catalog list itself is not paginated.
+- **States:** spinner while the first page loads, an error with "Try again",
+  a message with a suggestion when nothing is found, and a retry under the list
+  when a later page fails.
+- **Clear:** the ✕ in the bar empties the text and shows the full list.
+- **Keeping the text:** the state lives in the home screen, which stays mounted
+  under the activity detail, so the text and results are there on going back.
+- **Favourites:** the heart of a result changes at once and is undone if the
+  request fails, as in the list (`useToggleFavourite` updates every cached search).
+
+The filter panel comes in #104; `useSearchActivities` and `useSearchCount`
+already take the filters.
+
 ## Pending
 
-- The search screen (UI) is not part of this issue. The filters are in #102 ([search-filters.md](search-filters.md)).
+- The filter panel (#104). The filters API is in #102 ([search-filters.md](search-filters.md)).
 - `search_activities` does not say whether each result is a favourite yet (see `favourites.md`).
