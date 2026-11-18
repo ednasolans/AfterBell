@@ -1,4 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  type InfiniteData,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Alert } from "react-native";
 
 import { addFavourite } from "../api/addFavourite";
@@ -13,6 +17,8 @@ import { catalogKeys } from "./catalogKeys";
 
 export type ToggleFavourite = { activityId: string; save: boolean };
 
+type SearchPages = InfiniteData<CatalogActivity[]>;
+
 // Saves or removes a favourite. The heart changes at once in every screen; if
 // the request fails, the screens go back to how they were and an alert says why.
 export function useToggleFavourite() {
@@ -26,10 +32,11 @@ export function useToggleFavourite() {
       const listKey = catalogKeys.list();
       const detailKey = catalogKeys.detail(activityId);
       const favouritesKey = catalogKeys.favourites();
+      const searchesKey = catalogKeys.searches();
 
       // A request already on its way would overwrite the change
       await Promise.all(
-        [listKey, detailKey, favouritesKey].map((queryKey) =>
+        [listKey, detailKey, favouritesKey, searchesKey].map((queryKey) =>
           queryClient.cancelQueries({ queryKey }),
         ),
       );
@@ -41,6 +48,9 @@ export function useToggleFavourite() {
         ),
         favourites:
           queryClient.getQueryData<FavouriteActivity[]>(favouritesKey),
+        searches: queryClient.getQueriesData<SearchPages>({
+          queryKey: searchesKey,
+        }),
       };
 
       queryClient.setQueryData<CatalogActivity[]>(listKey, (items) =>
@@ -49,6 +59,20 @@ export function useToggleFavourite() {
             ? { ...item, isFavourite: save }
             : item,
         ),
+      );
+      queryClient.setQueriesData<SearchPages>(
+        { queryKey: searchesKey },
+        (data) =>
+          data && {
+            ...data,
+            pages: data.pages.map((page) =>
+              page.map((item) =>
+                item.activity.id === activityId
+                  ? { ...item, isFavourite: save }
+                  : item,
+              ),
+            ),
+          },
       );
       queryClient.setQueryData<CatalogActivityDetail | null>(
         detailKey,
@@ -73,6 +97,9 @@ export function useToggleFavourite() {
           context.favouritesKey,
           context.previous.favourites,
         );
+        for (const [queryKey, data] of context.previous.searches) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
       Alert.alert("Favourites", toFavouriteErrorMessage(error));
     },

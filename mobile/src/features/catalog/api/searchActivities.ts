@@ -82,18 +82,14 @@ function textFilter(value: string | null): string | undefined {
   return text === "" ? undefined : text;
 }
 
-// One page of published activities (tutor offers included) that match the
-// text and every filter, most relevant first. Page 0 is the first page.
-export async function searchActivities(
-  query: string,
-  filters: SearchFilters = NO_SEARCH_FILTERS,
-  page = 0,
-): Promise<Activity[]> {
+// The arguments of search_activities and count_search_activities for a text
+// and filters. Throws the message for the customer when they are not valid.
+function toSearchArgs(query: string, filters: SearchFilters) {
   const invalid = validateSearchQuery(query) ?? validateSearchFilters(filters);
   if (invalid) {
     throw new Error(invalid);
   }
-  const { data, error } = await supabase.rpc("search_activities", {
+  return {
     p_query: trimSearchQuery(query),
     p_categories:
       filters.categories.length > 0 ? filters.categories : undefined,
@@ -104,11 +100,43 @@ export async function searchActivities(
     p_price_min: filters.priceMin ?? undefined,
     p_price_max: filters.priceMax ?? undefined,
     p_price_period: filters.pricePeriod ?? undefined,
+  };
+}
+
+function toSearchError(error: { message: string }): Error {
+  return new Error(SEARCH_ERROR_MESSAGES[error.message] ?? error.message);
+}
+
+// One page of published activities (tutor offers included) of providers with
+// an approved profile that match the text and every filter, most relevant
+// first. Page 0 is the first page.
+export async function searchActivities(
+  query: string,
+  filters: SearchFilters = NO_SEARCH_FILTERS,
+  page = 0,
+): Promise<Activity[]> {
+  const { data, error } = await supabase.rpc("search_activities", {
+    ...toSearchArgs(query, filters),
     p_limit: SEARCH_PAGE_SIZE,
     p_offset: page * SEARCH_PAGE_SIZE,
   });
   if (error) {
-    throw new Error(SEARCH_ERROR_MESSAGES[error.message] ?? error.message);
+    throw toSearchError(error);
   }
   return data.map((row) => toActivity(row));
+}
+
+// How many activities searchActivities finds, across every page
+export async function countSearchActivities(
+  query: string,
+  filters: SearchFilters = NO_SEARCH_FILTERS,
+): Promise<number> {
+  const { data, error } = await supabase.rpc(
+    "count_search_activities",
+    toSearchArgs(query, filters),
+  );
+  if (error) {
+    throw toSearchError(error);
+  }
+  return data;
 }
