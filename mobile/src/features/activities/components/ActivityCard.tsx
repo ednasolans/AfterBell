@@ -13,7 +13,8 @@ import { ACTIVITY_STATUS_LABELS } from "@/lib/activityStatus";
 import { activityImage } from "@/features/catalog/visuals";
 import { Image } from "expo-image";
 
-import { ACTIVITY_TYPE_LABELS } from "../types";
+import { ACTIVITY_TYPE_LABELS } from "@/lib/activityTypes";
+import { formatDateRange } from "@/lib/dates";
 
 type ActivityCardProps = {
   activity: Activity;
@@ -31,6 +32,11 @@ export function ActivityCard({
   onDelete,
   isDeleting,
 }: ActivityCardProps) {
+  const dates =
+    activity.type === "whole_year"
+      ? null
+      : formatDateRange(activity.startDate, activity.endDate);
+
   return (
     <View style={styles.card}>
       <View style={styles.imageWrap}>
@@ -79,6 +85,7 @@ export function ActivityCard({
             {ACTIVITY_TYPE_LABELS[activity.type]}
           </Text>
         </View>
+        {dates ? <Text style={styles.detail}>{dates}</Text> : null}
         {address ? (
           <View style={styles.metaRow}>
             <Ionicons
