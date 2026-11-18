@@ -23,6 +23,14 @@ jest.mock("../api/fetchCatalogActivities", () => ({
 jest.mock("../api/searchCatalogActivities", () => ({
   searchCatalogActivities: (...args: unknown[]) => mockSearch(...args),
 }));
+jest.mock("../api/fetchAvailableFilters", () => ({
+  fetchAvailableFilters: () =>
+    Promise.resolve({
+      categories: ["music", "swimming"],
+      cities: ["Lleida", "Tàrrega"],
+      prices: [{ period: "per_month", min: 30, max: 80 }],
+    }),
+}));
 jest.mock("../api/searchActivities", () => ({
   ...jest.requireActual("../api/searchActivities"),
   countSearchActivities: (...args: unknown[]) => mockCount(...args),
@@ -238,5 +246,160 @@ describe("CatalogSearch", () => {
       "piano",
     );
     expect(screen.getByText("Piano lessons")).toBeTruthy();
+  });
+
+  describe("filters", () => {
+    const LLEIDA_MUSIC = {
+      ...NO_SEARCH_FILTERS,
+      categories: ["music"],
+      city: "Lleida",
+    };
+
+    // Opens the panel, chooses music in Lleida and applies it
+    async function filterMusicInLleida(
+      screen: Awaited<ReturnType<typeof renderSearch>>,
+    ) {
+      await fireEvent.press(screen.getByRole("button", { name: "Filters" }));
+      await fireEvent.press(
+        await screen.findByRole("button", { name: /^City/ }),
+      );
+      await fireEvent.press(screen.getByRole("radio", { name: "Lleida" }));
+      await fireEvent.press(screen.getByRole("button", { name: /^Category/ }));
+      await fireEvent.press(screen.getByRole("checkbox", { name: "Music" }));
+      await fireEvent.press(screen.getByRole("button", { name: "Done" }));
+      await fireEvent.press(
+        screen.getByRole("button", { name: "Apply filters" }),
+      );
+    }
+
+    it("searches with the filters alone, without a text", async () => {
+      mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+      const screen = await renderSearch();
+
+      await filterMusicInLleida(screen);
+
+      await waitFor(() =>
+        expect(screen.getByText("Piano lessons")).toBeTruthy(),
+      );
+      expect(mockSearch).toHaveBeenCalledWith("", LLEIDA_MUSIC, 0);
+      expect(mockCount).toHaveBeenCalledWith("", LLEIDA_MUSIC);
+      expect(screen.queryByRole("header", { name: "Filters" })).toBeNull();
+      expect(screen.queryByText("Every activity")).toBeNull();
+    });
+
+    it("combines the filters with the text", async () => {
+      mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+      const screen = await renderSearch();
+      await type(screen, "piano");
+      await waitFor(() =>
+        expect(mockSearch).toHaveBeenCalledWith("piano", NO_SEARCH_FILTERS, 0),
+      );
+
+      await filterMusicInLleida(screen);
+
+      await waitFor(() =>
+        expect(mockSearch).toHaveBeenCalledWith("piano", LLEIDA_MUSIC, 0),
+      );
+    });
+
+    it("keeps the filters when the text is too short", async () => {
+      mockSearch.mockResolvedValue([]);
+      const screen = await renderSearch();
+      await filterMusicInLleida(screen);
+
+      await type(screen, "p");
+
+      expect(
+        await screen.findByText("Type at least 2 characters to search."),
+      ).toBeTruthy();
+      expect(mockSearch).toHaveBeenLastCalledWith("", LLEIDA_MUSIC, 0);
+      expect(screen.queryByText("Every activity")).toBeNull();
+    });
+
+    it("says when nothing matches the filters", async () => {
+      mockSearch.mockResolvedValue([]);
+      mockCount.mockResolvedValue(0);
+      const screen = await renderSearch();
+
+      await filterMusicInLleida(screen);
+
+      expect(
+        await screen.findByText("No activities match these filters."),
+      ).toBeTruthy();
+      expect(
+        screen.getByText("Remove some filters to see more activities."),
+      ).toBeTruthy();
+    });
+
+    it("removes one filter from its chip", async () => {
+      mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+      const screen = await renderSearch();
+      await filterMusicInLleida(screen);
+
+      await fireEvent.press(
+        await screen.findByRole("button", { name: "Remove filter Lleida" }),
+      );
+
+      await waitFor(() =>
+        expect(mockSearch).toHaveBeenLastCalledWith(
+          "",
+          { ...LLEIDA_MUSIC, city: null },
+          0,
+        ),
+      );
+      expect(
+        screen.getByRole("button", { name: "Filters, 1 active" }),
+      ).toBeTruthy();
+    });
+
+    it("clears every filter and goes back to the full list", async () => {
+      mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+      const screen = await renderSearch();
+      await filterMusicInLleida(screen);
+      await screen.findByText("Piano lessons");
+
+      await fireEvent.press(screen.getByRole("button", { name: "Clear all" }));
+
+      await waitFor(() =>
+        expect(screen.getByText("Every activity")).toBeTruthy(),
+      );
+      expect(screen.getByRole("button", { name: "Filters" })).toBeTruthy();
+    });
+
+    it("keeps the filters when an activity is opened", async () => {
+      mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+      const onOpen = jest.fn();
+      const screen = await renderSearch(onOpen);
+      await filterMusicInLleida(screen);
+
+      await fireEvent.press(await screen.findByLabelText("Open Piano lessons"));
+
+      expect(onOpen).toHaveBeenCalledWith("r1");
+      expect(
+        screen.getByRole("button", { name: "Filters, 2 active" }),
+      ).toBeTruthy();
+      expect(screen.getByText("Piano lessons")).toBeTruthy();
+    });
+
+    it("opens the panel with the applied filters and closes it without changes", async () => {
+      mockSearch.mockResolvedValue([]);
+      const screen = await renderSearch();
+      await filterMusicInLleida(screen);
+
+      await fireEvent.press(
+        screen.getByRole("button", { name: "Filters, 2 active" }),
+      );
+      expect(
+        await screen.findByRole("button", { name: "City: Lleida" }),
+      ).toBeTruthy();
+      await fireEvent.press(
+        screen.getByRole("button", { name: "Close filters" }),
+      );
+
+      expect(screen.queryByRole("header", { name: "Filters" })).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Filters, 2 active" }),
+      ).toBeTruthy();
+    });
   });
 });

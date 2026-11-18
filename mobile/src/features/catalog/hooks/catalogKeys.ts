@@ -6,6 +6,8 @@ export const catalogKeys = {
   list: () => [...catalogKeys.all, "list"] as const,
   detail: (id: string) => [...catalogKeys.all, "detail", id] as const,
   favourites: () => [...catalogKeys.all, "favourites"] as const,
+  // The values to build the filter panel
+  availableFilters: () => [...catalogKeys.all, "available-filters"] as const,
   // Every search, to update them all at once
   searches: () => [...catalogKeys.all, "search"] as const,
   search: (query: string, filters: SearchFilters) =>
