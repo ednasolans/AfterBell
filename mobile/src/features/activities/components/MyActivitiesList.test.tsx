@@ -6,6 +6,8 @@ import {
 } from "@testing-library/react-native";
 import { Alert, type AlertButton, Text } from "react-native";
 
+import { formatDate } from "@/lib/dates";
+
 import { ACTIVITY } from "@/test-utils/activityFixtures";
 import {
   createQueryClientWrapper,
@@ -183,5 +185,59 @@ describe("MyActivitiesList", () => {
     expect(
       await screen.findByText("Places of Swimming for kids"),
     ).toBeOnTheScreen();
+  });
+});
+
+describe("events in MyActivitiesList", () => {
+  const event = {
+    ...ACTIVITY,
+    id: "event-1",
+    title: "Summer workshop",
+    type: "event" as const,
+    startDate: "2099-07-01",
+    endDate: "2099-07-15",
+    schedule: [],
+  };
+
+  it("shows events alongside regular activities and edits through the existing action", async () => {
+    jest.mocked(fetchMyActivities).mockResolvedValue([ACTIVITY, event]);
+    const onEdit = jest.fn();
+    await renderList(onEdit);
+
+    expect(await screen.findByText("Summer workshop")).toBeOnTheScreen();
+    expect(screen.getByText("Swimming for kids")).toBeOnTheScreen();
+    expect(screen.getByText("Activity")).toBeOnTheScreen();
+    expect(screen.getByText("Event")).toBeOnTheScreen();
+    expect(
+      screen.getByText(
+        `${formatDate(event.startDate)} – ${formatDate(event.endDate)}`,
+      ),
+    ).toBeOnTheScreen();
+    await fireEvent.press(
+      screen.getByRole("button", { name: "Edit Summer workshop" }),
+    );
+    expect(onEdit).toHaveBeenCalledWith("event-1");
+  });
+
+  it("deletes an event through the existing confirmation and mutation", async () => {
+    jest.mocked(fetchMyActivities).mockResolvedValue([event]);
+    jest.mocked(deleteActivity).mockResolvedValue(undefined);
+    await renderList();
+
+    await fireEvent.press(
+      await screen.findByRole("button", {
+        name: "Delete Summer workshop",
+      }),
+    );
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Delete activity",
+      expect.stringContaining("Summer workshop"),
+      expect.any(Array),
+    );
+    pressAlertButton("Delete");
+
+    await waitFor(() =>
+      expect(deleteActivity).toHaveBeenCalledWith("event-1", expect.anything()),
+    );
   });
 });

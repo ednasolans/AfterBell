@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react-native";
 
+import { formatDate } from "@/lib/dates";
+
 import { ACTIVITY } from "@/test-utils/activityFixtures";
 
 import { ActivityCard } from "./ActivityCard";
@@ -16,7 +18,7 @@ describe("ActivityCard", () => {
     );
 
     expect(screen.getByText("Swimming for kids")).toBeOnTheScreen();
-    expect(screen.getByText("Whole year")).toBeOnTheScreen();
+    expect(screen.getByText("Activity")).toBeOnTheScreen();
     expect(screen.getByText("Ages: 7-9, 10-12")).toBeOnTheScreen();
     expect(screen.getByText("30 € per month")).toBeOnTheScreen();
   });
@@ -68,5 +70,68 @@ describe("ActivityCard", () => {
 
     expect(screen.getByText("Temporary")).toBeOnTheScreen();
     expect(screen.queryByText("Whole year")).not.toBeOnTheScreen();
+  });
+});
+
+describe("event cards", () => {
+  it.each(["2099-07-01", "2099-07-15"])(
+    "shows the event label and its dates through %s without weekly slots",
+    async (endDate) => {
+      await render(
+        <ActivityCard
+          activity={{
+            ...ACTIVITY,
+            type: "event",
+            startDate: "2099-07-01",
+            endDate,
+            schedule: [],
+          }}
+          onEdit={jest.fn()}
+          onDelete={jest.fn()}
+          isDeleting={false}
+        />,
+      );
+
+      const expected =
+        endDate === "2099-07-01"
+          ? formatDate(endDate)
+          : `${formatDate("2099-07-01")} – ${formatDate(endDate)}`;
+      expect(screen.getByText("Event")).toBeOnTheScreen();
+      expect(screen.getByText(expected)).toBeOnTheScreen();
+      expect(screen.getByText("Draft")).toBeOnTheScreen();
+      expect(screen.queryByText(/undefined|null/)).not.toBeOnTheScreen();
+    },
+  );
+
+  it("shows an event's optional weekly schedule", async () => {
+    await render(
+      <ActivityCard
+        activity={{
+          ...ACTIVITY,
+          type: "event",
+          startDate: "2099-07-01",
+          endDate: "2099-07-15",
+        }}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+        isDeleting={false}
+      />,
+    );
+
+    expect(screen.getByText(/tuesday 17:00–18:00/)).toBeOnTheScreen();
+  });
+
+  it("handles an older event without dates", async () => {
+    await render(
+      <ActivityCard
+        activity={{ ...ACTIVITY, type: "event", schedule: [] }}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+        isDeleting={false}
+      />,
+    );
+
+    expect(screen.getByText("Event")).toBeOnTheScreen();
+    expect(screen.queryByText(/undefined|null/)).not.toBeOnTheScreen();
   });
 });

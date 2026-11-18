@@ -21,3 +21,18 @@ export function formatDate(isoDate: string, locale?: string): string {
     year: "numeric",
   });
 }
+
+export function formatDateRange(
+  startDate: string | null,
+  endDate: string | null,
+): string | null {
+  if (startDate && startDate === endDate) {
+    return formatDate(startDate);
+  }
+  if (startDate && endDate) {
+    return `${formatDate(startDate)} – ${formatDate(endDate)}`;
+  }
+  if (startDate) return `From ${formatDate(startDate)}`;
+  if (endDate) return `Until ${formatDate(endDate)}`;
+  return null;
+}

@@ -1,4 +1,4 @@
-import { formatDate, fromIsoDate, toIsoDate } from "./dates";
+import { formatDate, formatDateRange, fromIsoDate, toIsoDate } from "./dates";
 
 describe("toIsoDate", () => {
   it("adds a leading zero to the month and the day", () => {
@@ -27,5 +27,27 @@ describe("fromIsoDate", () => {
 describe("formatDate", () => {
   it("shows the date in the given locale", () => {
     expect(formatDate("2027-01-05", "en-GB")).toBe("5 Jan 2027");
+  });
+});
+
+describe("formatDateRange", () => {
+  it("formats a single-day event once", () => {
+    expect(formatDateRange("2099-07-01", "2099-07-01")).toBe(
+      formatDate("2099-07-01"),
+    );
+  });
+
+  it("formats both dates of a multi-day event", () => {
+    expect(formatDateRange("2099-07-01", "2099-07-15")).toBe(
+      `${formatDate("2099-07-01")} – ${formatDate("2099-07-15")}`,
+    );
+  });
+
+  it.each([
+    [null, null, null],
+    ["2099-07-01", null, `From ${formatDate("2099-07-01")}`],
+    [null, "2099-07-15", `Until ${formatDate("2099-07-15")}`],
+  ])("handles incomplete dates (%s, %s)", (start, end, expected) => {
+    expect(formatDateRange(start, end)).toBe(expected);
   });
 });

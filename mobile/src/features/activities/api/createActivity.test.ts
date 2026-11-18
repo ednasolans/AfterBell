@@ -60,4 +60,31 @@ describe("createActivity", () => {
 
     await expect(createActivity(FORM)).rejects.toThrow("row-level security");
   });
+  it.each([{ schedule: [] }, { schedule: FORM.schedule }])(
+    "creates an event through activities with optional slots (%j)",
+    async ({ schedule }) => {
+      rpc.mockResolvedValue({ error: null } as Awaited<
+        ReturnType<typeof supabase.rpc>
+      >);
+
+      await createActivity({
+        ...FORM,
+        type: "event",
+        startDate: "2027-07-01",
+        endDate: "2027-07-15",
+        schedule,
+      });
+
+      expect(rpc).toHaveBeenCalledWith("save_activity_with_languages", {
+        p_languages: [],
+        p_activity: expect.objectContaining({
+          type: "event",
+          start_date: "2027-07-01",
+          end_date: "2027-07-15",
+          schedule: schedule.length === 0 ? null : schedule,
+        }),
+      });
+      expect(rpc.mock.calls[0][1]).not.toHaveProperty("p_activity.status");
+    },
+  );
 });

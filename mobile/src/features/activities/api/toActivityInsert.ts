@@ -33,11 +33,15 @@ export function toActivityInsert(form: ActivityForm): ActivityInsert {
     start_date: form.type === "whole_year" ? null : form.startDate,
     end_date: form.type === "whole_year" ? null : form.endDate,
     target_age_ranges: form.targetAgeRanges,
-    schedule: form.schedule.map(({ day, startTime, endTime }) => ({
-      day,
-      startTime,
-      endTime,
-    })),
+    // An empty array fails is_valid_schedule; dated activities allow NULL.
+    schedule:
+      form.type !== "whole_year" && form.schedule.length === 0
+        ? null
+        : form.schedule.map(({ day, startTime, endTime }) => ({
+            day,
+            startTime,
+            endTime,
+          })),
     price,
     price_period: pricePeriod,
     // An empty maximum is only accepted together with "no limit"
