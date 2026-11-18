@@ -32,6 +32,7 @@ export async function chatCompletion(
   config: LlmConfig,
   messages: ChatMessage[],
   fetchFn: typeof fetch = fetch, // replaced by a fake in tests
+  timeoutMs: number = DEFAULT_TIMEOUT_MS, // shorter for the search summary (#112)
 ): Promise<LlmResult> {
   const started = performance.now();
   let response: Response;
@@ -48,7 +49,7 @@ export async function chatCompletion(
         response_format: { type: "json_object" },
         max_tokens: MAX_OUTPUT_TOKENS,
       }),
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
     const isTimeout = err instanceof DOMException && err.name === "TimeoutError";

@@ -122,4 +122,70 @@ describe("validateActivity", () => {
       ).toBe("The start date cannot be in the past");
     });
   });
+
+  it("does not ask for a maximum when there is no limit", () => {
+    const errors = validateActivity({
+      ...VALID,
+      maxParticipants: null,
+      unlimitedParticipants: true,
+    });
+    expect(errors.maxParticipants).toBeUndefined();
+  });
+
+  it("asks for a maximum when there is a limit", () => {
+    const errors = validateActivity({ ...VALID, maxParticipants: null });
+    expect(errors.maxParticipants).toBe(
+      "Enter between 1 and 1000 participants",
+    );
+  });
+});
+
+describe("language pairs", () => {
+  const languageActivity = { ...VALID, category: "language" };
+
+  it.each([true, false])("allows an empty draft with isTutor=%s", (isTutor) => {
+    expect(
+      validateActivity({ ...languageActivity, isTutor }).languages,
+    ).toBeUndefined();
+  });
+
+  it.each([true, false])(
+    "requires a pair for published language activities with isTutor=%s",
+    (isTutor) => {
+      expect(
+        validateActivity(
+          { ...languageActivity, isTutor },
+          VALID,
+          undefined,
+          true,
+        ).languages,
+      ).toBe("Add at least one language and level.");
+    },
+  );
+
+  it("allows published tutoring in other categories without pairs", () => {
+    expect(
+      validateActivity({ ...VALID, isTutor: true }, VALID, undefined, true)
+        .languages,
+    ).toBeUndefined();
+  });
+
+  it.each([
+    { language: "English", level: " " },
+    { language: " ", level: "B1" },
+  ])("rejects an incomplete pair (%o)", (pair) => {
+    expect(
+      validateActivity({ ...languageActivity, languages: [pair] }).languages,
+    ).toBe("Enter a language and level for each entry.");
+  });
+
+  it("rejects duplicate pairs even with whitespace", () => {
+    const languages = [
+      { language: "English", level: "B1" },
+      { language: " English ", level: "B1" },
+    ];
+    expect(validateActivity({ ...languageActivity, languages }).languages).toBe(
+      "Enter each language and level combination once.",
+    );
+  });
 });

@@ -1,4 +1,4 @@
-import { type Activity } from "@/lib/activity";
+import { type Activity, type LanguagePair } from "@/lib/activity";
 import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
@@ -13,11 +13,15 @@ export {
 
 export const SELECTABLE_ACTIVITY_TYPES = ACTIVITY_TYPES;
 
+export type ActivityLanguageField = LanguagePair & { id: number };
+
 // What the user fills in: null means "not chosen yet"
 export interface ActivityForm {
   title: string;
   description: string;
   category: string | null;
+  isTutor: boolean;
+  languages: LanguagePair[];
   type: ActivityType;
   // ISO dates (YYYY-MM-DD)
   startDate: string | null;
@@ -27,6 +31,8 @@ export interface ActivityForm {
   price: number | null;
   pricePeriod: PricePeriod | null;
   maxParticipants: number | null;
+  // Chosen on purpose: then there is no maximum
+  unlimitedParticipants: boolean;
   // One of the addresses of the provider, entered in its technical sheet
   addressId: string | null;
 }
@@ -35,6 +41,8 @@ export const EMPTY_ACTIVITY_FORM: ActivityForm = {
   title: "",
   description: "",
   category: null,
+  isTutor: false,
+  languages: [],
   type: "whole_year",
   startDate: null,
   endDate: null,
@@ -43,6 +51,7 @@ export const EMPTY_ACTIVITY_FORM: ActivityForm = {
   price: null,
   pricePeriod: null,
   maxParticipants: null,
+  unlimitedParticipants: false,
   addressId: null,
 };
 

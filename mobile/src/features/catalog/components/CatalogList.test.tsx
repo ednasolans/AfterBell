@@ -1,4 +1,5 @@
 import { act, fireEvent, waitFor, within } from "@testing-library/react-native";
+import { Alert } from "react-native";
 
 import { formatDate } from "@/lib/dates";
 
@@ -14,6 +15,16 @@ const mockFetch = jest.fn();
 
 jest.mock("../api/fetchCatalogActivities", () => ({
   fetchCatalogActivities: () => mockFetch(),
+}));
+
+const mockAddFavourite = jest.fn();
+const mockRemoveFavourite = jest.fn();
+
+jest.mock("../api/addFavourite", () => ({
+  addFavourite: (id: string) => mockAddFavourite(id),
+}));
+jest.mock("../api/removeFavourite", () => ({
+  removeFavourite: (id: string) => mockRemoveFavourite(id),
 }));
 
 describe("CatalogList", () => {
@@ -172,6 +183,76 @@ describe("CatalogList", () => {
     });
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
+  });
+
+  describe("heart", () => {
+    beforeEach(() => {
+      mockAddFavourite.mockReset();
+      jest.spyOn(Alert, "alert").mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it("fills the heart at once and saves the activity", async () => {
+      mockFetch.mockResolvedValue([makeCatalogActivity()]);
+      // The request has not answered yet
+      mockAddFavourite.mockReturnValue(new Promise(() => undefined));
+
+      const { findByLabelText } = await renderWithQuery(
+        <CatalogList onOpen={jest.fn()} />,
+      );
+      await fireEvent.press(
+        await findByLabelText("Save Saturday workshop in favourites"),
+      );
+
+      expect(
+        await findByLabelText("Remove Saturday workshop from favourites"),
+      ).toBeTruthy();
+      expect(mockAddFavourite).toHaveBeenCalledWith("a1");
+    });
+
+    it("does not open the activity when the heart is pressed", async () => {
+      mockFetch.mockResolvedValue([makeCatalogActivity()]);
+      mockAddFavourite.mockResolvedValue(undefined);
+      const onOpen = jest.fn();
+
+      const { findByLabelText } = await renderWithQuery(
+        <CatalogList onOpen={onOpen} />,
+      );
+      await fireEvent.press(
+        await findByLabelText("Save Saturday workshop in favourites"),
+      );
+
+      expect(onOpen).not.toHaveBeenCalled();
+    });
+
+    it("empties the heart again and explains why when saving fails", async () => {
+      mockFetch.mockResolvedValue([makeCatalogActivity()]);
+      mockAddFavourite.mockRejectedValue(
+        new Error(
+          'new row violates row-level security policy for table "favourites"',
+        ),
+      );
+
+      const { findByLabelText } = await renderWithQuery(
+        <CatalogList onOpen={jest.fn()} />,
+      );
+      await fireEvent.press(
+        await findByLabelText("Save Saturday workshop in favourites"),
+      );
+
+      await waitFor(() =>
+        expect(Alert.alert).toHaveBeenCalledWith(
+          "Favourites",
+          "This activity can no longer be saved.",
+        ),
+      );
+      expect(
+        await findByLabelText("Save Saturday workshop in favourites"),
+      ).toBeTruthy();
+    });
   });
 });
 

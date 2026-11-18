@@ -42,7 +42,9 @@ export function CatalogList({ onOpen }: Readonly<CatalogListProps>) {
       }
       renderItem={({ item }) => (
         <CatalogActivityCard
-          item={item}
+          activity={item.activity}
+          providerName={item.provider.contact?.name ?? null}
+          isFavourite={item.isFavourite}
           onPress={() => onOpen(item.activity.id)}
         />
       )}
@@ -52,6 +54,6 @@ export function CatalogList({ onOpen }: Readonly<CatalogListProps>) {
 
 const styles = StyleSheet.create({
   list: { backgroundColor: colors.background },
-  container: { padding: 16, paddingTop: 8 },
+  container: { padding: 16, paddingTop: 0 },
   empty: { textAlign: "center", color: colors.textMuted, marginTop: 24 },
 });

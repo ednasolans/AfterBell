@@ -3,10 +3,10 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import LogoutButton from "@/components/LogoutButton";
-import { CatalogList } from "@/features/catalog/components/CatalogList";
+import { CatalogSearch } from "@/features/catalog/components/CatalogSearch";
 import { colors } from "@/theme/colors";
 
-// Home of the customer area: access to the family profiles and the list of activities
+// Home of the customer area: access to the family profiles and the list and search of activities
 export default function CustomerHomeScreen() {
   const router = useRouter();
 
@@ -41,7 +41,7 @@ export default function CustomerHomeScreen() {
         </Pressable>
       </View>
 
-      <CatalogList
+      <CatalogSearch
         onOpen={(id) =>
           router.push({ pathname: "/activities/[id]", params: { id } })
         }
@@ -66,14 +66,28 @@ export default function CustomerHomeScreen() {
             />
             <Text style={styles.navText}>Family</Text>
           </Pressable>
-          <View style={styles.navItem}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open my requests"
+            onPress={() => router.push("/my-requests")}
+            style={styles.navItem}
+          >
             <Ionicons
-              name="bookmark-outline"
+              name="document-text-outline"
               size={21}
               color={colors.textMuted}
             />
-            <Text style={styles.navText}>Saved</Text>
-          </View>
+            <Text style={styles.navText}>Requests</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open favourites"
+            onPress={() => router.push("/favourites")}
+            style={styles.navItem}
+          >
+            <Ionicons name="heart-outline" size={21} color={colors.textMuted} />
+            <Text style={styles.navText}>Favourites</Text>
+          </Pressable>
           <LogoutButton />
         </View>
       </View>

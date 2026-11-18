@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type ReactNode } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
 import { DateField } from "@/components/DateField";
 import { FormSubmit } from "@/components/FormSubmit";
@@ -31,6 +31,7 @@ import {
   type ActivityType,
 } from "../types";
 
+import { ActivityLanguages } from "./ActivityLanguages";
 import { AddressSelect } from "./AddressSelect";
 import { colors } from "@/theme/colors";
 
@@ -52,6 +53,7 @@ const ACTIVITY_TYPE_OPTIONS: SelectOption<ActivityType>[] =
 type ActivityFormProps = {
   // Starting values: empty to create, the saved activity to edit
   initialForm?: ActivityFormValues;
+  isPublished?: boolean;
   submitLabel: string;
   // Saves the activity (e.g. mutateAsync of a mutation); it must throw if saving fails
   onSubmit: (form: ActivityFormValues) => Promise<unknown>;
@@ -59,11 +61,13 @@ type ActivityFormProps = {
   // Why the last save failed, or null
   saveError: Error | null;
   onSaved?: () => void;
-  header?: ReactNode;
+  // Shown above the form. A function also learns whether there are unsaved changes.
+  header?: ReactNode | ((state: { hasUnsavedChanges: boolean }) => ReactNode);
 };
 
 export function ActivityForm({
   initialForm,
+  isPublished,
   submitLabel,
   onSubmit,
   isSaving,
@@ -72,10 +76,8 @@ export function ActivityForm({
   header,
 }: ActivityFormProps) {
   const categories = useCategories();
-  const { form, updateField, errors, submit } = useActivityForm({
-    initialForm,
-    onSubmit,
-  });
+  const { form, updateField, addLanguage, errors, submit, hasUnsavedChanges } =
+    useActivityForm({ initialForm, isPublished, onSubmit });
 
   async function handleSave() {
     const saved = await submit();
@@ -89,7 +91,7 @@ export function ActivityForm({
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
     >
-      {header}
+      {typeof header === "function" ? header({ hasUnsavedChanges }) : header}
       <Text style={styles.eyebrow}>ACTIVITY SETUP</Text>
       <Text style={styles.title} accessibilityRole="header">
         {initialForm ? "Edit" : "Create"} an{" "}
@@ -143,6 +145,22 @@ export function ActivityForm({
         onChange={(value) => updateField("category", value)}
         error={errors.category}
       />
+      <View style={styles.tutoring}>
+        <Text style={styles.tutoringLabel}>Private tutoring</Text>
+        <Switch
+          accessibilityLabel="Private tutoring"
+          value={form.isTutor}
+          onValueChange={(value) => updateField("isTutor", value)}
+        />
+      </View>
+      {form.category === "language" ? (
+        <ActivityLanguages
+          pairs={form.languages}
+          onAdd={addLanguage}
+          onChange={(pairs) => updateField("languages", pairs)}
+          error={errors.languages}
+        />
+      ) : null}
       <MultiSelect
         label="Age ranges"
         placeholder="Choose age ranges"
@@ -240,13 +258,29 @@ export function ActivityForm({
         onChange={(value) => updateField("pricePeriod", value)}
         error={errors.pricePeriod}
       />
-      <NumberField
-        label="Maximum participants"
-        value={form.maxParticipants}
-        onChange={(value) => updateField("maxParticipants", value)}
-        parse={parseInteger}
-        error={errors.maxParticipants}
-      />
+      <View style={styles.switchRow}>
+        <View style={styles.switchText}>
+          <Text style={styles.switchLabel}>No limit of participants</Text>
+          <Text style={styles.switchHint}>
+            Only if any number of people can join.
+          </Text>
+        </View>
+        <Switch
+          accessibilityLabel="No limit of participants"
+          value={form.unlimitedParticipants}
+          onValueChange={(value) => updateField("unlimitedParticipants", value)}
+          trackColor={{ true: colors.primary, false: colors.border }}
+        />
+      </View>
+      {form.unlimitedParticipants ? null : (
+        <NumberField
+          label="Maximum participants"
+          value={form.maxParticipants}
+          onChange={(value) => updateField("maxParticipants", value)}
+          parse={parseInteger}
+          error={errors.maxParticipants}
+        />
+      )}
 
       <FormSubmit
         label={submitLabel}
@@ -260,6 +294,15 @@ export function ActivityForm({
 }
 
 const styles = StyleSheet.create({
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+  },
+  switchText: { flex: 1, gap: 2 },
+  switchLabel: { color: colors.text, fontWeight: "700" },
+  switchHint: { color: colors.textMuted, fontSize: 12 },
   container: {
     padding: 20,
     paddingBottom: 8,
@@ -278,6 +321,13 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 20,
   },
+  tutoring: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  tutoringLabel: { fontWeight: "600", color: colors.text },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",

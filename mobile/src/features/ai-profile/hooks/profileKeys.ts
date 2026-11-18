@@ -3,4 +3,5 @@
 export const profileKeys = {
   all: ["provider-profile"] as const,
   mine: () => [...profileKeys.all, "mine"] as const,
+  outdated: () => [...profileKeys.all, "outdated"] as const,
 };

@@ -1,5 +1,9 @@
 
-import { validateFamilyProfile } from "./validation";
+import {
+  CITY_MAX_LENGTH,
+  validateFamilyCity,
+  validateFamilyProfile,
+} from "./validation";
 
 import type { FamilyProfileFormValues } from "./types";
 
@@ -66,5 +70,25 @@ describe("validateFamilyProfile", () => {
     });
 
     expect(errors.firstName).toBeUndefined();
+  });
+});
+
+describe("validateFamilyCity", () => {
+  it("accepts a town", () => {
+    expect(validateFamilyCity("Lleida")).toBeNull();
+  });
+
+  it("requires a town, ignoring spaces", () => {
+    expect(validateFamilyCity("   ")).toBe("Enter your city or town");
+  });
+
+  it("accepts exactly the maximum length, measured without spaces", () => {
+    expect(validateFamilyCity(` ${"a".repeat(CITY_MAX_LENGTH)} `)).toBeNull();
+  });
+
+  it("rejects one character more than the maximum", () => {
+    expect(validateFamilyCity("a".repeat(CITY_MAX_LENGTH + 1))).toBe(
+      "The city name must be 100 characters or less",
+    );
   });
 });

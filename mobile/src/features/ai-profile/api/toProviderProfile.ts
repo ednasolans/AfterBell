@@ -13,5 +13,7 @@ export function toProviderProfile(
     status: row.status as ProfileStatus,
     generatedAt: row.generated_at,
     approvedAt: row.approved_at,
+    approvedHeadline: row.approved_headline,
+    approvedDescription: row.approved_description,
   };
 }

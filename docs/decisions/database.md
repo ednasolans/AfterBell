@@ -70,6 +70,7 @@ erDiagram
         text city "max 100"
         text province "max 100"
         text country "max 100"
+        geography location "Point 4326, optional"
         timestamptz created_at
     }
     ACTIVITIES {
@@ -88,7 +89,8 @@ erDiagram
         jsonb schedule "list of slots, optional unless whole_year"
         numeric price
         text price_period
-        int max_participants "1 to 1000"
+        int max_participants "1 to 1000, empty only with no limit"
+        bool unlimited_participants "true only on purpose"
         text search_normalized "set by a trigger"
         timestamptz created_at
         timestamptz updated_at "set by a trigger"
@@ -132,6 +134,8 @@ erDiagram
 
     FAMILY_GROUPS {
         uuid id PK
+        text city "optional, max 100"
+        geography location "Point 4326, blurred to about 1-2 km"
         timestamptz created_at
     }
     FAMILY_GROUP_MEMBERS {
@@ -215,8 +219,12 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | Decision | Why |
 |---|---|
 | **`categories` is a table**, referenced by `activities.category` | Each category has a type (`individual` or `collective`). Names cannot be changed or deleted, because `technical_sheets` and `family_profiles` store them in arrays, checked by a trigger. |
-| **`languages` belongs to an activity** | Language and tutor activities need their languages and levels to be published. |
+| **`languages` belongs to an activity** | Publication requires at least one `public.languages` row with a language and level for activities in the `language` category. `activities.is_tutor` identifies private tutoring independently of this rule. |
+| **An activity can have no limit of participants, but only on purpose** (`unlimited_participants`) | A `NULL` maximum meaning "no limit" / no limit at all | Team decision: an empty maximum must not mean "no limit" just because someone forgot it. The flag is `false` by default, so a missing maximum is rejected. |
+| **One family profile per request; a full activity does not accept requests** | Several profiles per request / pending requests on a full activity | Each child is accepted or rejected on its own, and a request that can never be accepted would only confuse the family. See [`enrolments.md`](../features/enrolments.md). |
+| **The maximum cannot go below the accepted participants** (trigger `activities_participant_limit_above_accepted`) | Letting the activity be "overbooked" | Team decision (#119): the provider gets a clear message instead of an activity with more people than places. It locks the same row as `accept_enrolment_request`, so the two cannot cross. |
 | **`enrolment_requests` can only be changed through functions** (`send_`, `accept_`, `reject_` and `cancel_enrolment_request`) | The functions check who is calling and lock the activity row, so two acceptances cannot go over `max_participants`. |
+| **Favourites are read through `my_favourites`**, and `favourites.customer_id` defaults to `auth.uid()` | Customers cannot read unpublished activities, so a plain query would hide them. The function keeps them in the list marked as not available. See [`favourites.md`](../features/favourites.md). |
 | **`search_summary_cache` and `search_summary_requests` have no client access** | Only the backend uses them, and they store no search text linked to a person. |
 
 ### Families
@@ -230,6 +238,7 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **`family_profiles` store a first name, an optional date of birth, an age range and interests** | Full name / age as a number | The children are minors: store the minimum. C11 added `date_of_birth`, agreed with the client, so the age does not go out of date. `age_range` stays until the form uses the date. Interests use the activity categories. |
 | **Family data is visible only to the members of the group** | Visible to providers | Nobody else needs it. When a family signs up for an activity, the enrollment will store what the provider needs. |
 | **Membership checks use a `SECURITY DEFINER` helper** (`is_family_member(group_id)`) | A subquery on `family_group_members` inside its own policy | A policy on `family_group_members` that reads `family_group_members` calls itself and fails with *infinite recursion*. The helper reads the table without RLS and returns only `true` or `false`. |
+| **The family location is a town and a point blurred to about 1-2 km, stored in `family_groups` and written only through `set_family_location`** (#139) | The exact position / a location per profile | Recommendations by distance need it, but a family's home must never be stored. See [`location.md`](../features/location.md). |
 | **Protect the first family profile from deletion** | Adding an `is_main` column or allowing every profile to be deleted | The first profile in a family group is considered the main profile, determined by `created_at ASC, id ASC`. The database does not store an `is_main` column. A `BEFORE DELETE` trigger prevents deleting this profile, ensuring that a family with at least one profile cannot become empty through profile deletion. |
 
 ### AI profiles

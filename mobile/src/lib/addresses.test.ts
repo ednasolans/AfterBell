@@ -1,4 +1,5 @@
 import {
+  addressSearchText,
   CITY_MAX_LENGTH,
   COUNTRY_MAX_LENGTH,
   EMPTY_ADDRESS_FORM,
@@ -111,7 +112,16 @@ describe("toAddressInsert", () => {
       city: "Balaguer",
       province: "Lleida",
       country: "Spain",
+      location: null,
     });
+  });
+
+  it("saves the point of the address, longitude first", () => {
+    const row = toAddressInsert(MAIN_ADDRESS, {
+      latitude: 41.6142,
+      longitude: 0.6262,
+    });
+    expect(row.location).toBe("SRID=4326;POINT(0.6262 41.6142)");
   });
 
   it("removes surrounding spaces", () => {
@@ -128,5 +138,19 @@ describe("toAddressInsert", () => {
     const row = toAddressInsert({ ...MAIN_ADDRESS, door: "  " });
     expect(row.floor).toBeNull();
     expect(row.door).toBeNull();
+  });
+});
+
+describe("addressSearchText", () => {
+  it("joins the address in the order a map search expects", () => {
+    expect(addressSearchText(SECOND_ADDRESS)).toBe(
+      "Av. Catalunya 5, 25600 Balaguer, Lleida, Spain",
+    );
+  });
+
+  it("leaves out the floor and the door, and empty parts", () => {
+    expect(
+      addressSearchText({ ...MAIN_ADDRESS, number: " ", province: "" }),
+    ).toBe("C/ Major, 25001 Lleida, Spain");
   });
 });

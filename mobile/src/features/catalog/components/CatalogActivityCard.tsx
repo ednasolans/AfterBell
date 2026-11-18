@@ -1,122 +1,148 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors } from "@/theme/colors";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/activityTypes";
+import { isFinished } from "@/lib/activity";
+import { colors } from "@/theme/colors";
 import { categoryLabel } from "@/lib/activityCategories";
 
 import {
   formatActivityPrice,
   formatAgeRanges,
   formatDateRange,
-  isFinished,
 } from "../format";
-import { type CatalogActivity } from "../types";
+import { type CatalogCardActivity } from "../types";
 import { activityImage } from "../visuals";
+import { FavouriteButton } from "./FavouriteButton";
 
 type CatalogActivityCardProps = {
-  item: CatalogActivity;
+  activity: CatalogCardActivity;
+  providerName: string | null;
+  isFavourite: boolean;
+  // A favourite that can no longer be opened: marked, and only its heart works
+  unavailable?: boolean;
   onPress: () => void;
 };
 
 export function CatalogActivityCard({
-  item,
+  activity,
+  providerName,
+  isFavourite,
+  unavailable = false,
   onPress,
 }: Readonly<CatalogActivityCardProps>) {
-  const { activity, provider } = item;
   const image = activityImage(activity.category);
   const dates = formatDateRange(activity.startDate, activity.endDate);
 
+  // The heart sits over the card, not inside it: a button cannot contain
+  // another button (invalid HTML on web, and screen readers would not reach it)
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${activity.title}`}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-    >
-      <View style={styles.imageWrap}>
-        <Image
-          source={image}
-          style={styles.image}
-          contentFit="cover"
-          transition={180}
+    <View style={[styles.wrapper, unavailable && styles.unavailable]}>
+      <Pressable
+        onPress={onPress}
+        disabled={unavailable}
+        accessibilityRole="button"
+        accessibilityLabel={
+          unavailable
+            ? `${activity.title}, not available`
+            : `Open ${activity.title}`
+        }
+        accessibilityState={{ disabled: unavailable }}
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      >
+        <View style={styles.imageWrap}>
+          <Image
+            source={image}
+            style={styles.image}
+            contentFit="cover"
+            transition={180}
+          />
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryText}>
+              {categoryLabel(activity.category)}
+            </Text>
+          </View>
+          {unavailable ? (
+            <View style={styles.finishedBadge}>
+              <Text style={styles.finishedText}>Not available</Text>
+            </View>
+          ) : null}
+          {!unavailable && isFinished(activity) ? (
+            <View style={styles.finishedBadge}>
+              <Text style={styles.finishedText}>Finished</Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.body}>
+          <Text style={styles.title}>{activity.title}</Text>
+          {activity.type === "event" ? (
+            <Text style={styles.typeLabel}>
+              {ACTIVITY_TYPE_LABELS[activity.type]}
+            </Text>
+          ) : null}
+          {providerName ? (
+            <View style={styles.providerRow}>
+              <Ionicons
+                name="business-outline"
+                size={15}
+                color={colors.primaryDark}
+              />
+              <Text style={styles.provider}>{providerName}</Text>
+            </View>
+          ) : null}
+          {dates ? (
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="calendar-outline"
+                size={15}
+                color={colors.textMuted}
+              />
+              <Text style={styles.detail}>{dates}</Text>
+            </View>
+          ) : null}
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="people-outline"
+                size={15}
+                color={colors.textMuted}
+              />
+              <Text style={styles.detail}>
+                {`Ages: ${formatAgeRanges(activity.targetAgeRanges)}`}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="pricetag-outline"
+                size={15}
+                color={colors.textMuted}
+              />
+              <Text style={styles.detail}>
+                {formatActivityPrice(activity.price, activity.pricePeriod)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Pressable>
+      <View style={styles.favourite}>
+        <FavouriteButton
+          activityId={activity.id}
+          activityTitle={activity.title}
+          isFavourite={isFavourite}
         />
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryText}>
-            {categoryLabel(activity.category)}
-          </Text>
-        </View>
-        {isFinished(activity) ? (
-          <View style={styles.finishedBadge}>
-            <Text style={styles.finishedText}>Finished</Text>
-          </View>
-        ) : null}
-        <View style={styles.bookmark}>
-          <Ionicons name="heart-outline" size={18} color={colors.text} />
-        </View>
       </View>
-      <View style={styles.body}>
-        <Text style={styles.title}>{activity.title}</Text>
-        {activity.type === "event" ? (
-          <Text style={styles.typeLabel}>
-            {ACTIVITY_TYPE_LABELS[activity.type]}
-          </Text>
-        ) : null}
-        {provider.contact ? (
-          <View style={styles.providerRow}>
-            <Ionicons
-              name="business-outline"
-              size={15}
-              color={colors.primaryDark}
-            />
-            <Text style={styles.provider}>{provider.contact.name}</Text>
-          </View>
-        ) : null}
-        {dates ? (
-          <View style={styles.metaItem}>
-            <Ionicons
-              name="calendar-outline"
-              size={15}
-              color={colors.textMuted}
-            />
-            <Text style={styles.detail}>{dates}</Text>
-          </View>
-        ) : null}
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Ionicons
-              name="people-outline"
-              size={15}
-              color={colors.textMuted}
-            />
-            <Text style={styles.detail}>
-              {`Ages: ${formatAgeRanges(activity.targetAgeRanges)}`}
-            </Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons
-              name="pricetag-outline"
-              size={15}
-              color={colors.textMuted}
-            />
-            <Text style={styles.detail}>
-              {formatActivityPrice(activity.price, activity.pricePeriod)}
-            </Text>
-          </View>
-        </View>
-      </View>
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: { marginBottom: 12 },
   card: {
     overflow: "hidden",
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 20,
-    marginBottom: 12,
     shadowColor: "#17342f",
     shadowOpacity: 0.06,
     shadowRadius: 10,
@@ -124,6 +150,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   pressed: { opacity: 0.8 },
+  unavailable: { opacity: 0.6 },
   imageWrap: { height: 148, position: "relative" },
   image: { width: "100%", height: "100%" },
   categoryBadge: {
@@ -146,17 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   finishedText: { color: colors.white, fontSize: 12, fontWeight: "800" },
-  bookmark: {
-    position: "absolute",
-    right: 12,
-    top: 12,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  favourite: { position: "absolute", right: 13, top: 13 },
   body: { padding: 16, gap: 8 },
   title: { fontSize: 18, fontWeight: "800", color: colors.text },
   typeLabel: { color: colors.primaryDark, fontWeight: "700" },

@@ -4,6 +4,8 @@ import { EMPTY_ACTIVITY_FORM, type ActivityForm } from "../types";
 import { useActivityForm } from "./useActivityForm";
 
 const VALID_ACTIVITY: ActivityForm = {
+  isTutor: false,
+  languages: [],
   title: "Swimming for kids",
   description: "",
   category: "swimming",
@@ -15,6 +17,7 @@ const VALID_ACTIVITY: ActivityForm = {
   price: 30,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  unlimitedParticipants: false,
   addressId: "address-1",
 };
 
@@ -34,6 +37,32 @@ describe("useActivityForm", () => {
     );
 
     expect(result.current.form).toEqual(VALID_ACTIVITY);
+  });
+
+  it("keeps language IDs stable when removing, editing and adding rows", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({
+        initialForm: {
+          ...VALID_ACTIVITY,
+          category: "language",
+          languages: [
+            { language: "English", level: "B1" },
+            { language: "Catalan", level: "C1" },
+          ],
+        },
+        onSubmit: jest.fn(),
+      }),
+    );
+    const [removed, retained] = result.current.form.languages;
+
+    await act(() => {
+      result.current.updateField("languages", [{ ...retained, level: "C2" }]);
+      result.current.addLanguage();
+    });
+
+    const [edited, added] = result.current.form.languages;
+    expect(edited).toEqual({ ...retained, level: "C2" });
+    expect([removed.id, retained.id]).not.toContain(added.id);
   });
 
   it("does not submit an invalid form and shows its errors", async () => {
@@ -121,6 +150,54 @@ describe("useActivityForm", () => {
     });
 
     expect(result.current.form.startDate).toBe("2027-07-01");
+  });
+
+  it("clears the maximum when the provider chooses no limit", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({ initialForm: VALID_ACTIVITY, onSubmit: jest.fn() }),
+    );
+
+    await act(() => result.current.updateField("unlimitedParticipants", true));
+
+    expect(result.current.form.maxParticipants).toBeNull();
+    expect(result.current.errors).toEqual({});
+  });
+
+  it("knows when there are unsaved changes, until they are saved", async () => {
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+    const { result } = await renderHook(() =>
+      useActivityForm({ initialForm: VALID_ACTIVITY, onSubmit }),
+    );
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    await act(() => result.current.updateField("title", "Swimming for teens"));
+    expect(result.current.hasUnsavedChanges).toBe(true);
+
+    await act(() => result.current.submit());
+    expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it("has no unsaved changes when a field goes back to its saved value", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({ initialForm: VALID_ACTIVITY, onSubmit: jest.fn() }),
+    );
+
+    await act(() => result.current.updateField("title", "Other"));
+    await act(() => result.current.updateField("title", "Swimming for kids"));
+
+    expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it("keeps the unsaved changes when saving fails", async () => {
+    const onSubmit = jest.fn().mockRejectedValue(new Error("offline"));
+    const { result } = await renderHook(() =>
+      useActivityForm({ initialForm: VALID_ACTIVITY, onSubmit }),
+    );
+
+    await act(() => result.current.updateField("title", "Swimming for teens"));
+    await act(() => result.current.submit());
+
+    expect(result.current.hasUnsavedChanges).toBe(true);
   });
 });
 

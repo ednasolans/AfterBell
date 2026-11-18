@@ -18,8 +18,11 @@ export function useProfileForm({
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
 
-  // Errors are shown after the first save attempt and then update while typing
   const errors = submitted ? validateProfileForm(form) : {};
+  // The text differs from the saved one: leaving would lose the changes
+  const isDirty =
+    form.headline !== initialForm.headline ||
+    form.description !== initialForm.description;
 
   function updateField<K extends keyof ProfileForm>(
     field: K,
@@ -43,5 +46,5 @@ export function useProfileForm({
     }
   }
 
-  return { form, errors, updateField, submit };
+  return { form, errors, isDirty, updateField, submit };
 }

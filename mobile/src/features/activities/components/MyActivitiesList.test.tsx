@@ -4,7 +4,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native";
-import { Alert, type AlertButton } from "react-native";
+import { Alert, type AlertButton, Text } from "react-native";
 
 import { formatDate } from "@/lib/dates";
 
@@ -166,6 +166,24 @@ describe("MyActivitiesList", () => {
       await screen.findByText(
         "The activity could not be deleted. Please try again.",
       ),
+    ).toBeOnTheScreen();
+  });
+
+  it("shows the extra content of each card, e.g. its places", async () => {
+    jest.mocked(fetchMyActivities).mockResolvedValue([ACTIVITY]);
+    await render(
+      <MyActivitiesList
+        onCreate={jest.fn()}
+        onEdit={jest.fn()}
+        renderCardFooter={(activity) => (
+          <Text>{`Places of ${activity.title}`}</Text>
+        )}
+      />,
+      { wrapper: createQueryClientWrapper(createTestQueryClient()) },
+    );
+
+    expect(
+      await screen.findByText("Places of Swimming for kids"),
     ).toBeOnTheScreen();
   });
 });

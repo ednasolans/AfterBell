@@ -17,6 +17,8 @@ jest.mock("../api/createActivity", () => ({
 const mockedCreate = jest.mocked(createActivity);
 
 const FORM: ActivityForm = {
+  isTutor: false,
+  languages: [],
   title: "Swimming for kids",
   description: "",
   category: "swimming",
@@ -28,6 +30,7 @@ const FORM: ActivityForm = {
   price: 30,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  unlimitedParticipants: false,
   addressId: "address-1",
 };
 

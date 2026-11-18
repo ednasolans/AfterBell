@@ -29,7 +29,8 @@ async function fetchEnrolledCount(activityId: string): Promise<number | null> {
   return data[0]?.taken_places ?? 0;
 }
 
-// One published activity with its provider and address. It is null when the
+// One published activity with its provider, its address and whether the
+// customer saved it. It is null when the
 // activity does not exist, is not published or its provider has no approved
 // profile.
 export async function fetchCatalogActivity(
@@ -37,7 +38,7 @@ export async function fetchCatalogActivity(
 ): Promise<CatalogActivityDetail | null> {
   const { data, error } = await supabase
     .from("activities")
-    .select("*")
+    .select("*, languages(language, level), favourites(customer_id)")
     .eq("id", id)
     .eq("status", "published")
     .maybeSingle();
@@ -67,6 +68,7 @@ export async function fetchCatalogActivity(
       profile,
       contacts.get(activity.providerId) ?? null,
     ),
+    isFavourite: data.favourites.length > 0,
     address,
     enrolledCount,
   };

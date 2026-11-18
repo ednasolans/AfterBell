@@ -13,9 +13,33 @@ the AI is visible to customers until the provider approves it.
 4. The provider edits the headline and description and taps **Save changes**.
    The profile stays a draft. It can also **Generate again**.
 5. **Approve and publish** asks for confirmation, saves the current edits and
-   sets `status = 'approved'`. A trigger sets `approved_at`.
+   sets `status = 'approved'`.
 6. Customers only see the approved text, through the function
    `public_approved_provider_profiles()`: the table is readable only by its owner.
+
+## Review states (Sprint 2, C2)
+
+| Status | Meaning | What customers see |
+|---|---|---|
+| `draft` | Never approved | Nothing |
+| `pending_approval` | New text (regenerated or edited) waiting for approval | The previous approved text |
+| `approved` | Published | This text |
+
+- **Regenerate profile** (published profile) asks for confirmation and saves the
+  new AI text as `pending_approval`. A draft is generated again without asking.
+- **Edit text** opens the editor of the published profile. Saving edited text
+  moves it to `pending_approval`: a database trigger enforces it, so the app
+  can never publish text without a new approval.
+- **Discard** (`discard_profile_changes()`) goes back to the approved version
+  and keeps its `approved_at`.
+- The editor shows a character count and asks before leaving with unsaved
+  changes.
+- **Outdated profile**: `my_profile_is_outdated()` is true when the technical
+  sheet changed after the AI wrote the profile (`sheet_updated_at`, set only
+  when the AI generates the text). The screen shows a warning with
+  **Regenerate now**.
+- The approved copy (`approved_headline`, `approved_description`, `approved_at`)
+  and `sheet_updated_at` are set by triggers; the app cannot change them.
 
 Editing or regenerating an approved profile is planned for Sprint 2.
 
@@ -28,14 +52,15 @@ Editing or regenerating an approved profile is planned for Sprint 2.
   `supabase/functions/_shared/prompts.ts` (`PROMPT_VERSION`).
 - Validates the JSON answer (`_shared/profile.ts`) and retries once if it is
   invalid.
-- Saves the draft with an upsert (one profile per provider).
+- Saves a first profile or a draft with an upsert (one profile per provider).
+  If the profile was already approved, it updates it as `pending_approval`
+  instead (the INSERT policy only accepts drafts).
 
 | Code | HTTP | Meaning |
 |---|---|---|
 | `unauthorized` | 401 | No valid session |
 | `forbidden` | 403 | The user is not a company |
 | `no_technical_sheet` | 409 | The provider has no technical sheet |
-| `already_approved` | 409 | The profile is already published |
 | `too_many_requests` | 429 | Generated less than 30 s ago |
 | `llm_timeout` | 504 | The LLM took more than 20 s |
 | `llm_unavailable` | 502 | The LLM returned an error |

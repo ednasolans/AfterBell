@@ -6,10 +6,12 @@ import { toActivityInsert } from "./toActivityInsert";
 
 // Replace the real client: tests must not need a database
 jest.mock("@/lib/supabase", () => ({
-  supabase: { from: jest.fn() },
+  supabase: { rpc: jest.fn() },
 }));
 
 const FORM: ActivityForm = {
+  isTutor: false,
+  languages: [],
   title: "Swimming for kids",
   description: "",
   category: "swimming",
@@ -21,39 +23,49 @@ const FORM: ActivityForm = {
   price: 30,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  unlimitedParticipants: false,
   addressId: "address-1",
 };
 
-const insert = jest.fn();
+const rpc = jest.mocked(supabase.rpc);
 
 beforeEach(() => {
-  insert.mockReset();
-  jest
-    .mocked(supabase.from)
-    .mockReturnValue({ insert } as unknown as ReturnType<typeof supabase.from>);
+  rpc.mockReset();
 });
 
 describe("createActivity", () => {
-  it("inserts the mapped row into activities", async () => {
-    insert.mockResolvedValue({ error: null });
+  it("saves the activity and trimmed language pairs in one request", async () => {
+    rpc.mockResolvedValue({ error: null } as Awaited<
+      ReturnType<typeof supabase.rpc>
+    >);
+    const form: ActivityForm = {
+      ...FORM,
+      category: "language",
+      isTutor: true,
+      languages: [{ language: " English ", level: " B1 " }],
+    };
 
-    await createActivity(FORM);
+    await createActivity(form);
 
-    expect(supabase.from).toHaveBeenCalledWith("activities");
-    expect(insert).toHaveBeenCalledWith(toActivityInsert(FORM));
+    expect(rpc).toHaveBeenCalledWith("save_activity_with_languages", {
+      p_activity: toActivityInsert(form),
+      p_languages: [{ language: "English", level: "B1" }],
+    });
   });
 
   it("throws when the database rejects the row", async () => {
-    insert.mockResolvedValue({
+    rpc.mockResolvedValue({
       error: { message: "new row violates row-level security policy" },
-    });
+    } as Awaited<ReturnType<typeof supabase.rpc>>);
 
     await expect(createActivity(FORM)).rejects.toThrow("row-level security");
   });
   it.each([{ schedule: [] }, { schedule: FORM.schedule }])(
     "creates an event through activities with optional slots (%j)",
     async ({ schedule }) => {
-      insert.mockResolvedValue({ error: null });
+      rpc.mockResolvedValue({ error: null } as Awaited<
+        ReturnType<typeof supabase.rpc>
+      >);
 
       await createActivity({
         ...FORM,
@@ -63,16 +75,16 @@ describe("createActivity", () => {
         schedule,
       });
 
-      expect(supabase.from).toHaveBeenCalledWith("activities");
-      expect(insert).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(rpc).toHaveBeenCalledWith("save_activity_with_languages", {
+        p_languages: [],
+        p_activity: expect.objectContaining({
           type: "event",
           start_date: "2027-07-01",
           end_date: "2027-07-15",
           schedule: schedule.length === 0 ? null : schedule,
         }),
-      );
-      expect(insert.mock.calls[0][0]).not.toHaveProperty("status");
+      });
+      expect(rpc.mock.calls[0][1]).not.toHaveProperty("p_activity.status");
     },
   );
 });

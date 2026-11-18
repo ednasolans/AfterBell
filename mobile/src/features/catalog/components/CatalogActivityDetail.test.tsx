@@ -1,4 +1,5 @@
-import { waitFor } from "@testing-library/react-native";
+import { fireEvent, waitFor } from "@testing-library/react-native";
+import { Text } from "react-native";
 
 import { formatDate } from "@/lib/dates";
 
@@ -15,6 +16,16 @@ const mockFetch = jest.fn();
 
 jest.mock("../api/fetchCatalogActivity", () => ({
   fetchCatalogActivity: (id: string) => mockFetch(id),
+}));
+
+const mockAddFavourite = jest.fn();
+const mockRemoveFavourite = jest.fn();
+
+jest.mock("../api/addFavourite", () => ({
+  addFavourite: (id: string) => mockAddFavourite(id),
+}));
+jest.mock("../api/removeFavourite", () => ({
+  removeFavourite: (id: string) => mockRemoveFavourite(id),
 }));
 
 function makeDetail(overrides: Partial<Detail> = {}): Detail {
@@ -52,6 +63,28 @@ describe("CatalogActivityDetail", () => {
     expect(getByText("club@example.com")).toBeTruthy();
     expect(getByText("600000000")).toBeTruthy();
     expect(getByText("https://club.example.com")).toBeTruthy();
+  });
+
+  it("shows tutoring and the saved language levels in the activity detail", async () => {
+    mockFetch.mockResolvedValue(
+      makeDetail({
+        activity: makeActivity({
+          category: "language",
+          isTutor: true,
+          languages: [
+            { language: "English", level: "B1" },
+            { language: "Catalan", level: "C1" },
+          ],
+        }),
+      }),
+    );
+
+    const { findByText, getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    expect(await findByText("Private tutoring")).toBeTruthy();
+    expect(getByText("English (B1), Catalan (C1)")).toBeTruthy();
   });
 
   it("shows the label and the dates of a temporary activity", async () => {
@@ -116,6 +149,23 @@ describe("CatalogActivityDetail", () => {
     );
 
     await waitFor(() => expect(getByText("3 of 20")).toBeTruthy());
+    expect(getByText("Places left")).toBeTruthy();
+    expect(getByText("17")).toBeTruthy();
+  });
+
+  it("shows the content added under the activity", async () => {
+    mockFetch.mockResolvedValue(makeDetail());
+
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail
+        id="a1"
+        renderFooter={(detail) => (
+          <Text>{`Footer of ${detail.activity.id}`}</Text>
+        )}
+      />,
+    );
+
+    await waitFor(() => expect(getByText("Footer of a1")).toBeTruthy());
   });
 
   it("shows 0 when nobody is enrolled", async () => {
@@ -126,6 +176,18 @@ describe("CatalogActivityDetail", () => {
     );
 
     await waitFor(() => expect(getByText("0 of 20")).toBeTruthy());
+  });
+
+  it("shows the counter without a maximum when there is no limit", async () => {
+    mockFetch.mockResolvedValue(
+      makeDetail({ activity: makeActivity({ maxParticipants: null }) }),
+    );
+
+    const { getByText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await waitFor(() => expect(getByText("3 (no limit)")).toBeTruthy());
   });
 
   it("hides the counter when it could not be read", async () => {
@@ -249,4 +311,22 @@ describe("CatalogActivityDetail", () => {
       expect(queryByText("Schedule")).not.toBeOnTheScreen();
     },
   );
+
+  it("shows a full heart when the activity is a favourite, and removes it", async () => {
+    mockFetch.mockResolvedValue(makeDetail({ isFavourite: true }));
+    mockRemoveFavourite.mockResolvedValue(undefined);
+
+    const { findByLabelText } = await renderWithQuery(
+      <CatalogActivityDetail id="a1" />,
+    );
+
+    await fireEvent.press(
+      await findByLabelText("Remove Saturday workshop from favourites"),
+    );
+
+    expect(mockRemoveFavourite).toHaveBeenCalledWith("a1");
+    expect(
+      await findByLabelText("Save Saturday workshop in favourites"),
+    ).toBeTruthy();
+  });
 });

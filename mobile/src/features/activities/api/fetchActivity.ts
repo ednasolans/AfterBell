@@ -6,7 +6,7 @@ import { toActivity } from "@/lib/activity";
 export async function fetchActivity(id: string): Promise<Activity> {
   const { data, error } = await supabase
     .from("activities")
-    .select("*")
+    .select("*, languages(language, level)")
     .eq("id", id)
     .single();
   if (error) {

@@ -9,6 +9,8 @@ describe("toActivityForm", () => {
       title: ACTIVITY.title,
       description: ACTIVITY.description,
       category: ACTIVITY.category,
+      isTutor: ACTIVITY.isTutor,
+      languages: ACTIVITY.languages,
       type: "whole_year",
       startDate: null,
       endDate: null,
@@ -17,6 +19,7 @@ describe("toActivityForm", () => {
       price: ACTIVITY.price,
       pricePeriod: ACTIVITY.pricePeriod,
       maxParticipants: ACTIVITY.maxParticipants,
+      unlimitedParticipants: false,
       addressId: ACTIVITY.addressId,
     });
   });
@@ -72,5 +75,18 @@ describe("toActivityForm", () => {
         schedule: ACTIVITY.schedule,
       });
     });
+  });
+  it("keeps the maximum of an activity with a limit", () => {
+    const form = toActivityForm({ ...ACTIVITY, maxParticipants: 12 });
+
+    expect(form.maxParticipants).toBe(12);
+    expect(form.unlimitedParticipants).toBe(false);
+  });
+
+  it("opens an activity without maximum as no limit", () => {
+    const form = toActivityForm({ ...ACTIVITY, maxParticipants: null });
+
+    expect(form.maxParticipants).toBeNull();
+    expect(form.unlimitedParticipants).toBe(true);
   });
 });

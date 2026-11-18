@@ -22,6 +22,8 @@ jest.mock("../api/updateActivity", () => ({ updateActivity: jest.fn() }));
 jest.mock("../api/deleteActivity", () => ({ deleteActivity: jest.fn() }));
 
 const ACTIVITY: Activity = {
+  isTutor: false,
+  languages: [],
   id: "activity-1",
   providerId: "provider-1",
   addressId: "address-1",
@@ -41,6 +43,8 @@ const ACTIVITY: Activity = {
 };
 
 const FORM: ActivityForm = {
+  isTutor: false,
+  languages: [],
   title: "Swimming for kids",
   description: "",
   category: "swimming",
@@ -52,6 +56,7 @@ const FORM: ActivityForm = {
   price: 30,
   pricePeriod: "per_month",
   maxParticipants: 12,
+  unlimitedParticipants: false,
   addressId: "address-1",
 };
 

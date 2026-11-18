@@ -116,6 +116,9 @@ Every file with logic has a test next to it (`*.test.ts` / `*.test.tsx`).
 | Description longer than 500 characters | `technical_sheets_description_check` violation |
 | Existing sheets after the migration | Each one points to a new address with its old address and city |
 
+**Public contact details (#71):** customers never read the sheet; the catalog gets the name, email, phone and website through `public_provider_contacts()`. `supabase/tests/provider_contacts.sql` checks that a customer gets only those columns, of the newest sheet of providers with a published activity, that it cannot read or change the sheet itself, and that anonymous users cannot call the function (11 checks, rolled back):
+`docker exec -i supabase_db_AfterBell psql -U postgres -d postgres < supabase/tests/provider_contacts.sql`
+
 **App:** open the `technical-sheet-preview` route in Expo Go, press **Save** with the form empty (errors appear, including "Street is required"), add and remove addresses, and fill it in (errors disappear while typing). Saving for real needs a logged-in `company` user.
 
 ## 5. Known limitations and pending work

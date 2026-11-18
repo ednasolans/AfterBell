@@ -32,12 +32,18 @@ export function EditActivity({ id, onSaved }: EditActivityProps) {
   return (
     <ActivityForm
       initialForm={toActivityForm(activity.data)}
+      isPublished={activity.data.status === "published"}
       submitLabel="Save changes"
       onSubmit={(form) => updateActivity.mutateAsync({ id, form })}
       isSaving={updateActivity.isPending}
       saveError={updateActivity.error}
       onSaved={onSaved}
-      header={<PublicationPanel activity={activity.data} />}
+      header={({ hasUnsavedChanges }) => (
+        <PublicationPanel
+          activity={activity.data}
+          hasUnsavedChanges={hasUnsavedChanges}
+        />
+      )}
     />
   );
 }

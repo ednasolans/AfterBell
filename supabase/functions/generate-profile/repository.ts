@@ -9,7 +9,12 @@ import type {
   SheetForPrompt,
   TemporaryActivityForPrompt,
 } from "../_shared/types.ts";
-import type { ExistingProfile, ProfileRepository, SavedDraft } from "./handler.ts";
+import type {
+  ExistingProfile,
+  GeneratedStatus,
+  ProfileRepository,
+  SavedProfile,
+} from "./handler.ts";
 
 // Only the fields the LLM may see. Contact data is never read.
 const SHEET_FIELDS =
@@ -88,24 +93,31 @@ export class SupabaseProfileRepository implements ProfileRepository {
     return data ? { status: data.status, generatedAt: new Date(data.generated_at) } : null;
   }
 
-  async saveDraft(profile: GeneratedProfile, model: string): Promise<SavedDraft> {
+  async saveProfile(
+    userId: string,
+    profile: GeneratedProfile,
+    model: string,
+    status: GeneratedStatus,
+  ): Promise<SavedProfile> {
     // provider_id is not sent: the column defaults to auth.uid().
-    // A previous draft of the same provider is overwritten.
-    const { data, error } = await this.client
-      .from("provider_profiles")
-      .upsert(
-        {
-          headline: profile.headline,
-          description: profile.description,
-          status: "draft",
-          model,
-          generated_at: new Date().toISOString(),
-        },
-        { onConflict: "provider_id" },
-      )
+    const values = {
+      headline: profile.headline,
+      description: profile.description,
+      status,
+      model,
+      generated_at: new Date().toISOString(),
+    };
+    // A first profile or a draft is inserted or overwritten. A profile that was
+    // approved is updated instead: the INSERT policy only accepts drafts, and
+    // the database keeps the approved copy until the new text is approved.
+    const table = this.client.from("provider_profiles");
+    const query = status === "draft"
+      ? table.upsert(values, { onConflict: "provider_id" })
+      : table.update(values).eq("provider_id", userId);
+    const { data, error } = await query
       .select("headline, description, status, model, generated_at")
-      .single<SavedDraft>();
-    if (error) throw new Error(`saving the draft failed: ${error.message}`);
+      .single<SavedProfile>();
+    if (error) throw new Error(`saving the profile failed: ${error.message}`);
     return data;
   }
 }

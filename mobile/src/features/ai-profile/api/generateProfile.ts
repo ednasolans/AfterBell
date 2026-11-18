@@ -4,7 +4,6 @@ import { supabase } from "@/lib/supabase";
 export const GENERATE_ERROR_MESSAGES: Record<string, string> = {
   no_technical_sheet:
     "Save your technical sheet before generating your profile.",
-  already_approved: "Your profile is already published.",
   too_many_requests: "Please wait a few seconds before generating it again.",
   llm_timeout: "The AI took too long to answer. Please try again.",
   llm_unavailable: "The AI is not available right now. Please try again later.",

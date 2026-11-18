@@ -15,7 +15,10 @@ University group project of the Master's in Informatics Engineering (MEINF, Univ
 | Activity publication (create, list, edit, delete) | Sprint 1 | [activities.md](docs/features/activities.md) |
 | Activity catalog for customers | Sprint 1 | — |
 | Temporary activities (backend, provider form, customer view and AI profile) | Sprint 2 | [activities.md](docs/features/activities.md) |
-| Search and filters, events, tutors, recommendations, favourites and enrolment requests | Sprint 2 | — |
+| Enrolment requests (backend, customer and provider screens) | Sprint 2 | [enrolments.md](docs/features/enrolments.md) |
+| Favourites (save activities, list with unavailable ones marked) | Sprint 2 | [favourites.md](docs/features/favourites.md) |
+| Location of families and provider addresses, for recommendations by distance | Sprint 2 | [location.md](docs/features/location.md) |
+| Search and filters, events, tutors and recommendations | Sprint 2 | — |
 
 ## Tech stack
 
