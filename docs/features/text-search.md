@@ -110,10 +110,9 @@ The search bar is above the activities of the customer home
 - **Favourites:** the heart of a result changes at once and is undone if the
   request fails, as in the list (`useToggleFavourite` updates every cached search).
 
-The filter panel comes in #104; `useSearchActivities` and `useSearchCount`
-already take the filters.
+The filter panel (#104) is described in
+[search-filters.md](search-filters.md#filter-panel-104).
 
 ## Pending
 
-- The filter panel (#104). The filters API is in #102 ([search-filters.md](search-filters.md)).
 - `search_activities` does not say whether each result is a favourite yet (see `favourites.md`).
