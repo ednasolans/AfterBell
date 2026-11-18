@@ -33,110 +33,110 @@ export function CatalogActivityCard({
   const image = activityImage(activity.category);
   const dates = formatDateRange(activity.startDate, activity.endDate);
 
+  // The heart sits over the card, not inside it: a button cannot contain
+  // another button (invalid HTML on web, and screen readers would not reach it)
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={unavailable}
-      accessibilityRole="button"
-      accessibilityLabel={
-        unavailable
-          ? `${activity.title}, not available`
-          : `Open ${activity.title}`
-      }
-      accessibilityState={{ disabled: unavailable }}
-      style={({ pressed }) => [
-        styles.card,
-        unavailable && styles.unavailable,
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={styles.imageWrap}>
-        <Image
-          source={image}
-          style={styles.image}
-          contentFit="cover"
-          transition={180}
-        />
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryText}>
-            {categoryLabel(activity.category)}
-          </Text>
-        </View>
-        {unavailable ? (
-          <View style={styles.finishedBadge}>
-            <Text style={styles.finishedText}>Not available</Text>
-          </View>
-        ) : null}
-        {!unavailable && isFinished(activity) ? (
-          <View style={styles.finishedBadge}>
-            <Text style={styles.finishedText}>Finished</Text>
-          </View>
-        ) : null}
-        <View style={styles.favourite}>
-          <FavouriteButton
-            activityId={activity.id}
-            activityTitle={activity.title}
-            isFavourite={isFavourite}
+    <View style={[styles.wrapper, unavailable && styles.unavailable]}>
+      <Pressable
+        onPress={onPress}
+        disabled={unavailable}
+        accessibilityRole="button"
+        accessibilityLabel={
+          unavailable
+            ? `${activity.title}, not available`
+            : `Open ${activity.title}`
+        }
+        accessibilityState={{ disabled: unavailable }}
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      >
+        <View style={styles.imageWrap}>
+          <Image
+            source={image}
+            style={styles.image}
+            contentFit="cover"
+            transition={180}
           />
-        </View>
-      </View>
-      <View style={styles.body}>
-        <Text style={styles.title}>{activity.title}</Text>
-        {providerName ? (
-          <View style={styles.providerRow}>
-            <Ionicons
-              name="business-outline"
-              size={15}
-              color={colors.primaryDark}
-            />
-            <Text style={styles.provider}>{providerName}</Text>
-          </View>
-        ) : null}
-        {dates ? (
-          <View style={styles.metaItem}>
-            <Ionicons
-              name="calendar-outline"
-              size={15}
-              color={colors.textMuted}
-            />
-            <Text style={styles.detail}>{dates}</Text>
-          </View>
-        ) : null}
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Ionicons
-              name="people-outline"
-              size={15}
-              color={colors.textMuted}
-            />
-            <Text style={styles.detail}>
-              {`Ages: ${formatAgeRanges(activity.targetAgeRanges)}`}
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryText}>
+              {categoryLabel(activity.category)}
             </Text>
           </View>
-          <View style={styles.metaItem}>
-            <Ionicons
-              name="pricetag-outline"
-              size={15}
-              color={colors.textMuted}
-            />
-            <Text style={styles.detail}>
-              {formatActivityPrice(activity.price, activity.pricePeriod)}
-            </Text>
+          {unavailable ? (
+            <View style={styles.finishedBadge}>
+              <Text style={styles.finishedText}>Not available</Text>
+            </View>
+          ) : null}
+          {!unavailable && isFinished(activity) ? (
+            <View style={styles.finishedBadge}>
+              <Text style={styles.finishedText}>Finished</Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.body}>
+          <Text style={styles.title}>{activity.title}</Text>
+          {providerName ? (
+            <View style={styles.providerRow}>
+              <Ionicons
+                name="business-outline"
+                size={15}
+                color={colors.primaryDark}
+              />
+              <Text style={styles.provider}>{providerName}</Text>
+            </View>
+          ) : null}
+          {dates ? (
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="calendar-outline"
+                size={15}
+                color={colors.textMuted}
+              />
+              <Text style={styles.detail}>{dates}</Text>
+            </View>
+          ) : null}
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="people-outline"
+                size={15}
+                color={colors.textMuted}
+              />
+              <Text style={styles.detail}>
+                {`Ages: ${formatAgeRanges(activity.targetAgeRanges)}`}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="pricetag-outline"
+                size={15}
+                color={colors.textMuted}
+              />
+              <Text style={styles.detail}>
+                {formatActivityPrice(activity.price, activity.pricePeriod)}
+              </Text>
+            </View>
           </View>
         </View>
+      </Pressable>
+      <View style={styles.favourite}>
+        <FavouriteButton
+          activityId={activity.id}
+          activityTitle={activity.title}
+          isFavourite={isFavourite}
+        />
       </View>
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: { marginBottom: 12 },
   card: {
     overflow: "hidden",
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 20,
-    marginBottom: 12,
     shadowColor: "#17342f",
     shadowOpacity: 0.06,
     shadowRadius: 10,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   finishedText: { color: colors.white, fontSize: 12, fontWeight: "800" },
-  favourite: { position: "absolute", right: 12, top: 12 },
+  favourite: { position: "absolute", right: 13, top: 13 },
   body: { padding: 16, gap: 8 },
   title: { fontSize: 18, fontWeight: "800", color: colors.text },
   providerRow: { flexDirection: "row", alignItems: "center", gap: 5 },
