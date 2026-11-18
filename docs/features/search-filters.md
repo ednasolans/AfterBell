@@ -147,6 +147,6 @@ No arguments. Returns one JSON object:
 
 - The filter screen (UI), in a later issue. The app has no function yet that
   calls `available_activity_filters`; it belongs to that screen.
-- `search_activities` does not require an approved provider profile, while the
-  catalog list does (`fetchCatalogActivities`), and it returns temporary
-  activities that have already ended. Both predate #102.
+- `search_activities` returns temporary activities that have already ended
+  (predates #102). Since #103 it requires an approved provider profile, like the
+  catalog list.

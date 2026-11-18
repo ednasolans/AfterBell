@@ -636,6 +636,20 @@ export type Database = {
         Args: { p_request_id: string };
         Returns: undefined;
       };
+      count_search_activities: {
+        Args: {
+          p_age_max?: number;
+          p_age_min?: number;
+          p_categories?: string[];
+          p_city?: string;
+          p_postal_code?: string;
+          p_price_max?: number;
+          p_price_min?: number;
+          p_price_period?: string;
+          p_query?: string;
+        };
+        Returns: number;
+      };
       discard_profile_changes: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
@@ -841,6 +855,20 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      search_activity_matches: {
+        Args: {
+          p_age_max: number;
+          p_age_min: number;
+          p_categories: string[];
+          p_city: string;
+          p_postal_code: string;
+          p_price_max: number;
+          p_price_min: number;
+          p_price_period: string;
+          p_query: string;
+        };
+        Returns: { activity_id: string; relevance: number }[];
       };
       send_enrolment_request: {
         Args: {

@@ -28,6 +28,10 @@ INSERT INTO public.addresses (id, provider_id, street, number, postal_code, city
 INSERT INTO public.technical_sheets (provider_id, name, provider_type, activity_types, address_id, email) VALUES
     ('f1000000-0000-0000-0000-00000000000a', 'Club Filtres', 'sports_club', '{music}', 'f1100000-0000-0000-0000-000000000001', 'club@test.com');
 
+-- Only providers with an approved profile show their activities (#103)
+INSERT INTO public.provider_profiles (provider_id, headline, description, model, status, approved_at, approved_headline, approved_description)
+VALUES ('f1000000-0000-0000-0000-00000000000a', 'Club Filtres', 'Sports club', 'test', 'approved', now(), 'Club Filtres', 'Sports club');
+
 -- Inserted as drafts: publishing needs the full publication rules, which this
 -- test does not check. The statuses are set afterwards.
 --   Piano          music     7-9          Lleida  25001  30 per_month

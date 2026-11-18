@@ -7,6 +7,7 @@ import {
   SEARCH_PAGE_SIZE,
   SEARCH_TOO_LONG_MESSAGE,
   SEARCH_TOO_SHORT_MESSAGE,
+  countSearchActivities,
   searchActivities,
   trimSearchQuery,
   validateSearchFilters,
@@ -179,6 +180,48 @@ describe("searchActivities", () => {
       searchActivities("musica", { ...NO_SEARCH_FILTERS, priceMax: 20 }),
     ).rejects.toThrow(SEARCH_ERROR_MESSAGES.search_price_period_required);
     expect(mockRpc).not.toHaveBeenCalled();
+  });
+});
+
+describe("countSearchActivities", () => {
+  it("sends the same text and filters as the search, without the page", async () => {
+    mockRpc.mockResolvedValue({ data: 42, error: null });
+
+    const total = await countSearchActivities("  musica ", {
+      ...NO_SEARCH_FILTERS,
+      categories: ["music"],
+    });
+
+    expect(total).toBe(42);
+    expect(mockRpc).toHaveBeenCalledWith("count_search_activities", {
+      p_query: "musica",
+      p_categories: ["music"],
+      p_age_min: undefined,
+      p_age_max: undefined,
+      p_city: undefined,
+      p_postal_code: undefined,
+      p_price_min: undefined,
+      p_price_max: undefined,
+      p_price_period: undefined,
+    });
+  });
+
+  it("does not call the database with a text that is too short", async () => {
+    await expect(countSearchActivities("a")).rejects.toThrow(
+      SEARCH_TOO_SHORT_MESSAGE,
+    );
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("turns the database error into a message", async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: "search_query_too_long" },
+    });
+
+    await expect(countSearchActivities("musica")).rejects.toThrow(
+      SEARCH_TOO_LONG_MESSAGE,
+    );
   });
 });
 
