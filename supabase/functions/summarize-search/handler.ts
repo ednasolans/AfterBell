@@ -29,6 +29,8 @@ export const CACHE_TTL_MS = 30 * 60_000;
 const TEXT_MAX_CHARS = 100;
 // Same minimum as search_activities, which rejects shorter texts with an error
 const QUERY_MIN_CHARS = 2;
+// There are a dozen categories in the catalogue
+const MAX_CATEGORIES = 20;
 
 /** A search result with its id, so the cache key changes when results change. */
 export interface SearchResult extends ResultForSummary {
@@ -116,7 +118,31 @@ function optionalPrice(value: unknown, field: string): number | null {
   return value;
 }
 
-/** The body has the same filters as the search: { query, category, city, priceMin, priceMax }. */
+function optionalAge(value: unknown, field: string): number | null {
+  if (value === undefined || value === null) return null;
+  if (!Number.isInteger(value) || (value as number) < 0) {
+    throw new HttpError(400, "invalid_request", `"${field}" must be a whole number of years`);
+  }
+  return value as number;
+}
+
+/** A list of category names; an empty list is no filter. */
+function optionalCategories(value: unknown): string[] | null {
+  if (value === undefined || value === null) return null;
+  if (
+    !Array.isArray(value) || value.length > MAX_CATEGORIES ||
+    value.some((name) => typeof name !== "string" || name.length > TEXT_MAX_CHARS)
+  ) {
+    throw new HttpError(400, "invalid_request", `"categories" must be a list of at most ${MAX_CATEGORIES} names`);
+  }
+  return value.length === 0 ? null : value;
+}
+
+/**
+ * The body has the same filters as the search: { query, categories, ageMin, ageMax,
+ * city, postalCode, priceMin, priceMax, pricePeriod }. The rules between them
+ * (e.g. minimum not above maximum) are checked by search_activities.
+ */
 export async function parseFilters(req: Request): Promise<SearchFilters> {
   let body: unknown;
   try {
@@ -134,10 +160,14 @@ export async function parseFilters(req: Request): Promise<SearchFilters> {
   }
   return {
     query,
-    category: optionalText(input.category, "category", TEXT_MAX_CHARS),
+    categories: optionalCategories(input.categories),
+    ageMin: optionalAge(input.ageMin, "ageMin"),
+    ageMax: optionalAge(input.ageMax, "ageMax"),
     city: optionalText(input.city, "city", TEXT_MAX_CHARS),
+    postalCode: optionalText(input.postalCode, "postalCode", TEXT_MAX_CHARS),
     priceMin: optionalPrice(input.priceMin, "priceMin"),
     priceMax: optionalPrice(input.priceMax, "priceMax"),
+    pricePeriod: optionalText(input.pricePeriod, "pricePeriod", TEXT_MAX_CHARS),
   };
 }
 
@@ -151,10 +181,14 @@ export async function cacheKey(filters: SearchFilters, results: SearchResult[]):
   const source = JSON.stringify([
     SUMMARY_PROMPT_VERSION,
     normalise(filters.query),
-    normalise(filters.category),
+    filters.categories,
+    filters.ageMin,
+    filters.ageMax,
     normalise(filters.city),
+    normalise(filters.postalCode),
     filters.priceMin,
     filters.priceMax,
+    filters.pricePeriod,
     results.map((result) => result.id),
   ]);
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source));

@@ -21,10 +21,14 @@ const MAX_AGE_RANGES = 7;
 /** The search the customer made: the same parameters as search_activities. */
 export interface SearchFilters {
   query: string | null;
-  category: string | null;
+  categories: string[] | null;
+  ageMin: number | null;
+  ageMax: number | null;
   city: string | null;
+  postalCode: string | null;
   priceMin: number | null;
   priceMax: number | null;
+  pricePeriod: string | null;
 }
 
 /** One search result, with only the fields the summary needs. No personal data. */
@@ -78,10 +82,13 @@ export function toSummaryData(filters: SearchFilters, results: ResultForSummary[
   return {
     search: {
       text: query === "" ? null : query,
-      category: filters.category ? categoryLabel(filters.category) : null,
+      categories: filters.categories ? filters.categories.map(categoryLabel) : null,
+      age_min: filters.ageMin,
+      age_max: filters.ageMax,
       city: filters.city ? cleanText(filters.city, CITY_MAX_CHARS) : null,
       price_min: filters.priceMin,
       price_max: filters.priceMax,
+      price_period: filters.pricePeriod ? PRICE_PERIOD_LABELS[filters.pricePeriod] ?? null : null,
     },
     activities: results.slice(0, SUMMARY_MAX_RESULTS).map((result) => ({
       title: cleanText(result.title, TITLE_MAX_CHARS),

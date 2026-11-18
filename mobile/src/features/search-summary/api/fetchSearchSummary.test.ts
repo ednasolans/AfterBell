@@ -1,3 +1,4 @@
+import { NO_SEARCH_FILTERS } from "@/lib/searchFilters";
 import { supabase } from "@/lib/supabase";
 
 import { type SearchSummaryFilters } from "../types";
@@ -11,11 +12,11 @@ jest.mock("@/lib/supabase", () => ({
 }));
 
 const FILTERS: SearchSummaryFilters = {
+  ...NO_SEARCH_FILTERS,
   query: "swimming",
-  category: null,
   city: "Lleida",
-  priceMin: null,
   priceMax: 50,
+  pricePeriod: "per_month",
 };
 
 function invokeReturns(result: { data: unknown; error: unknown }) {

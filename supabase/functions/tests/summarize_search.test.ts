@@ -7,6 +7,7 @@ import {
   cacheKey,
   type Deps,
   handleRequest,
+  HttpError,
   type SearchResult,
   SUMMARY_TIMEOUT_MS,
   type SummaryLogEvent,
@@ -27,10 +28,14 @@ const RESULT: SearchResult = {
 
 const FILTERS: SearchFilters = {
   query: "swimming",
-  category: null,
+  categories: null,
+  ageMin: null,
+  ageMax: null,
   city: "Lleida",
+  postalCode: null,
   priceMin: null,
   priceMax: null,
+  pricePeriod: null,
 };
 
 /** Fake database, cache, rate limit and LLM: they record what they receive. */
@@ -50,6 +55,7 @@ class Fakes {
       enabled?: boolean;
       llm?: () => Promise<LlmResult>;
       cacheWriteFails?: boolean;
+      searchError?: Error;
     } = {},
   ) {}
 
@@ -60,6 +66,7 @@ class Fakes {
           Promise.resolve(this.options.userId === undefined ? "user-1" : this.options.userId),
         search: (filters, limit) => {
           this.searches.push({ filters, limit });
+          if (this.options.searchError) return Promise.reject(this.options.searchError);
           return Promise.resolve(this.options.results ?? [RESULT]);
         },
       },
@@ -114,11 +121,37 @@ Deno.test("returns a READY summary of the results and caches it", async () => {
 
 Deno.test("runs the same search as the app with the first results only", async () => {
   const fakes = new Fakes();
-  await call(fakes, { query: " swimming ", category: "swimming", city: "Lleida", priceMin: 10, priceMax: 50 });
+  await call(fakes, {
+    query: " swimming ",
+    categories: ["swimming", "football"],
+    ageMin: 6,
+    ageMax: 9,
+    city: "Lleida",
+    postalCode: " 25001 ",
+    priceMin: 10,
+    priceMax: 50,
+    pricePeriod: "per_month",
+  });
   assertEquals(fakes.searches, [{
-    filters: { query: "swimming", category: "swimming", city: "Lleida", priceMin: 10, priceMax: 50 },
+    filters: {
+      query: "swimming",
+      categories: ["swimming", "football"],
+      ageMin: 6,
+      ageMax: 9,
+      city: "Lleida",
+      postalCode: "25001",
+      priceMin: 10,
+      priceMax: 50,
+      pricePeriod: "per_month",
+    },
     limit: 10,
   }]);
+});
+
+Deno.test("an empty list of categories is no filter", async () => {
+  const fakes = new Fakes();
+  await call(fakes, { query: "swimming", categories: [] });
+  assertEquals(fakes.searches[0].filters.categories, null);
 });
 
 Deno.test("an identical search reuses the cached summary", async () => {
@@ -206,13 +239,23 @@ Deno.test("no session is rejected with 401", async () => {
 });
 
 Deno.test("invalid filters are rejected with 400", async () => {
-  for (const body of ["not json", "[]", { query: 5 }, { query: "x".repeat(101) }, { priceMin: -1 }, { priceMax: "10" }]) {
+  for (const body of ["not json", "[]", { query: 5 }, { query: "x".repeat(101) }, { priceMin: -1 }, { priceMax: "10" },
+    { categories: "music" }, { categories: [5] }, { categories: Array(21).fill("music") },
+    { ageMin: -1 }, { ageMax: 7.5 }, { ageMin: "7" }, { pricePeriod: 3 }]) {
     const fakes = new Fakes();
     const res = await call(fakes, body);
     assertEquals(res.status, 400, JSON.stringify(body));
     assertEquals(res.body.error.code, "invalid_request");
     assertEquals(fakes.searches.length, 0);
   }
+});
+
+Deno.test("filters that the search rejects are answered with 400, not 500", async () => {
+  const fakes = new Fakes({ searchError: new HttpError(400, "invalid_request", "search_unknown_category") });
+  const { status, body } = await call(fakes, { categories: ["cooking"] });
+  assertEquals(status, 400);
+  assertEquals(body.error, { code: "invalid_request", message: "search_unknown_category" });
+  assertEquals(fakes.llmCalls.length, 0);
 });
 
 Deno.test("only POST and OPTIONS are allowed", async () => {
@@ -251,6 +294,9 @@ Deno.test("the cache key ignores case and spaces but not the results", async () 
   assertEquals(await cacheKey({ ...FILTERS, query: "  SWIMMING " }, [RESULT]), key);
   assert(await cacheKey(FILTERS, [{ ...RESULT, id: "activity-2" }]) !== key);
   assert(await cacheKey({ ...FILTERS, priceMax: 20 }, [RESULT]) !== key);
+  assert(await cacheKey({ ...FILTERS, categories: ["swimming"] }, [RESULT]) !== key);
+  assert(await cacheKey({ ...FILTERS, ageMin: 6 }, [RESULT]) !== key);
+  assert(await cacheKey({ ...FILTERS, pricePeriod: "per_hour" }, [RESULT]) !== key);
   assert(!key.includes("swimming"));
   assertEquals(key.length, 64);
 });
