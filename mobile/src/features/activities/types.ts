@@ -3,16 +3,15 @@ import { type AgeRange } from "@/lib/ages";
 import { type PricePeriod } from "@/lib/price";
 import { type TimeSlot } from "@/lib/schedule";
 
-export const ACTIVITY_TYPES = ["whole_year", "event", "temporary"] as const;
-export type ActivityType = (typeof ACTIVITY_TYPES)[number];
+import { ACTIVITY_TYPES, type ActivityType } from "@/lib/activityTypes";
+
+export {
+  ACTIVITY_TYPES,
+  ACTIVITY_TYPE_LABELS,
+  type ActivityType,
+} from "@/lib/activityTypes";
 
 export const SELECTABLE_ACTIVITY_TYPES = ACTIVITY_TYPES;
-
-export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
-  whole_year: "Activity",
-  temporary: "Temporary",
-  event: "Event",
-};
 
 // What the user fills in: null means "not chosen yet"
 export interface ActivityForm {
