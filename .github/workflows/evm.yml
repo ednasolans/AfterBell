@@ -7,7 +7,7 @@ on:
       milestone:
         description: "Milestone title (e.g. Sprint 1)"
         required: true
-        default: "Sprint 1"
+        default: "Sprint 2"
       report_date:
         description: "Report date, usually the last day of the sprint (YYYY-MM-DD)"
         required: true
