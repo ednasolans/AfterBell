@@ -41,7 +41,8 @@ describe("CatalogList", () => {
 
     await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
     expect(getByText("Sports Club")).toBeTruthy();
-    expect(getByText("Ages: 7-9, 10-12")).toBeTruthy();
+    expect(getByText("Ages 7–12")).toBeTruthy();
+    expect(getByText("Mon, 17:00")).toBeTruthy();
     expect(getByText("15 € per month")).toBeTruthy();
   });
 
@@ -112,7 +113,8 @@ describe("CatalogList", () => {
     );
 
     await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
-    expect(queryByText(/–/)).toBeNull();
+    // Dates always show the year
+    expect(queryByText(/20\d\d/)).toBeNull();
   });
 
   it("shows the activity without a provider name when it has no contact details", async () => {

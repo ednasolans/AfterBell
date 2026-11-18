@@ -21,7 +21,8 @@ export default function GroupLayout() {
         >
           <Stack.Screen
             name="customer-home"
-            options={{ title: "Activities" }}
+            // The home draws its own header, with the active profile
+            options={{ title: "Activities", headerShown: false }}
           />
           <Stack.Screen
             name="activities/[id]"

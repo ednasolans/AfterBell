@@ -1,6 +1,10 @@
-import { fireEvent, waitFor } from "@testing-library/react-native";
+import { fireEvent, render, waitFor } from "@testing-library/react-native";
 
 import { NO_SEARCH_FILTERS } from "@/lib/searchFilters";
+import {
+  createQueryClientWrapper,
+  createTestQueryClient,
+} from "@/test-utils/queryClientWrapper";
 
 import { SEARCH_PAGE_SIZE } from "../api/searchActivities";
 import {
@@ -255,18 +259,16 @@ describe("CatalogSearch", () => {
       city: "Lleida",
     };
 
-    // Opens the panel, chooses music in Lleida and applies it
+    // Chooses music in the category row, then Lleida in the panel
     async function filterMusicInLleida(
       screen: Awaited<ReturnType<typeof renderSearch>>,
     ) {
-      await fireEvent.press(screen.getByRole("button", { name: "Filters" }));
+      await fireEvent.press(screen.getByRole("checkbox", { name: "Music" }));
+      await fireEvent.press(screen.getByRole("button", { name: /^Filters/ }));
       await fireEvent.press(
         await screen.findByRole("button", { name: /^City/ }),
       );
       await fireEvent.press(screen.getByRole("radio", { name: "Lleida" }));
-      await fireEvent.press(screen.getByRole("button", { name: /^Category/ }));
-      await fireEvent.press(screen.getByRole("checkbox", { name: "Music" }));
-      await fireEvent.press(screen.getByRole("button", { name: "Done" }));
       await fireEvent.press(
         screen.getByRole("button", { name: "Apply filters" }),
       );
@@ -400,6 +402,95 @@ describe("CatalogSearch", () => {
       expect(
         screen.getByRole("button", { name: "Filters, 2 active" }),
       ).toBeTruthy();
+    });
+  });
+
+  describe("profile and categories", () => {
+    it("shows the section title", async () => {
+      const screen = await renderSearch();
+
+      expect(
+        screen.getByRole("header", { name: "Discover activities" }),
+      ).toBeTruthy();
+    });
+
+    it("filters by a category of the row and removes it on a second press", async () => {
+      mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+      const screen = await renderSearch();
+
+      await fireEvent.press(screen.getByRole("checkbox", { name: "Music" }));
+
+      await waitFor(() =>
+        expect(mockSearch).toHaveBeenCalledWith(
+          "",
+          { ...NO_SEARCH_FILTERS, categories: ["music"] },
+          0,
+        ),
+      );
+      expect(
+        screen.getByRole("button", { name: "Remove filter Music" }),
+      ).toBeTruthy();
+
+      await fireEvent.press(screen.getByRole("checkbox", { name: "Music" }));
+
+      await waitFor(() =>
+        expect(screen.getByText("Every activity")).toBeTruthy(),
+      );
+    });
+
+    it("applies the ages of the profile as a filter the customer can remove", async () => {
+      mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+      const screen = await renderWithQuery(
+        <CatalogSearch
+          onOpen={jest.fn()}
+          profileAges={{ ageMin: 8, ageMax: 8 }}
+        />,
+      );
+
+      await waitFor(() =>
+        expect(mockSearch).toHaveBeenCalledWith(
+          "",
+          { ...NO_SEARCH_FILTERS, ageMin: 8, ageMax: 8 },
+          0,
+        ),
+      );
+
+      await fireEvent.press(
+        screen.getByRole("button", { name: "Remove filter Age 8" }),
+      );
+
+      await waitFor(() =>
+        expect(screen.getByText("Every activity")).toBeTruthy(),
+      );
+    });
+
+    it("applies the ages again when the profile changes", async () => {
+      mockSearch.mockResolvedValue([]);
+      const screen = await render(
+        <CatalogSearch
+          onOpen={jest.fn()}
+          profileAges={{ ageMin: 8, ageMax: 8 }}
+        />,
+        // rerender keeps the wrapper, so the query client stays the same
+        { wrapper: createQueryClientWrapper(createTestQueryClient()) },
+      );
+      await screen.findByRole("button", { name: "Remove filter Age 8" });
+
+      await screen.rerender(
+        <CatalogSearch
+          onOpen={jest.fn()}
+          profileAges={{ ageMin: 18, ageMax: null }}
+        />,
+      );
+
+      expect(
+        await screen.findByRole("button", {
+          name: "Remove filter From 18 years",
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole("button", { name: "Remove filter Age 8" }),
+      ).toBeNull();
     });
   });
 });
