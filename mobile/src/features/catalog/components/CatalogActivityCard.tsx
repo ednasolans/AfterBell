@@ -5,11 +5,13 @@ import { ACTIVITY_TYPE_LABELS } from "@/lib/activityTypes";
 import { isFinished } from "@/lib/activity";
 import { colors } from "@/theme/colors";
 import { categoryLabel } from "@/lib/activityCategories";
+import { type TimeSlot } from "@/lib/schedule";
 
 import {
   formatActivityPrice,
-  formatAgeRanges,
+  formatAgeSummary,
   formatDateRange,
+  formatScheduleSummary,
 } from "../format";
 import { type CatalogCardActivity } from "../types";
 import { activityImage } from "../visuals";
@@ -21,6 +23,8 @@ type CatalogActivityCardProps = {
   isFavourite: boolean;
   // A favourite that can no longer be opened: marked, and only its heart works
   unavailable?: boolean;
+  // Not known in the favourites list
+  schedule?: readonly TimeSlot[];
   onPress: () => void;
 };
 
@@ -29,10 +33,13 @@ export function CatalogActivityCard({
   providerName,
   isFavourite,
   unavailable = false,
+  schedule = [],
   onPress,
 }: Readonly<CatalogActivityCardProps>) {
   const image = activityImage(activity.category);
   const dates = formatDateRange(activity.startDate, activity.endDate);
+  const ages = formatAgeSummary(activity.targetAgeRanges);
+  const times = formatScheduleSummary(schedule);
 
   // The heart sits over the card, not inside it: a button cannot contain
   // another button (invalid HTML on web, and screen readers would not reach it)
@@ -80,47 +87,20 @@ export function CatalogActivityCard({
               {ACTIVITY_TYPE_LABELS[activity.type]}
             </Text>
           ) : null}
-          {providerName ? (
-            <View style={styles.providerRow}>
-              <Ionicons
-                name="business-outline"
-                size={15}
-                color={colors.primaryDark}
-              />
-              <Text style={styles.provider}>{providerName}</Text>
-            </View>
-          ) : null}
-          {dates ? (
-            <View style={styles.metaItem}>
-              <Ionicons
-                name="calendar-outline"
-                size={15}
-                color={colors.textMuted}
-              />
-              <Text style={styles.detail}>{dates}</Text>
-            </View>
-          ) : null}
-          <View style={styles.metaRow}>
-            <View style={styles.metaItem}>
-              <Ionicons
-                name="people-outline"
-                size={15}
-                color={colors.textMuted}
-              />
-              <Text style={styles.detail}>
-                {`Ages: ${formatAgeRanges(activity.targetAgeRanges)}`}
-              </Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Ionicons
-                name="pricetag-outline"
-                size={15}
-                color={colors.textMuted}
-              />
-              <Text style={styles.detail}>
-                {formatActivityPrice(activity.price, activity.pricePeriod)}
-              </Text>
-            </View>
+          <View style={styles.providerRow}>
+            <Text style={styles.provider} numberOfLines={1}>
+              {providerName ?? ""}
+            </Text>
+            <Text style={styles.price}>
+              {formatActivityPrice(activity.price, activity.pricePeriod)}
+            </Text>
+          </View>
+          <View style={styles.chips}>
+            {ages ? (
+              <Text style={[styles.chip, styles.ageChip]}>{ages}</Text>
+            ) : null}
+            {times ? <IconChip icon="time-outline" text={times} /> : null}
+            {dates ? <IconChip icon="calendar-outline" text={dates} /> : null}
           </View>
         </View>
       </Pressable>
@@ -131,6 +111,21 @@ export function CatalogActivityCard({
           isFavourite={isFavourite}
         />
       </View>
+    </View>
+  );
+}
+
+function IconChip({
+  icon,
+  text,
+}: {
+  icon: "time-outline" | "calendar-outline";
+  text: string;
+}) {
+  return (
+    <View style={[styles.chip, styles.iconChip]}>
+      <Ionicons name={icon} size={13} color={colors.textMuted} />
+      <Text style={styles.chipText}>{text}</Text>
     </View>
   );
 }
@@ -151,7 +146,7 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.8 },
   unavailable: { opacity: 0.6 },
-  imageWrap: { height: 148, position: "relative" },
+  imageWrap: { height: 130, position: "relative" },
   image: { width: "100%", height: "100%" },
   categoryBadge: {
     position: "absolute",
@@ -177,9 +172,32 @@ const styles = StyleSheet.create({
   body: { padding: 16, gap: 8 },
   title: { fontSize: 18, fontWeight: "800", color: colors.text },
   typeLabel: { color: colors.primaryDark, fontWeight: "700" },
-  providerRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  provider: { color: colors.primaryDark, fontWeight: "700" },
-  metaRow: { flexDirection: "row", gap: 14, flexWrap: "wrap" },
-  metaItem: { flexDirection: "row", alignItems: "center", gap: 5 },
-  detail: { color: colors.textMuted, fontSize: 14 },
+  providerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  provider: { flex: 1, color: colors.textMuted, fontSize: 14 },
+  price: { color: colors.primaryDark, fontSize: 15, fontWeight: "800" },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 2 },
+  chip: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    fontSize: 12,
+    overflow: "hidden",
+  },
+  ageChip: {
+    backgroundColor: colors.primarySoft,
+    color: colors.primaryDark,
+    fontWeight: "700",
+  },
+  iconChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.surfaceMuted,
+  },
+  chipText: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
 });

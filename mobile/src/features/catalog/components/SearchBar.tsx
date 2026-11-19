@@ -21,7 +21,7 @@ export function SearchBar({
 }: Readonly<SearchBarProps>) {
   return (
     <View style={styles.bar}>
-      <Ionicons name="search" size={18} color={colors.textMuted} />
+      <Ionicons name="search" size={20} color={colors.primaryDark} />
       <TextInput
         style={styles.input}
         value={value}
@@ -57,12 +57,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
-    paddingHorizontal: 12,
+    borderRadius: 18,
+    paddingHorizontal: 14,
     marginHorizontal: 16,
-    marginTop: 8,
+    marginTop: 12,
     // Outside the list, so the cards never touch the bar when scrolling
     marginBottom: 8,
   },
-  input: { flex: 1, paddingVertical: 12, fontSize: 15, color: colors.text },
+  input: { flex: 1, paddingVertical: 14, fontSize: 15, color: colors.text },
 });

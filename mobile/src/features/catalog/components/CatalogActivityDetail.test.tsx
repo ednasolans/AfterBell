@@ -8,6 +8,7 @@ import {
   makeCatalogActivity,
   makeProvider,
   renderWithQuery,
+  TEST_PROFILE_ID,
 } from "../testFixtures";
 import { type CatalogActivityDetail as Detail } from "../types";
 import { CatalogActivityDetail } from "./CatalogActivityDetail";
@@ -22,10 +23,10 @@ const mockAddFavourite = jest.fn();
 const mockRemoveFavourite = jest.fn();
 
 jest.mock("../api/addFavourite", () => ({
-  addFavourite: (id: string) => mockAddFavourite(id),
+  addFavourite: (target: unknown) => mockAddFavourite(target),
 }));
 jest.mock("../api/removeFavourite", () => ({
-  removeFavourite: (id: string) => mockRemoveFavourite(id),
+  removeFavourite: (target: unknown) => mockRemoveFavourite(target),
 }));
 
 function makeDetail(overrides: Partial<Detail> = {}): Detail {
@@ -324,7 +325,10 @@ describe("CatalogActivityDetail", () => {
       await findByLabelText("Remove Saturday workshop from favourites"),
     );
 
-    expect(mockRemoveFavourite).toHaveBeenCalledWith("a1");
+    expect(mockRemoveFavourite).toHaveBeenCalledWith({
+      familyProfileId: TEST_PROFILE_ID,
+      activityId: "a1",
+    });
     expect(
       await findByLabelText("Save Saturday workshop in favourites"),
     ).toBeTruthy();

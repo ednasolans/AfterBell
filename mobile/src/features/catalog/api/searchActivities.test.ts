@@ -9,6 +9,7 @@ import {
   SEARCH_TOO_SHORT_MESSAGE,
   countSearchActivities,
   searchActivities,
+  searchFilterErrors,
   trimSearchQuery,
   validateSearchFilters,
   validateSearchQuery,
@@ -304,5 +305,37 @@ describe("validateSearchFilters", () => {
     const filters = { ...VALID, categories: [...VALID.categories] };
     validateSearchFilters(filters);
     expect(filters).toEqual(VALID);
+  });
+
+  it("reports the age error first when both ranges are wrong", () => {
+    expect(
+      validateSearchFilters({ ...VALID, ageMin: 10, ageMax: 9, priceMin: -1 }),
+    ).toBe(SEARCH_ERROR_MESSAGES.search_invalid_age_range);
+  });
+});
+
+describe("searchFilterErrors", () => {
+  it("has no errors for no filters", () => {
+    expect(searchFilterErrors(NO_SEARCH_FILTERS)).toEqual({});
+  });
+
+  it("gives the error of each range to its own field", () => {
+    expect(
+      searchFilterErrors({
+        ...NO_SEARCH_FILTERS,
+        ageMin: 10,
+        ageMax: 9,
+        priceMax: 5,
+      }),
+    ).toEqual({
+      age: SEARCH_ERROR_MESSAGES.search_invalid_age_range,
+      price: SEARCH_ERROR_MESSAGES.search_price_period_required,
+    });
+  });
+
+  it("prefers the range error to the missing period", () => {
+    expect(
+      searchFilterErrors({ ...NO_SEARCH_FILTERS, priceMin: 9, priceMax: 5 }),
+    ).toEqual({ price: SEARCH_ERROR_MESSAGES.search_invalid_price_range });
   });
 });

@@ -1,18 +1,23 @@
 import { act, fireEvent, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
 
-import { makeActivity, makeFavourite, renderWithQuery } from "../testFixtures";
+import {
+  makeActivity,
+  makeFavourite,
+  renderWithQuery,
+  TEST_PROFILE_ID,
+} from "../testFixtures";
 import { FavouritesList } from "./FavouritesList";
 
 const mockFetch = jest.fn();
 const mockRemoveFavourite = jest.fn();
 
 jest.mock("../api/fetchFavourites", () => ({
-  fetchFavourites: () => mockFetch(),
+  fetchFavourites: (profileId: string) => mockFetch(profileId),
 }));
 jest.mock("../api/addFavourite", () => ({ addFavourite: jest.fn() }));
 jest.mock("../api/removeFavourite", () => ({
-  removeFavourite: (id: string) => mockRemoveFavourite(id),
+  removeFavourite: (target: unknown) => mockRemoveFavourite(target),
 }));
 
 function renderList(onOpen = jest.fn(), onExplore = jest.fn()) {
@@ -30,6 +35,26 @@ describe("FavouritesList", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it("loads the favourites of the active family profile", async () => {
+    mockFetch.mockResolvedValue([]);
+
+    await renderList();
+
+    await waitFor(() =>
+      expect(mockFetch).toHaveBeenCalledWith(TEST_PROFILE_ID),
+    );
+  });
+
+  it("asks for a family profile when there is none, without loading anything", async () => {
+    const { getByText } = await renderWithQuery(
+      <FavouritesList onOpen={jest.fn()} onExplore={jest.fn()} />,
+      null,
+    );
+
+    expect(getByText("Add a family profile to save favourites.")).toBeTruthy();
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("shows the saved activities with the activity card and a full heart", async () => {
@@ -82,7 +107,10 @@ describe("FavouritesList", () => {
       await findByLabelText("Remove Saturday workshop from favourites"),
     );
 
-    expect(mockRemoveFavourite).toHaveBeenCalledWith("a1");
+    expect(mockRemoveFavourite).toHaveBeenCalledWith({
+      familyProfileId: TEST_PROFILE_ID,
+      activityId: "a1",
+    });
     await waitFor(() => expect(queryByText("Saturday workshop")).toBeNull());
   });
 

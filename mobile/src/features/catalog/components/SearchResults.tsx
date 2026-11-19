@@ -9,6 +9,7 @@ import {
 
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
+import { type SearchFilters } from "@/lib/searchFilters";
 import { colors } from "@/theme/colors";
 
 import { useSearchActivities } from "../hooks/useSearchActivities";
@@ -16,8 +17,10 @@ import { useSearchCount } from "../hooks/useSearchCount";
 import { CatalogActivityCard } from "./CatalogActivityCard";
 
 type SearchResultsProps = {
-  // Trimmed and valid
+  // Trimmed and valid; '' searches only with the filters
   query: string;
+  // Valid
+  filters: SearchFilters;
   onOpen: (id: string) => void;
 };
 
@@ -27,9 +30,13 @@ function countLabel(total: number): string {
 
 // The activities that match a search, with how many there are. More pages are
 // loaded when the end of the list is reached.
-export function SearchResults({ query, onOpen }: Readonly<SearchResultsProps>) {
-  const results = useSearchActivities(query);
-  const count = useSearchCount(query);
+export function SearchResults({
+  query,
+  filters,
+  onOpen,
+}: Readonly<SearchResultsProps>) {
+  const results = useSearchActivities(query, filters);
+  const count = useSearchCount(query, filters);
 
   if (results.isPending) {
     return <LoadingView />;
@@ -77,11 +84,14 @@ export function SearchResults({ query, onOpen }: Readonly<SearchResultsProps>) {
       ListEmptyComponent={
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>
-            {`No activities match "${query}".`}
+            {query === ""
+              ? "No activities match these filters."
+              : `No activities match "${query}".`}
           </Text>
           <Text style={styles.emptyHint}>
-            Try other words, check the spelling or clear the search to see every
-            activity.
+            {query === ""
+              ? "Remove some filters to see more activities."
+              : "Try other words, check the spelling or clear the search to see every activity."}
           </Text>
         </View>
       }
@@ -97,6 +107,7 @@ export function SearchResults({ query, onOpen }: Readonly<SearchResultsProps>) {
           activity={item.activity}
           providerName={item.provider.contact?.name ?? null}
           isFavourite={item.isFavourite}
+          schedule={item.activity.schedule}
           onPress={() => onOpen(item.activity.id)}
         />
       )}

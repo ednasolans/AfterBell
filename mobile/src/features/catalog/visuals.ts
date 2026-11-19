@@ -1,3 +1,6 @@
+import { type Ionicons } from "@expo/vector-icons";
+import { type ComponentProps } from "react";
+
 import { type ActivityCategory } from "@/lib/activityCategories";
 
 export const ACTIVITY_IMAGES: Record<ActivityCategory, string> = {
@@ -31,3 +34,34 @@ export function activityImage(category: string): string {
     ? ACTIVITY_IMAGES[category as ActivityCategory]
     : ACTIVITY_IMAGES.other;
 }
+
+type IconName = ComponentProps<typeof Ionicons>["name"];
+
+export const ACTIVITY_ICONS: Record<ActivityCategory, IconName> = {
+  football: "football-outline",
+  basketball: "basketball-outline",
+  tennis: "tennisball-outline",
+  swimming: "water-outline",
+  dance: "body-outline",
+  drama: "happy-outline",
+  music: "musical-notes-outline",
+  language: "language-outline",
+  art: "color-palette-outline",
+  tutoring: "school-outline",
+  other: "sparkles-outline",
+};
+
+// Icon of a category, or the "other" icon for categories added later
+export function activityIcon(category: string): IconName {
+  return category in ACTIVITY_ICONS
+    ? ACTIVITY_ICONS[category as ActivityCategory]
+    : ACTIVITY_ICONS.other;
+}
+
+// Soft background and icon colour of the category shortcuts, in turn
+export const CATEGORY_TINTS = [
+  { background: "#e3f1ec", icon: "#2f7d6b" },
+  { background: "#fdf1d6", icon: "#b7791f" },
+  { background: "#f9e3e1", icon: "#c0564b" },
+  { background: "#e6e9f8", icon: "#4a5bb5" },
+] as const;

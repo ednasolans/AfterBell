@@ -1,47 +1,43 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import LogoutButton from "@/components/LogoutButton";
 import { CatalogSearch } from "@/features/catalog/components/CatalogSearch";
+import { ExploringForCard } from "@/features/family-profiles/components/ExploringForCard";
+import { useActiveProfileAges } from "@/features/family-profiles/hooks/useActiveProfileAges";
 import { colors } from "@/theme/colors";
 
-// Home of the customer area: access to the family profiles and the list and search of activities
+// Home of the customer area: who the family is exploring for, and the list
+// and search of activities for that profile's age
 export default function CustomerHomeScreen() {
   const router = useRouter();
+  const profileAges = useActiveProfileAges();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hi there!</Text>
-        <View style={styles.titleRow}>
-          <View>
-            <Text style={styles.title}>What shall we</Text>
-            <Text style={styles.title}>explore today?</Text>
-          </View>
-          <View style={styles.avatar}>
+        <View style={styles.brandRow}>
+          <View style={styles.logo}>
             <Ionicons
-              name="person-outline"
-              size={22}
-              color={colors.primaryDark}
+              name="notifications-outline"
+              size={20}
+              color={colors.white}
             />
           </View>
+          <Text style={styles.brand}>AfterBell</Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/family-profiles")}
-          style={styles.button}
-        >
-          <Ionicons
-            name="people-outline"
-            size={18}
-            color={colors.primaryDark}
-          />
-          <Text style={styles.buttonText}>My family profiles</Text>
-        </Pressable>
+        <ExploringForCard
+          onAddProfile={() => router.push("/family-profiles")}
+        />
+        <Text style={styles.title} accessibilityRole="header">
+          What shall we explore today?
+        </Text>
       </View>
 
       <CatalogSearch
+        profileAges={profileAges}
         onOpen={(id) =>
           router.push({ pathname: "/activities/[id]", params: { id } })
         }
@@ -49,9 +45,11 @@ export default function CustomerHomeScreen() {
 
       <View style={styles.footer}>
         <View style={styles.bottomNav}>
-          <View style={[styles.navItem, styles.navItemActive]}>
-            <Ionicons name="compass" size={21} color={colors.primaryDark} />
-            <Text style={styles.navActiveText}>Explore</Text>
+          <View style={styles.navItem}>
+            <View style={styles.navItemActive}>
+              <Ionicons name="home" size={21} color={colors.primaryDark} />
+            </View>
+            <Text style={styles.navActiveText}>Home</Text>
           </View>
           <Pressable
             accessibilityRole="button"
@@ -91,46 +89,29 @@ export default function CustomerHomeScreen() {
           <LogoutButton />
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 },
-  greeting: { color: colors.primaryDark, fontWeight: "700", fontSize: 14 },
-  titleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  header: { paddingHorizontal: 16, paddingTop: 12, gap: 14 },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  logo: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.primaryDark,
     alignItems: "center",
+    justifyContent: "center",
   },
+  brand: { color: colors.text, fontSize: 22, fontWeight: "800" },
   title: {
     color: colors.text,
-    fontSize: 27,
+    fontSize: 26,
     fontWeight: "800",
-    marginTop: 4,
     lineHeight: 31,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  button: {
-    backgroundColor: colors.primarySoft,
-    padding: 13,
-    borderRadius: 14,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-  },
-  buttonText: {
-    color: colors.primaryDark,
-    fontWeight: "700",
+    marginBottom: 4,
   },
   footer: {
     paddingHorizontal: 16,
@@ -150,7 +131,8 @@ const styles = StyleSheet.create({
   navItemActive: {
     backgroundColor: colors.primarySoft,
     borderRadius: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
   },
   navActiveText: { color: colors.primaryDark, fontSize: 11, fontWeight: "800" },
   navText: { color: colors.textMuted, fontSize: 11, fontWeight: "600" },
