@@ -16,12 +16,16 @@ jest.mock("@/lib/supabase", () => ({ supabase: {} }));
 const mockList = jest.fn();
 const mockSearch = jest.fn();
 const mockCount = jest.fn();
+const mockSummary = jest.fn();
 
 jest.mock("../api/fetchCatalogActivities", () => ({
   fetchCatalogActivities: () => mockList(),
 }));
 jest.mock("../api/searchCatalogActivities", () => ({
   searchCatalogActivities: (...args: unknown[]) => mockSearch(...args),
+}));
+jest.mock("@/features/search-summary/api/fetchSearchSummary", () => ({
+  fetchSearchSummary: (...args: unknown[]) => mockSummary(...args),
 }));
 jest.mock("../api/searchActivities", () => ({
   ...jest.requireActual("../api/searchActivities"),
@@ -59,6 +63,7 @@ beforeEach(() => {
   jest.spyOn(console, "error").mockImplementation(() => undefined);
   mockList.mockResolvedValue([FULL_LIST]);
   mockCount.mockResolvedValue(2);
+  mockSummary.mockResolvedValue({ status: "UNAVAILABLE" });
 });
 
 afterEach(() => {
@@ -119,6 +124,39 @@ describe("CatalogSearch", () => {
     expect(screen.getByText("Piano lessons")).toBeTruthy();
     expect(screen.getByText("Maths tutor")).toBeTruthy();
     expect(screen.queryByText("Every activity")).toBeNull();
+  });
+  it("shows the AI summary of the results above them", async () => {
+    mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+    mockSummary.mockResolvedValue({
+      status: "READY",
+      summary: "One piano activity for children.",
+    });
+    const screen = await renderSearch();
+
+    await type(screen, " piano ");
+
+    expect(
+      await screen.findByText("One piano activity for children."),
+    ).toBeTruthy();
+    expect(screen.getByText("AI summary")).toBeTruthy();
+    expect(screen.getByText("Piano lessons")).toBeTruthy();
+    expect(mockSummary).toHaveBeenCalledWith(
+      { ...NO_SEARCH_FILTERS, query: "piano" },
+      expect.anything(),
+    );
+  });
+
+  it("asks for no AI summary when nothing is found", async () => {
+    mockSearch.mockResolvedValue([]);
+    const screen = await renderSearch();
+
+    await type(screen, "nothing");
+
+    expect(
+      await screen.findByText('No activities match "nothing".'),
+    ).toBeTruthy();
+    expect(mockSummary).not.toHaveBeenCalled();
+    expect(screen.queryByText("AI summary")).toBeNull();
   });
 
   it("says when one activity is found", async () => {

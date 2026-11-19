@@ -10,6 +10,8 @@ import {
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
 import { colors } from "@/theme/colors";
+import { SearchSummary } from "@/features/search-summary/components/SearchSummary";
+import { NO_SEARCH_FILTERS } from "@/lib/searchFilters";
 
 import { useSearchActivities } from "../hooks/useSearchActivities";
 import { useSearchCount } from "../hooks/useSearchCount";
@@ -68,10 +70,16 @@ export function SearchResults({ query, onOpen }: Readonly<SearchResultsProps>) {
         }
       }}
       ListHeaderComponent={
-        count.data !== undefined && activities.length > 0 ? (
-          <Text style={styles.count} accessibilityLiveRegion="polite">
-            {countLabel(count.data)}
-          </Text>
+        activities.length > 0 ? (
+          <>
+            {/* The AI summary only starts once there are results to summarize */}
+            <SearchSummary filters={{ ...NO_SEARCH_FILTERS, query }} enabled />
+            {count.data === undefined ? null : (
+              <Text style={styles.count} accessibilityLiveRegion="polite">
+                {countLabel(count.data)}
+              </Text>
+            )}
+          </>
         ) : undefined
       }
       ListEmptyComponent={
