@@ -11,6 +11,7 @@ import { fetchMyActivities } from "./fetchMyActivities";
 import { toActivity, type ActivityRow } from "@/lib/activity";
 import { updateActivity } from "./updateActivity";
 import { toActivityInsert } from "./toActivityInsert";
+import { toActivityForm } from "./toActivityForm";
 
 // Replace the real client: tests must not need a database
 jest.mock("@/lib/supabase", () => ({
@@ -112,6 +113,28 @@ describe("fetchMyActivities", () => {
 });
 
 describe("fetchActivity", () => {
+  it("restores a saved event without a weekly schedule for editing", async () => {
+    mockQuery({
+      data: {
+        ...ROW,
+        type: "event",
+        start_date: "2027-07-01",
+        end_date: "2027-07-15",
+        schedule: null,
+      },
+      error: null,
+    });
+
+    const activity = await fetchActivity("activity-1");
+
+    expect(toActivityForm(activity)).toMatchObject({
+      type: "event",
+      startDate: "2027-07-01",
+      endDate: "2027-07-15",
+      schedule: [],
+    });
+  });
+
   it("returns the activity with the given id", async () => {
     const languages = [{ language: "Catalan", level: "C1" }];
     const row = { ...ROW, is_tutor: true, languages };
@@ -133,6 +156,65 @@ describe("fetchActivity", () => {
 
 describe("updateActivity", () => {
   const rpc = jest.mocked(supabase.rpc);
+  it.each([{ schedule: [] }, { schedule: FORM.schedule }])(
+    "updates an event through activities with optional slots (%j)",
+    async ({ schedule }) => {
+      rpc.mockResolvedValue({ error: null } as Awaited<
+        ReturnType<typeof supabase.rpc>
+      >);
+
+      await updateActivity({
+        id: "activity-1",
+        form: {
+          ...FORM,
+          type: "event",
+          startDate: "2027-07-01",
+          endDate: "2027-07-15",
+          schedule,
+        },
+      });
+
+      expect(rpc).toHaveBeenCalledWith("save_activity_with_languages", {
+        p_activity_id: "activity-1",
+        p_languages: [],
+        p_activity: expect.objectContaining({
+          type: "event",
+          start_date: "2027-07-01",
+          end_date: "2027-07-15",
+          schedule: schedule.length === 0 ? null : schedule,
+        }),
+      });
+      expect(rpc.mock.calls[0][1]).not.toHaveProperty("p_activity.status");
+    },
+  );
+
+  it("updates an event to whole-year with both dates cleared", async () => {
+    rpc.mockResolvedValue({ error: null } as Awaited<
+      ReturnType<typeof supabase.rpc>
+    >);
+    const eventForm = toActivityForm({
+      ...toActivity(ROW),
+      type: "event",
+      startDate: "2027-07-01",
+      endDate: "2027-07-15",
+    });
+
+    await updateActivity({
+      id: "activity-1",
+      form: { ...eventForm, type: "whole_year" },
+    });
+
+    expect(rpc).toHaveBeenCalledWith("save_activity_with_languages", {
+      p_activity_id: "activity-1",
+      p_languages: [],
+      p_activity: expect.objectContaining({
+        type: "whole_year",
+        start_date: null,
+        end_date: null,
+        schedule: FORM.schedule,
+      }),
+    });
+  });
 
   it("updates the activity and its pairs together", async () => {
     rpc.mockResolvedValue({ error: null } as Awaited<

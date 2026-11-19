@@ -200,3 +200,94 @@ describe("useActivityForm", () => {
     expect(result.current.hasUnsavedChanges).toBe(true);
   });
 });
+
+describe("activity and event switching", () => {
+  const EVENT: ActivityForm = {
+    ...VALID_ACTIVITY,
+    type: "event",
+    startDate: "2099-07-01",
+    endDate: "2099-07-15",
+  };
+
+  it("clears event dates and preserves all shared fields and saved slots", async () => {
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+    const { result } = await renderHook(() =>
+      useActivityForm({ initialForm: EVENT, onSubmit }),
+    );
+
+    await act(() => result.current.updateField("type", "whole_year"));
+
+    expect(result.current.form).toEqual({
+      ...EVENT,
+      type: "whole_year",
+      startDate: null,
+      endDate: null,
+    });
+    expect(await act(() => result.current.submit())).toBe(true);
+    expect(onSubmit).toHaveBeenCalledWith(result.current.form);
+    expect(EVENT.startDate).toBe("2099-07-01");
+  });
+
+  it("does not restore event dates after switching back", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({ initialForm: EVENT, onSubmit: jest.fn() }),
+    );
+
+    await act(() => result.current.updateField("type", "whole_year"));
+    await act(() => result.current.updateField("type", "event"));
+
+    expect(result.current.form).toEqual({
+      ...EVENT,
+      startDate: null,
+      endDate: null,
+    });
+  });
+
+  it("discards stale dates when a saved whole-year activity becomes an event", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({
+        initialForm: { ...EVENT, type: "whole_year" },
+        onSubmit: jest.fn(),
+      }),
+    );
+
+    await act(() => result.current.updateField("type", "event"));
+
+    expect(result.current.form.startDate).toBeNull();
+    expect(result.current.form.endDate).toBeNull();
+  });
+
+  it("keeps event dates when editing a shared field", async () => {
+    const { result } = await renderHook(() =>
+      useActivityForm({ initialForm: EVENT, onSubmit: jest.fn() }),
+    );
+
+    await act(() => result.current.updateField("title", "Swimming event"));
+
+    expect(result.current.form).toEqual({ ...EVENT, title: "Swimming event" });
+  });
+
+  it("updates schedule and date errors immediately after type changes", async () => {
+    const onSubmit = jest.fn();
+    const { result } = await renderHook(() =>
+      useActivityForm({
+        initialForm: { ...EVENT, schedule: [] },
+        onSubmit,
+      }),
+    );
+
+    expect(await act(() => result.current.submit())).toBe(true);
+    await act(() => result.current.updateField("type", "whole_year"));
+    expect(result.current.errors).toEqual({
+      schedule: "Add at least one time slot",
+    });
+
+    await act(() => result.current.updateField("type", "event"));
+    expect(result.current.errors).toEqual({
+      startDate: "Choose the start date",
+      endDate: "Choose the end date",
+    });
+    expect(await act(() => result.current.submit())).toBe(false);
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+});

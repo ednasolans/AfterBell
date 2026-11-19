@@ -4,7 +4,6 @@ import {
   type AgeBounds,
   type AgeRange,
 } from "@/lib/ages";
-import { formatDate } from "@/lib/dates";
 import { formatPrice as formatPriceValue } from "@/lib/price";
 import { type TimeSlot, WEEK_DAYS, type WeekDay } from "@/lib/schedule";
 
@@ -27,17 +26,7 @@ export function formatPrice(price: number): string {
   return price === 0 ? "Free" : `${price} €`;
 }
 
-export function formatDateRange(
-  startDate: string | null,
-  endDate: string | null,
-): string | null {
-  if (startDate && endDate) {
-    return `${formatDate(startDate)} – ${formatDate(endDate)}`;
-  }
-  if (startDate) return `From ${formatDate(startDate)}`;
-  if (endDate) return `Until ${formatDate(endDate)}`;
-  return null;
-}
+export { formatDateRange } from "@/lib/dates";
 
 // "Ages 7–12", "Ages 4–6, 13–15", "Ages 16+", "Adults" or "All ages".
 // Ranges that follow each other are joined. The database also allows

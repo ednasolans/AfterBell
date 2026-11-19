@@ -64,7 +64,7 @@ function validatePlace(form: ActivityForm, errors: ActivityErrors): void {
 }
 
 function validateSchedule(form: ActivityForm, errors: ActivityErrors): void {
-  if (form.schedule.length === 0) {
+  if (form.type === "whole_year" && form.schedule.length === 0) {
     errors.schedule = "Add at least one time slot";
   }
 }
@@ -78,7 +78,7 @@ function validateDates(
   today: string,
   errors: ActivityErrors,
 ): void {
-  if (form.type !== "temporary") {
+  if (form.type === "whole_year") {
     return;
   }
   const { startDate, endDate } = form;

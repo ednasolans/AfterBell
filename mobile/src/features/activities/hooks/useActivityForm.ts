@@ -54,8 +54,11 @@ export function useActivityForm({
   ) {
     setForm((previous) => {
       let next = { ...previous, [field]: value };
-      // A whole-year activity has no dates
-      if (next.type === "whole_year") {
+      // Clear inapplicable dates when entering or leaving whole-year activities.
+      if (
+        next.type === "whole_year" ||
+        (field === "type" && previous.type === "whole_year")
+      ) {
         next = { ...next, startDate: null, endDate: null };
       }
       // "No limit" has no maximum

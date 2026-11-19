@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ACTIVITY_TYPE_LABELS } from "@/lib/activityTypes";
 import { isFinished } from "@/lib/activity";
 import { colors } from "@/theme/colors";
 import { categoryLabel } from "@/lib/activityCategories";
@@ -81,6 +82,11 @@ export function CatalogActivityCard({
         </View>
         <View style={styles.body}>
           <Text style={styles.title}>{activity.title}</Text>
+          {activity.type === "event" ? (
+            <Text style={styles.typeLabel}>
+              {ACTIVITY_TYPE_LABELS[activity.type]}
+            </Text>
+          ) : null}
           <View style={styles.providerRow}>
             <Text style={styles.provider} numberOfLines={1}>
               {providerName ?? ""}
@@ -165,6 +171,7 @@ const styles = StyleSheet.create({
   favourite: { position: "absolute", right: 13, top: 13 },
   body: { padding: 16, gap: 8 },
   title: { fontSize: 18, fontWeight: "800", color: colors.text },
+  typeLabel: { color: colors.primaryDark, fontWeight: "700" },
   providerRow: {
     flexDirection: "row",
     alignItems: "center",
