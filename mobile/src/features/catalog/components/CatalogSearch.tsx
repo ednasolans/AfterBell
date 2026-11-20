@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactElement, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { type AgeBounds } from "@/lib/ages";
@@ -24,6 +24,9 @@ type CatalogSearchProps = {
   // Ages of the profile the customer is exploring for: they become the age
   // filter each time they change, and the customer can still remove it
   profileAges?: AgeBounds | null;
+  // Shown at the top of the list while no text is searched (e.g. the
+  // recommendations, which belong to another feature)
+  listHeader?: ReactElement;
 };
 
 // The search bar and the filters above the activities: the full list without
@@ -33,6 +36,7 @@ type CatalogSearchProps = {
 export function CatalogSearch({
   onOpen,
   profileAges = null,
+  listHeader,
 }: Readonly<CatalogSearchProps>) {
   const [text, setText] = useState("");
   // The text sent with the keyboard's search key, searched without the pause
@@ -68,6 +72,15 @@ export function CatalogSearch({
   // An invalid text is not searched, but the filters still are
   const searched = invalid ? "" : query;
   const hasFilters = activeFilterChips(filters).length > 0;
+  // Scrolled with the activities, so the header does not take their space
+  const header = (
+    <View>
+      {searched === "" ? listHeader : null}
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Discover activities
+      </Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -92,13 +105,15 @@ export function CatalogSearch({
           }))
         }
       />
-      <Text style={styles.sectionTitle} accessibilityRole="header">
-        Discover activities
-      </Text>
       {searched === "" && !hasFilters ? (
-        <CatalogList onOpen={onOpen} />
+        <CatalogList onOpen={onOpen} header={header} />
       ) : (
-        <SearchResults query={searched} filters={filters} onOpen={onOpen} />
+        <SearchResults
+          query={searched}
+          filters={filters}
+          onOpen={onOpen}
+          header={header}
+        />
       )}
       {/* Mounted only while open, so it starts from the applied filters */}
       {isPanelOpen ? (
@@ -121,7 +136,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 20,
     fontWeight: "800",
-    marginHorizontal: 16,
     marginTop: 4,
     marginBottom: 10,
   },
