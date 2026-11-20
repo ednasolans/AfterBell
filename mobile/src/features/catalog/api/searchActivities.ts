@@ -55,25 +55,38 @@ function validateRange(
   return min !== null && max !== null && min > max ? codes.invalid : null;
 }
 
-// null when the filters can be sent, otherwise the message for the customer.
-// The database checks the same rules, and also that the categories exist.
-export function validateSearchFilters(filters: SearchFilters): string | null {
-  const code =
-    validateRange(filters.ageMin, filters.ageMax, {
-      negative: "search_negative_age",
-      invalid: "search_invalid_age_range",
-    }) ??
+export type SearchFilterErrors = { age?: string; price?: string };
+
+// The message for the customer of each invalid range, to show it next to its
+// fields. The database checks the same rules, and also that the categories exist.
+export function searchFilterErrors(filters: SearchFilters): SearchFilterErrors {
+  const errors: SearchFilterErrors = {};
+  const ageCode = validateRange(filters.ageMin, filters.ageMax, {
+    negative: "search_negative_age",
+    invalid: "search_invalid_age_range",
+  });
+  if (ageCode) {
+    errors.age = SEARCH_ERROR_MESSAGES[ageCode];
+  }
+  const hasPrice = filters.priceMin !== null || filters.priceMax !== null;
+  const priceCode =
     validateRange(filters.priceMin, filters.priceMax, {
       negative: "search_negative_price",
       invalid: "search_invalid_price_range",
-    });
-  if (code) {
-    return SEARCH_ERROR_MESSAGES[code];
+    }) ??
+    (hasPrice && filters.pricePeriod === null
+      ? "search_price_period_required"
+      : null);
+  if (priceCode) {
+    errors.price = SEARCH_ERROR_MESSAGES[priceCode];
   }
-  const hasPrice = filters.priceMin !== null || filters.priceMax !== null;
-  return hasPrice && filters.pricePeriod === null
-    ? SEARCH_ERROR_MESSAGES.search_price_period_required
-    : null;
+  return errors;
+}
+
+// null when the filters can be sent, otherwise the message for the customer
+export function validateSearchFilters(filters: SearchFilters): string | null {
+  const errors = searchFilterErrors(filters);
+  return errors.age ?? errors.price ?? null;
 }
 
 // Blank text is no filter: sent as undefined, so it is left out of the request

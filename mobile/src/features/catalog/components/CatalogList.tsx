@@ -45,6 +45,7 @@ export function CatalogList({ onOpen }: Readonly<CatalogListProps>) {
           activity={item.activity}
           providerName={item.provider.contact?.name ?? null}
           isFavourite={item.isFavourite}
+          schedule={item.activity.schedule}
           onPress={() => onOpen(item.activity.id)}
         />
       )}

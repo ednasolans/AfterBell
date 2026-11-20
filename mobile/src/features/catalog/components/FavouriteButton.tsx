@@ -3,6 +3,7 @@ import { Pressable, StyleSheet } from "react-native";
 
 import { colors } from "@/theme/colors";
 
+import { useFavouritesProfileId } from "../favouritesProfile";
 import { useToggleFavourite } from "../hooks/useToggleFavourite";
 
 type FavouriteButtonProps = {
@@ -11,14 +12,20 @@ type FavouriteButtonProps = {
   isFavourite: boolean;
 };
 
-// The heart of an activity. It changes at once; useToggleFavourite undoes the
-// change and shows an alert if the request fails.
+// The heart of an activity for the active family profile. It changes at once;
+// useToggleFavourite undoes the change and shows an alert if the request fails.
 export function FavouriteButton({
   activityId,
   activityTitle,
   isFavourite,
 }: Readonly<FavouriteButtonProps>) {
   const toggle = useToggleFavourite();
+  // Favourites belong to a family profile: without one, there is no heart
+  const profileId = useFavouritesProfileId();
+
+  if (!profileId) {
+    return null;
+  }
 
   return (
     <Pressable

@@ -4,6 +4,7 @@ import { render } from "@testing-library/react-native";
 
 import { type Activity } from "@/lib/activity";
 
+import { FavouritesProfileProvider } from "./favouritesProfile";
 import {
   type CatalogActivity,
   type CatalogProvider,
@@ -76,12 +77,23 @@ export function makeFavourite(
   };
 }
 
-// Renders a component that uses React Query, with a fresh client that does not retry
-export async function renderWithQuery(ui: ReactElement) {
+// The active family profile of the tests: favourites belong to it
+export const TEST_PROFILE_ID = "family-profile-1";
+
+// Renders a component that uses React Query, with a fresh client that does not
+// retry, and an active family profile (null for a family without profiles)
+export async function renderWithQuery(
+  ui: ReactElement,
+  profileId: string | null = TEST_PROFILE_ID,
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
   return render(
-    <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+    <QueryClientProvider client={client}>
+      <FavouritesProfileProvider profileId={profileId}>
+        {ui}
+      </FavouritesProfileProvider>
+    </QueryClientProvider>,
   );
 }

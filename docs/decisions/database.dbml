@@ -149,14 +149,16 @@ Table languages {
 }
 
 Table favourites {
-  customer_id uuid [not null, default: `auth.uid()`, note: 'FK accounts, ON DELETE CASCADE']
+  family_profile_id uuid [not null, note: 'FK family_profiles, ON DELETE CASCADE']
   activity_id uuid [not null, note: 'FK activities, ON DELETE CASCADE']
   created_at timestamptz [not null, default: `now()`]
 
   Indexes {
-    (customer_id, activity_id) [pk]
+    (family_profile_id, activity_id) [pk]
     activity_id
   }
+  Note: 'RLS: the members of the family read, add and delete the favourites of its profiles (is_family_profile_member), of published activities. Listed per profile with my_favourites(p_family_profile_id), which keeps unpublished ones marked as not available.'
+}
   Note: 'RLS: only the customer reads, adds and deletes its own favourites, of published activities. Listed with my_favourites(), which keeps unpublished ones marked as not available.'
 }
 
@@ -284,7 +286,7 @@ Ref: technical_sheets.(address_id, provider_id) > addresses.(id, provider_id) [d
 Ref: activities.(address_id, provider_id) > addresses.(id, provider_id) [delete: no action]
 Ref: activities.category > categories.name
 Ref: languages.activity_id > activities.id [delete: cascade]
-Ref: favourites.customer_id > accounts.id [delete: cascade]
+Ref: favourites.family_profile_id > family_profiles.id [delete: cascade]
 Ref: favourites.activity_id > activities.id [delete: cascade]
 Ref: enrolment_requests.activity_id > activities.id [delete: cascade]
 Ref: enrolment_requests.customer_id > accounts.id [delete: cascade]

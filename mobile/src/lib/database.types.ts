@@ -379,18 +379,18 @@ export type Database = {
         Row: {
           activity_id: string;
           created_at: string;
-          customer_id: string;
+          family_profile_id: string;
         };
         ComputedFields: never;
         Insert: {
           activity_id: string;
           created_at?: string;
-          customer_id?: string;
+          family_profile_id: string;
         };
         Update: {
           activity_id?: string;
           created_at?: string;
-          customer_id?: string;
+          family_profile_id?: string;
         };
         Relationships: [
           {
@@ -401,10 +401,10 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "favourites_customer_id_fkey";
-            columns: ["customer_id"];
+            foreignKeyName: "favourites_family_profile_id_fkey";
+            columns: ["family_profile_id"];
             isOneToOne: false;
-            referencedRelation: "accounts";
+            referencedRelation: "family_profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -660,6 +660,10 @@ export type Database = {
       };
       is_company: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_family_member: { Args: { group_id: string }; Returns: boolean };
+      is_family_profile_member: {
+        Args: { p_family_profile_id: string };
+        Returns: boolean;
+      };
       is_valid_schedule: { Args: { schedule: Json }; Returns: boolean };
       my_enrolment_requests: {
         Args: { p_limit?: number; p_offset?: number };
@@ -677,7 +681,11 @@ export type Database = {
         }[];
       };
       my_favourites: {
-        Args: { p_limit?: number; p_offset?: number };
+        Args: {
+          p_family_profile_id: string;
+          p_limit?: number;
+          p_offset?: number;
+        };
         Returns: {
           activity_id: string;
           available: boolean;
@@ -868,7 +876,10 @@ export type Database = {
           p_price_period: string;
           p_query: string;
         };
-        Returns: { activity_id: string; relevance: number }[];
+        Returns: {
+          activity_id: string;
+          relevance: number;
+        }[];
       };
       send_enrolment_request: {
         Args: {

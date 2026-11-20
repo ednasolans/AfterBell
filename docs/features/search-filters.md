@@ -10,7 +10,8 @@ functions called with `supabase.rpc`:
 - `available_activity_filters`: the values to build the filters.
 
 Only logged-in users can call them (`authenticated`; anonymous users get
-_permission denied_). The filter screen comes in a later issue.
+_permission denied_). The filter panel of the app (#104) is described in
+[Filter panel](#filter-panel-104).
 
 ## API: `search_activities`
 
@@ -143,10 +144,81 @@ No arguments. Returns one JSON object:
 3. In `mobile/`: `npx jest src/features/catalog/api/searchActivities src/features/search-summary`.
 4. In `supabase/functions/`: `deno test --allow-env`.
 
+## Filter panel (#104)
+
+A **Filters** button under the search bar of the customer home opens a panel
+(`features/catalog/components/FilterPanel.tsx`) that slides up from the
+bottom:
+
+- **Category:** several can be chosen. The options come from
+  `available_activity_filters` (`useAvailableFilters`); until they load, the
+  categories this version of the app knows are offered (`categoryOptions`).
+- **Age:** minimum and maximum age, whole years.
+- **City:** the cities of `available_activity_filters`, plus "Any city". The
+  postal code is not offered (the issue does not ask for it).
+- **Price:** first a period ("Per month"…, only the periods that have published
+  activities, plus "Any price"), then the minimum and maximum price, with the
+  range of that period as a hint ("Prices per month go from 30 € to 80 €.").
+  The price fields only appear once a period is chosen, because prices are
+  only compared within one period; going back to "Any price" drops them.
+
+Decisions:
+
+- **Draft and "Apply filters".** The panel keeps its own copy of the filters
+  (`useFilterForm`); the search only changes when they are applied. A range
+  half typed never reaches the database, and there is no request per key.
+  "Reset" empties the panel without applying; the ✕ closes it without changes.
+- **Validation in the panel.** After the first "Apply filters", each range
+  shows its error under its fields (`searchFilterErrors`, the same rules as
+  `validateSearchFilters` and the database) and the panel stays open.
+- **Number fields, no slider:** a slider with two handles would be a new
+  dependency, and it is awkward with decimals.
+- **Options that fail do not block the panel:** while the cities and prices
+  load there is a spinner in their place, and if they fail a "Try again";
+  categories and ages can still be used.
+- **Chips:** the active filters are shown next to the button
+  (`FilterBar`, labels from `activeFilterChips`): one per category, one for
+  the ages, the city and the price. Each ✕ removes that filter; "Clear all"
+  removes them all. The button says how many are active.
+- **With text, without text:** the filters combine with the text. With filters
+  and no text, the results of the filters are shown instead of the full list;
+  a text that is too short is ignored but the filters still apply.
+- **Category row:** under the search bar, one icon per category of the
+  catalogue (`CategoryShortcuts`). Pressing one adds it to the category
+  filter, pressing it again removes it; it is the same filter as the panel.
+- **Exploring for:** the home shows the active family profile
+  (`ExploringForCard`, "Exploring for: Marc, Age 8") and uses its age as the
+  age filter (`useActiveProfileAges`): the exact age when the date of birth is
+  known, otherwise its age range. It is a normal chip ("Age 8"), so the
+  customer can remove it; it is applied again when another profile is chosen.
+  The profile list is the one of #21 (`ProfileSwitchModal`).
+- **Kept when an activity is opened:** the filters live in `CatalogSearch`, as
+  the text, which stays mounted under the activity detail.
+
+| File                                                       | What it does                                 |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| `features/catalog/api/fetchAvailableFilters.ts`            | Calls `available_activity_filters`           |
+| `features/catalog/hooks/useAvailableFilters.ts`            | Query of the above                           |
+| `features/catalog/hooks/useFilterForm.ts`                  | Draft of the panel, validation and apply     |
+| `features/catalog/filterChips.ts`                          | Label and removal of each active filter      |
+| `features/catalog/components/FilterPanel.tsx`              | The panel                                    |
+| `features/catalog/components/FilterBar.tsx`                | Filters button, chips and "Clear all"        |
+| `features/catalog/components/CatalogSearch.tsx`            | Keeps the text and the filters, picks a list |
+| `features/catalog/components/CategoryShortcuts.tsx`        | Category row                                 |
+| `features/family-profiles/components/ExploringForCard.tsx` | Active profile at the top of the home        |
+| `features/family-profiles/profileAge.ts`                   | Age and age label of a profile               |
+
+How to test in the app: open the customer home, press **Filters**, choose a
+category, ages, a city and a price period and range, and apply. The results
+and the count change, and the chips appear. Try a minimum age above the
+maximum: the error shows in the panel. Remove a chip, then "Clear all". Open
+an activity and go back: the filters are still there. Tests:
+`npx jest src/features/catalog`.
+
 ## Pending
 
-- The filter screen (UI), in a later issue. The app has no function yet that
-  calls `available_activity_filters`; it belongs to that screen.
+- The panel has not been tried on a physical device yet (keyboard over the
+  price fields, a selector opened from the panel on iOS).
 - `search_activities` returns temporary activities that have already ended
   (predates #102). Since #103 it requires an approved provider profile, like the
   catalog list.

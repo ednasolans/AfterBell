@@ -5,6 +5,7 @@ import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
 import { colors } from "@/theme/colors";
 
+import { useFavouritesProfileId } from "../favouritesProfile";
 import { useFavourites } from "../hooks/useFavourites";
 import { CatalogActivityCard } from "./CatalogActivityCard";
 
@@ -13,13 +14,25 @@ type FavouritesListProps = {
   onExplore: () => void;
 };
 
-// The activities saved by the customer. The ones that can no longer be opened
-// stay, marked, so they do not disappear without notice.
+// The activities saved for the active family profile. The ones that can no
+// longer be opened stay, marked, so they do not disappear without notice.
 export function FavouritesList({
   onOpen,
   onExplore,
 }: Readonly<FavouritesListProps>) {
   const favourites = useFavourites();
+  const profileId = useFavouritesProfileId();
+
+  if (!profileId) {
+    return (
+      <View style={styles.empty}>
+        <Ionicons name="heart-outline" size={32} color={colors.textMuted} />
+        <Text style={styles.emptyText}>
+          Add a family profile to save favourites.
+        </Text>
+      </View>
+    );
+  }
 
   if (favourites.isPending) {
     return <LoadingView />;

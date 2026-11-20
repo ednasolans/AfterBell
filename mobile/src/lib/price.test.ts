@@ -1,4 +1,4 @@
-import { formatPrice, parsePrice } from "./price";
+import { formatAmount, formatPrice, parsePrice } from "./price";
 
 describe("parsePrice", () => {
   it.each([
@@ -31,5 +31,12 @@ describe("parsePrice", () => {
 describe("formatPrice", () => {
   it("shows two decimals with a comma when needed", () => {
     expect(formatPrice(9.5, "per_hour")).toBe("9,50 € per hour");
+  });
+});
+
+describe("formatAmount", () => {
+  it("leaves out zero decimals and uses a comma otherwise", () => {
+    expect(formatAmount(30)).toBe("30");
+    expect(formatAmount(12.5)).toBe("12,50");
   });
 });

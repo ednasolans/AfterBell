@@ -8,6 +8,7 @@ import { Alert } from "react-native";
 import { addFavourite } from "../api/addFavourite";
 import { removeFavourite } from "../api/removeFavourite";
 import { toFavouriteErrorMessage } from "../favouriteErrors";
+import { useFavouritesProfileId } from "../favouritesProfile";
 import {
   type CatalogActivity,
   type CatalogActivityDetail,
@@ -19,20 +20,28 @@ export type ToggleFavourite = { activityId: string; save: boolean };
 
 type SearchPages = InfiniteData<CatalogActivity[]>;
 
-// Saves or removes a favourite. The heart changes at once in every screen; if
-// the request fails, the screens go back to how they were and an alert says why.
+// Saves or removes a favourite of the active family profile. The heart changes
+// at once in every screen of that profile; if the request fails, the screens go
+// back to how they were and an alert says why.
 export function useToggleFavourite() {
   const queryClient = useQueryClient();
+  const profileId = useFavouritesProfileId();
 
   return useMutation({
-    mutationFn: ({ activityId, save }: ToggleFavourite) =>
-      save ? addFavourite(activityId) : removeFavourite(activityId),
+    mutationFn: ({ activityId, save }: ToggleFavourite) => {
+      // The heart is not shown without a profile
+      if (!profileId) {
+        throw new Error("There is no family profile to save favourites for.");
+      }
+      const target = { familyProfileId: profileId, activityId };
+      return save ? addFavourite(target) : removeFavourite(target);
+    },
 
     onMutate: async ({ activityId, save }: ToggleFavourite) => {
-      const listKey = catalogKeys.list();
-      const detailKey = catalogKeys.detail(activityId);
-      const favouritesKey = catalogKeys.favourites();
-      const searchesKey = catalogKeys.searches();
+      const listKey = catalogKeys.list(profileId);
+      const detailKey = catalogKeys.detail(activityId, profileId);
+      const favouritesKey = catalogKeys.favourites(profileId);
+      const searchesKey = catalogKeys.searches(profileId);
 
       // A request already on its way would overwrite the change
       await Promise.all(
@@ -106,7 +115,7 @@ export function useToggleFavourite() {
 
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: catalogKeys.favourites(),
+        queryKey: catalogKeys.favourites(profileId),
       });
     },
   });

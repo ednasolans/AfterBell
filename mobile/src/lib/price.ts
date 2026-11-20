@@ -30,10 +30,14 @@ export function parsePrice(text: string): number | null {
   return Number(trimmed.replace(",", "."));
 }
 
-// "30 € per month"
-export function formatPrice(price: number, period: PricePeriod): string {
-  const amount = Number.isInteger(price)
+// "30", "9,50": no decimals when they are zero
+export function formatAmount(price: number): string {
+  return Number.isInteger(price)
     ? String(price)
     : price.toFixed(2).replace(".", ",");
-  return `${amount} € ${PRICE_PERIOD_LABELS[period].toLowerCase()}`;
+}
+
+// "30 € per month"
+export function formatPrice(price: number, period: PricePeriod): string {
+  return `${formatAmount(price)} € ${PRICE_PERIOD_LABELS[period].toLowerCase()}`;
 }

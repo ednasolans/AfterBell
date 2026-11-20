@@ -8,6 +8,7 @@ import {
   makeCatalogActivity,
   makeProvider,
   renderWithQuery,
+  TEST_PROFILE_ID,
 } from "../testFixtures";
 import { CatalogList } from "./CatalogList";
 
@@ -21,10 +22,10 @@ const mockAddFavourite = jest.fn();
 const mockRemoveFavourite = jest.fn();
 
 jest.mock("../api/addFavourite", () => ({
-  addFavourite: (id: string) => mockAddFavourite(id),
+  addFavourite: (target: unknown) => mockAddFavourite(target),
 }));
 jest.mock("../api/removeFavourite", () => ({
-  removeFavourite: (id: string) => mockRemoveFavourite(id),
+  removeFavourite: (target: unknown) => mockRemoveFavourite(target),
 }));
 
 describe("CatalogList", () => {
@@ -41,7 +42,8 @@ describe("CatalogList", () => {
 
     await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
     expect(getByText("Sports Club")).toBeTruthy();
-    expect(getByText("Ages: 7-9, 10-12")).toBeTruthy();
+    expect(getByText("Ages 7–12")).toBeTruthy();
+    expect(getByText("Mon, 17:00")).toBeTruthy();
     expect(getByText("15 € per month")).toBeTruthy();
   });
 
@@ -112,7 +114,8 @@ describe("CatalogList", () => {
     );
 
     await waitFor(() => expect(getByText("Saturday workshop")).toBeTruthy());
-    expect(queryByText(/–/)).toBeNull();
+    // Dates always show the year
+    expect(queryByText(/20\d\d/)).toBeNull();
   });
 
   it("shows the activity without a provider name when it has no contact details", async () => {
@@ -210,7 +213,10 @@ describe("CatalogList", () => {
       expect(
         await findByLabelText("Remove Saturday workshop from favourites"),
       ).toBeTruthy();
-      expect(mockAddFavourite).toHaveBeenCalledWith("a1");
+      expect(mockAddFavourite).toHaveBeenCalledWith({
+        familyProfileId: TEST_PROFILE_ID,
+        activityId: "a1",
+      });
     });
 
     it("does not open the activity when the heart is pressed", async () => {
