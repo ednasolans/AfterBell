@@ -1,9 +1,12 @@
 
 import {
+  type QueryClient,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+
+import { recommendationKeys } from "@/lib/recommendationKeys";
 
 import {
   createFamilyProfile,
@@ -47,17 +50,20 @@ export function useFamilyProfile(
   });
 }
 
+// The recommendations depend on the profiles (age and interests), so they are
+// recalculated too
+function invalidateFamilyProfiles(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: familyProfileKeys.all });
+  void queryClient.invalidateQueries({ queryKey: recommendationKeys.all });
+}
+
 export function useCreateFamilyProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: createFamilyProfile,
 
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: familyProfileKeys.all,
-      });
-    },
+    onSuccess: () => invalidateFamilyProfiles(queryClient),
   });
 }
 
@@ -73,11 +79,7 @@ export function useUpdateFamilyProfile() {
       values: FamilyProfileFormValues;
     }) => updateFamilyProfile(id, values),
 
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: familyProfileKeys.all,
-      });
-    },
+    onSuccess: () => invalidateFamilyProfiles(queryClient),
   });
 }
 
@@ -87,10 +89,6 @@ export function useDeleteFamilyProfile() {
   return useMutation({
     mutationFn: deleteFamilyProfile,
 
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: familyProfileKeys.all,
-      });
-    },
+    onSuccess: () => invalidateFamilyProfiles(queryClient),
   });
 }

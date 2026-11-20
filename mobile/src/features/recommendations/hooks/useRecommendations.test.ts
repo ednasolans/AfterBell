@@ -7,7 +7,7 @@ import {
 
 import { fetchRecommendations } from "../api/fetchRecommendations";
 import { type RecommendationsPage } from "../types";
-import { recommendationKeys } from "./recommendationKeys";
+import { recommendationKeys } from "@/lib/recommendationKeys";
 import {
   RECOMMENDATIONS_STALE_MS,
   useRecommendations,

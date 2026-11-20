@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { fetchRecommendations } from "../api/fetchRecommendations";
-import { recommendationKeys } from "./recommendationKeys";
+import { recommendationKeys } from "@/lib/recommendationKeys";
 
 // Short cache: the recommendations are not recalculated every time the screen
 // is shown. There is no cache in the Edge Function (see docs/features/recommendations.md).

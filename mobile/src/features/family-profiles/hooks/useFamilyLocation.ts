@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { recommendationKeys } from "@/lib/recommendationKeys";
+
 import { fetchFamilyCity, saveFamilyLocation } from "../api/familyLocation";
 import { familyProfileKeys } from "./useFamilyProfiles";
 
@@ -23,6 +25,8 @@ export function useSaveFamilyLocation() {
     mutationFn: saveFamilyLocation,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: familyLocationKey });
+      // The recommendations are the activities of the family's town
+      void queryClient.invalidateQueries({ queryKey: recommendationKeys.all });
     },
   });
 }
