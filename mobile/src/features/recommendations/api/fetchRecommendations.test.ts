@@ -1,3 +1,4 @@
+import { fetchContacts } from "@/lib/providerContacts";
 import { supabase } from "@/lib/supabase";
 import { type Tables } from "@/lib/database.types";
 
@@ -11,6 +12,7 @@ import {
 jest.mock("@/lib/supabase", () => ({
   supabase: { functions: { invoke: jest.fn() } },
 }));
+jest.mock("@/lib/providerContacts", () => ({ fetchContacts: jest.fn() }));
 
 const ROW: Tables<"activities"> = {
   id: "activity-1",
@@ -61,6 +63,19 @@ function failWith(code?: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.mocked(fetchContacts).mockResolvedValue(
+    new Map([
+      [
+        "provider-1",
+        {
+          name: "Sports Club",
+          email: null,
+          phoneNumber: null,
+          website: null,
+        },
+      ],
+    ]),
+  );
 });
 
 describe("toRecommendationsPage", () => {
@@ -73,6 +88,7 @@ describe("toRecommendationsPage", () => {
       activity: { id: "activity-1", providerId: "provider-1" },
       matchedProfiles: [{ id: "profile-1", firstName: "Marc" }],
       distanceMeters: 120,
+      providerName: null,
     });
   });
 
@@ -122,6 +138,34 @@ describe("fetchRecommendations", () => {
       body: { limit: RECOMMENDATIONS_PAGE_SIZE, offset: 0 },
     });
     expect(page.recommendations).toHaveLength(1);
+  });
+
+  it("adds the name of each provider, asked once per provider", async () => {
+    const body = {
+      ...BODY,
+      activities: [
+        BODY.activities[0],
+        { ...BODY.activities[0], activity: { ...ROW, id: "activity-2" } },
+        {
+          ...BODY.activities[0],
+          activity: { ...ROW, id: "activity-3", provider_id: "provider-2" },
+        },
+      ],
+    };
+    invoke.mockResolvedValue({ data: body, error: null } as never);
+    const page = await fetchRecommendations();
+    expect(fetchContacts).toHaveBeenCalledWith(["provider-1", "provider-2"]);
+    expect(page.recommendations.map((item) => item.providerName)).toEqual([
+      "Sports Club",
+      "Sports Club",
+      null,
+    ]);
+  });
+
+  it("fails when the providers cannot be read", async () => {
+    invoke.mockResolvedValue({ data: BODY, error: null } as never);
+    jest.mocked(fetchContacts).mockRejectedValue(new Error("no sheets"));
+    await expect(fetchRecommendations()).rejects.toThrow("no sheets");
   });
 
   it("asks the offset of a later page", async () => {

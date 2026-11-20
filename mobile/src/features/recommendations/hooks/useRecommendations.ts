@@ -20,3 +20,23 @@ export function useRecommendations(enabled = true) {
     enabled,
   });
 }
+
+type NextPageQuery = Pick<
+  ReturnType<typeof useRecommendations>,
+  | "hasNextPage"
+  | "isFetchingNextPage"
+  | "isFetchNextPageError"
+  | "fetchNextPage"
+>;
+
+// Asks the next page when a list reaches its end. Not while a page is loading,
+// and not after a failure: the footer of the list offers to try again.
+export function loadNextPage(query: NextPageQuery): void {
+  if (
+    query.hasNextPage &&
+    !query.isFetchingNextPage &&
+    !query.isFetchNextPageError
+  ) {
+    void query.fetchNextPage();
+  }
+}

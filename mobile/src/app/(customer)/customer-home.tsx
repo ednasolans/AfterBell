@@ -7,13 +7,17 @@ import LogoutButton from "@/components/LogoutButton";
 import { CatalogSearch } from "@/features/catalog/components/CatalogSearch";
 import { ExploringForCard } from "@/features/family-profiles/components/ExploringForCard";
 import { useActiveProfileAges } from "@/features/family-profiles/hooks/useActiveProfileAges";
+import { RecommendationsSection } from "@/features/recommendations/components/RecommendationsSection";
 import { colors } from "@/theme/colors";
 
-// Home of the customer area: who the family is exploring for, and the list
-// and search of activities for that profile's age
+// Home of the customer area: who the family is exploring for, the activities
+// recommended for the family, and the list and search of activities for that
+// profile's age
 export default function CustomerHomeScreen() {
   const router = useRouter();
   const profileAges = useActiveProfileAges();
+  const openActivity = (id: string) =>
+    router.push({ pathname: "/activities/[id]", params: { id } });
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -38,8 +42,12 @@ export default function CustomerHomeScreen() {
 
       <CatalogSearch
         profileAges={profileAges}
-        onOpen={(id) =>
-          router.push({ pathname: "/activities/[id]", params: { id } })
+        onOpen={openActivity}
+        listHeader={
+          <RecommendationsSection
+            onOpen={openActivity}
+            onSeeAll={() => router.push("/recommendations")}
+          />
         }
       />
 
