@@ -138,6 +138,15 @@ check "family 2 only sees its own match (Pol, music)" \
 check "family 2 never gets profiles of family 1" \
   "$(field '[.activities[].matched_profiles[].first_name] | map(select(. == "Marc" or . == "Laia")) | length')" "0"
 
+# ---- active profile (#108) --------------------------------------------------
+# Each activity fits one profile: with Laia active, her art activity goes first
+call "$FAMILY1" '{"profile_id":"e1070000-0000-0000-0000-0000000000c2"}'
+check "the active profile's activity goes first" "$(field '.activities[0].activity.category')" "art"
+call "$FAMILY1" '{"profile_id":"e1070000-0000-0000-0000-0000000000c3"}'
+check "a profile of another family keeps the plain order" "$(field '.activities[0].activity.category')" "football"
+call "$FAMILY1" '{"profile_id":"laia"}'
+check "a profile_id that is not a UUID is rejected (400)" "$STATUS" "400"
+
 # ---- pagination -------------------------------------------------------------
 call "$FAMILY1" '{"limit":4,"offset":0}'
 check "page 1 has 4 items" "$(field '.activities | length')" "4"

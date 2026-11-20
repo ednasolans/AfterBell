@@ -91,14 +91,18 @@ async function withProviderNames(
 
 // One page of the recommendations of the logged-in customer. Page 0 is the
 // first one. The function only knows the family of the session, so there is
-// no way to ask for another customer's recommendations.
+// no way to ask for another customer's recommendations. The activities of
+// profileId (the active profile) go first among the ones that fit as many
+// profiles.
 export async function fetchRecommendations(
   page = 0,
+  profileId: string | null = null,
 ): Promise<RecommendationsPage> {
   const { data, error } = await supabase.functions.invoke("recommendations", {
     body: {
       limit: RECOMMENDATIONS_PAGE_SIZE,
       offset: page * RECOMMENDATIONS_PAGE_SIZE,
+      profile_id: profileId,
     },
   });
   if (error) {

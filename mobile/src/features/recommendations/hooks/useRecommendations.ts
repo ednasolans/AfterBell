@@ -7,12 +7,12 @@ import { recommendationKeys } from "@/lib/recommendationKeys";
 // is shown. There is no cache in the Edge Function (see docs/features/recommendations.md).
 export const RECOMMENDATIONS_STALE_MS = 5 * 60_000;
 
-// The pages of the recommendations, loaded one after another. The function
-// says whether there is a next page.
-export function useRecommendations(enabled = true) {
+// The pages of the recommendations, loaded one after another, ordered for
+// the active profile. The function says whether there is a next page.
+export function useRecommendations(profileId: string | null, enabled = true) {
   return useInfiniteQuery({
-    queryKey: recommendationKeys.all,
-    queryFn: ({ pageParam }) => fetchRecommendations(pageParam),
+    queryKey: recommendationKeys.forProfile(profileId),
+    queryFn: ({ pageParam }) => fetchRecommendations(pageParam, profileId),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length : undefined,

@@ -32,10 +32,11 @@ export class SupabaseRecommendationsRepository implements RecommendationsReposit
     return error ? null : data.user?.id ?? null;
   }
 
-  async recommend(limit: number, offset: number): Promise<RecommendOutcome> {
+  async recommend(limit: number, offset: number, profileId: string | null): Promise<RecommendOutcome> {
     const { data, error } = await this.client.rpc("recommend_activities", {
       p_limit: limit,
       p_offset: offset,
+      p_profile_id: profileId,
     });
     if (error?.code === INSUFFICIENT_PRIVILEGE) {
       throw new HttpError(403, "forbidden", "Only customers have recommendations");

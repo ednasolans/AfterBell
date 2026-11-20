@@ -1,4 +1,5 @@
 -- #106: recommendations of a family (age, interests, town, availability, order).
+-- #108: the active profile goes first among activities that fit as many profiles.
 -- Run on the local database; everything is rolled back:
 --   docker exec -i supabase_db_AfterBell psql -U postgres -d postgres < supabase/tests/recommendations.sql
 -- Every line of the result must start with "ok".
@@ -121,12 +122,12 @@ RETURNS void LANGUAGE sql AS $$
 $$;
 
 -- Titles of the recommendations, in order, with the names of the profiles that fit
-CREATE FUNCTION pg_temp.recommended(p_limit integer DEFAULT 20, p_offset integer DEFAULT 0)
+CREATE FUNCTION pg_temp.recommended(p_limit integer DEFAULT 20, p_offset integer DEFAULT 0, p_profile uuid DEFAULT NULL)
 RETURNS text LANGUAGE sql AS $$
     SELECT string_agg(a.title || '[' || (
         SELECT string_agg(x->>'first_name', ',' ORDER BY ord) FROM jsonb_array_elements(r.matched_profiles) WITH ORDINALITY AS e(x, ord)
     ) || ']', '; ' ORDER BY r.ord)
-    FROM public.recommend_activities(p_limit, p_offset) WITH ORDINALITY AS r(activity_id, matched_profiles, matched_count, distance_meters, ord)
+    FROM public.recommend_activities(p_limit, p_offset, p_profile) WITH ORDINALITY AS r(activity_id, matched_profiles, matched_count, distance_meters, ord)
     JOIN public.activities a ON a.id = r.activity_id;
 $$;
 
@@ -167,6 +168,23 @@ SELECT pg_temp.check('the limit has a maximum',
     (SELECT count(*)::text FROM public.recommend_activities(1000, 0)), '6');
 SELECT pg_temp.check('an offset beyond the end gives nothing',
     (SELECT count(*)::text FROM public.recommend_activities(20, 100)), '0');
+
+-- The active profile (#108): first among the activities that fit as many
+-- profiles, never before the ones that fit more
+SELECT pg_temp.check('Joan active: his activity first of the one-profile group',
+    pg_temp.recommended(20, 0, 'a1060000-0000-0000-0000-0000000000c3'),
+    'Football ends today[Laia,Marc]; Football near[Laia,Marc]; Football for all[Laia,Marc]; '
+    || 'Music teens near[Joan]; Art near[Marc]; Art far[Marc]');
+SELECT pg_temp.check('Marc active: his activities before a closer one of Joan',
+    pg_temp.recommended(20, 0, 'a1060000-0000-0000-0000-0000000000c1'),
+    'Football ends today[Laia,Marc]; Football near[Laia,Marc]; Football for all[Laia,Marc]; '
+    || 'Art near[Marc]; Art far[Marc]; Music teens near[Joan]');
+SELECT pg_temp.check('the active profile also orders the later pages',
+    pg_temp.recommended(2, 4, 'a1060000-0000-0000-0000-0000000000c3'),
+    'Art near[Marc]; Art far[Marc]');
+SELECT pg_temp.check('a profile of another family changes nothing',
+    pg_temp.recommended(20, 0, 'a1060000-0000-0000-0000-0000000000c4'),
+    pg_temp.recommended());
 
 -- The age is calculated at the moment of the request: Joan turns 18 today
 RESET ROLE;

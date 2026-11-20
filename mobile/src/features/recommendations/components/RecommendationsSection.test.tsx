@@ -34,12 +34,23 @@ const SECOND = makeRecommendation({
   ],
 });
 
-async function renderSection(client = createTestQueryClient()) {
+async function renderSection(
+  client = createTestQueryClient(),
+  profileReady = true,
+) {
   const onOpen = jest.fn();
   const onSeeAll = jest.fn();
-  await render(<RecommendationsSection onOpen={onOpen} onSeeAll={onSeeAll} />, {
-    wrapper: createQueryClientWrapper(client),
-  });
+  await render(
+    <RecommendationsSection
+      profileId="profile-2"
+      profileReady={profileReady}
+      onOpen={onOpen}
+      onSeeAll={onSeeAll}
+    />,
+    {
+      wrapper: createQueryClientWrapper(client),
+    },
+  );
   return { onOpen, onSeeAll, client };
 }
 
@@ -56,6 +67,21 @@ describe("RecommendationsSection", () => {
       screen.getByRole("header", { name: "Recommended for you" }),
     ).toBeOnTheScreen();
     expect(screen.getByLabelText("Loading recommendations")).toBeOnTheScreen();
+  });
+
+  it("waits for the active profile before asking", async () => {
+    await renderSection(createTestQueryClient(), false);
+
+    expect(screen.getByLabelText("Loading recommendations")).toBeOnTheScreen();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("asks in the order of the active profile", async () => {
+    fetchMock.mockResolvedValue(makePage());
+    await renderSection();
+
+    expect(await screen.findByText("Swimming for kids")).toBeOnTheScreen();
+    expect(fetchMock).toHaveBeenCalledWith(0, "profile-2");
   });
 
   it("shows the recommendations with the profiles they fit", async () => {
@@ -133,7 +159,7 @@ describe("RecommendationsSection", () => {
       "endReached",
     );
     expect(await screen.findByText("Chess club")).toBeOnTheScreen();
-    expect(fetchMock).toHaveBeenLastCalledWith(1);
+    expect(fetchMock).toHaveBeenLastCalledWith(1, "profile-2");
   });
 
   it("does not ask for more when there are no more pages", async () => {

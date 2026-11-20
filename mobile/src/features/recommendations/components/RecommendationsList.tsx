@@ -9,14 +9,20 @@ import { NextPageFooter } from "./NextPageFooter";
 import { RecommendationCard } from "./RecommendationCard";
 
 type RecommendationsListProps = {
+  // The profile the customer is exploring for: its activities go first
+  profileId: string | null;
+  // false while the active profile is not known yet, so nothing is asked twice
+  profileReady?: boolean;
   onOpen: (id: string) => void;
 };
 
 // Every recommendation, one page after another ("See all")
 export function RecommendationsList({
+  profileId,
+  profileReady = true,
   onOpen,
 }: Readonly<RecommendationsListProps>) {
-  const recommendations = useRecommendations();
+  const recommendations = useRecommendations(profileId, profileReady);
 
   if (recommendations.isPending) {
     return <LoadingView />;

@@ -776,7 +776,7 @@ export type Database = {
         Returns: string[];
       };
       recommend_activities: {
-        Args: { p_limit?: number; p_offset?: number };
+        Args: { p_limit?: number; p_offset?: number; p_profile_id?: string };
         Returns: {
           activity_id: string;
           distance_meters: number;

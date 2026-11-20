@@ -18,6 +18,10 @@ import { RecommendationCard } from "./RecommendationCard";
 const CARD_WIDTH = 280;
 
 type RecommendationsSectionProps = {
+  // The profile the customer is exploring for: its activities go first
+  profileId: string | null;
+  // false while the active profile is not known yet, so nothing is asked twice
+  profileReady?: boolean;
   onOpen: (id: string) => void;
   onSeeAll: () => void;
 };
@@ -27,10 +31,12 @@ type RecommendationsSectionProps = {
 // newer). Without recommendations it shows nothing; why there are none
 // belongs to #109.
 export function RecommendationsSection({
+  profileId,
+  profileReady = true,
   onOpen,
   onSeeAll,
 }: Readonly<RecommendationsSectionProps>) {
-  const recommendations = useRecommendations();
+  const recommendations = useRecommendations(profileId, profileReady);
 
   if (recommendations.isPending) {
     return (

@@ -135,7 +135,7 @@ describe("fetchRecommendations", () => {
     invoke.mockResolvedValue({ data: BODY, error: null } as never);
     const page = await fetchRecommendations();
     expect(invoke).toHaveBeenCalledWith("recommendations", {
-      body: { limit: RECOMMENDATIONS_PAGE_SIZE, offset: 0 },
+      body: { limit: RECOMMENDATIONS_PAGE_SIZE, offset: 0, profile_id: null },
     });
     expect(page.recommendations).toHaveLength(1);
   });
@@ -168,6 +168,18 @@ describe("fetchRecommendations", () => {
     await expect(fetchRecommendations()).rejects.toThrow("no sheets");
   });
 
+  it("sends the active profile, to order the activities for it", async () => {
+    invoke.mockResolvedValue({ data: BODY, error: null } as never);
+    await fetchRecommendations(0, "profile-1");
+    expect(invoke).toHaveBeenCalledWith("recommendations", {
+      body: {
+        limit: RECOMMENDATIONS_PAGE_SIZE,
+        offset: 0,
+        profile_id: "profile-1",
+      },
+    });
+  });
+
   it("asks the offset of a later page", async () => {
     invoke.mockResolvedValue({ data: BODY, error: null } as never);
     await fetchRecommendations(2);
@@ -175,6 +187,7 @@ describe("fetchRecommendations", () => {
       body: {
         limit: RECOMMENDATIONS_PAGE_SIZE,
         offset: 2 * RECOMMENDATIONS_PAGE_SIZE,
+        profile_id: null,
       },
     });
   });

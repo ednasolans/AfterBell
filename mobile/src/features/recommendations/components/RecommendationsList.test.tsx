@@ -21,7 +21,7 @@ const fetchMock = jest.mocked(fetchRecommendations);
 
 async function renderList() {
   const onOpen = jest.fn();
-  await render(<RecommendationsList onOpen={onOpen} />, {
+  await render(<RecommendationsList profileId="profile-2" onOpen={onOpen} />, {
     wrapper: createQueryClientWrapper(createTestQueryClient()),
   });
   return { onOpen };
