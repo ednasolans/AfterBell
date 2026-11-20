@@ -5,7 +5,7 @@ import { categoryOptions } from "@/lib/activityCategories";
 import { colors } from "@/theme/colors";
 
 import { useAvailableFilters } from "../hooks/useAvailableFilters";
-import { activityIcon, CATEGORY_TINTS } from "../visuals";
+import { activityIcon, CATEGORY_TINTS } from "@/lib/activityVisuals";
 
 type CategoryShortcutsProps = {
   // Categories of the filters now

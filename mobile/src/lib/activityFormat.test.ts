@@ -6,7 +6,7 @@ import {
   formatDateRange,
   formatPrice,
   formatScheduleSummary,
-} from "./format";
+} from "./activityFormat";
 
 describe("formatAgeRange", () => {
   it("shows the youngest and the oldest age", () => {

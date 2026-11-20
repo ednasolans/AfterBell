@@ -15,7 +15,7 @@ jest.mock("./searchActivities", () => ({
 jest.mock("./fetchApprovedProfiles", () => ({
   fetchApprovedProfiles: (ids: string[]) => mockProfiles(ids),
 }));
-jest.mock("./fetchContacts", () => ({
+jest.mock("@/lib/providerContacts", () => ({
   fetchContacts: (ids: string[]) => mockContacts(ids),
 }));
 jest.mock("@/lib/supabase", () => ({

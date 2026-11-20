@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 
 import { type CatalogActivity } from "../types";
 import { fetchApprovedProfiles } from "./fetchApprovedProfiles";
-import { fetchContacts } from "./fetchContacts";
+import { fetchContacts } from "@/lib/providerContacts";
 import { searchActivities } from "./searchActivities";
 import { toCatalogProvider } from "./toCatalogProvider";
 

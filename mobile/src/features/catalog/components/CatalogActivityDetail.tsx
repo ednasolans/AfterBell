@@ -11,7 +11,7 @@ import {
   formatActivityPrice,
   formatAgeRanges,
   formatDateRange,
-} from "../format";
+} from "@/lib/activityFormat";
 import { useCatalogActivity } from "../hooks/useCatalogActivity";
 import { type CatalogActivityDetail as Detail } from "../types";
 import { FavouriteButton } from "./FavouriteButton";
