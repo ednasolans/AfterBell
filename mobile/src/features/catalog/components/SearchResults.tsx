@@ -12,7 +12,6 @@ import { LoadingView } from "@/components/LoadingView";
 import { type SearchFilters } from "@/lib/searchFilters";
 import { colors } from "@/theme/colors";
 import { SearchSummary } from "@/features/search-summary/components/SearchSummary";
-import { NO_SEARCH_FILTERS } from "@/lib/searchFilters";
 
 import { useSearchActivities } from "../hooks/useSearchActivities";
 import { useSearchCount } from "../hooks/useSearchCount";
@@ -80,7 +79,10 @@ export function SearchResults({
         activities.length > 0 ? (
           <>
             {/* The AI summary only starts once there are results to summarize */}
-            <SearchSummary filters={{ ...NO_SEARCH_FILTERS, query }} enabled />
+            <SearchSummary
+              filters={{ ...filters, query: query === "" ? null : query }}
+              enabled
+            />
             {count.data === undefined ? null : (
               <Text style={styles.count} accessibilityLiveRegion="polite">
                 {countLabel(count.data)}

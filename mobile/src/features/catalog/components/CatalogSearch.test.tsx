@@ -349,6 +349,20 @@ describe("CatalogSearch", () => {
       expect(screen.queryByText("Every activity")).toBeNull();
     });
 
+    it("asks for the AI summary with the same filters", async () => {
+      mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+      const screen = await renderSearch();
+
+      await filterMusicInLleida(screen);
+
+      await waitFor(() =>
+        expect(mockSummary).toHaveBeenCalledWith(
+          { ...LLEIDA_MUSIC, query: null },
+          expect.anything(),
+        ),
+      );
+    });
+
     it("combines the filters with the text", async () => {
       mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
       const screen = await renderSearch();
