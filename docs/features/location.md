@@ -69,5 +69,5 @@ Addresses saved before #139, or that could not be geocoded, have no point: compa
 
 ## 5. Pending
 
-- C7 (#106) uses `family_groups.location` and `addresses.location` in `recommend_activities`.
+- `recommend_activities` (#106) uses `family_groups.location` and `addresses.location` to order by distance: see [recommendations.md](recommendations.md).
 - Addresses saved before this issue have no point. They get one when they are saved again (editing addresses does not exist yet), or with a one-off script.

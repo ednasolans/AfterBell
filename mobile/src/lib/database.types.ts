@@ -624,6 +624,7 @@ export type Database = {
         Args: { p_activity_id: string };
         Returns: string[];
       };
+      age_bracket: { Args: { p_years: number }; Returns: string };
       available_activity_filters: {
         Args: Record<PropertyKey, never>;
         Returns: Json;
@@ -775,35 +776,13 @@ export type Database = {
         Returns: string[];
       };
       recommend_activities: {
-        Args: { p_city: string; p_family_profile_id: string };
+        Args: { p_limit?: number; p_offset?: number };
         Returns: {
-          address_id: string;
-          category: string;
-          created_at: string;
-          description: string | null;
-          end_date: string | null;
-          id: string;
-          is_tutor: boolean;
-          max_participants: number | null;
-          price: number;
-          price_period: string;
-          provider_id: string;
-          schedule: Json | null;
-          search_normalized: string;
-          start_date: string | null;
-          status: string;
-          target_age_ranges: string[];
-          title: string;
-          type: string;
-          unlimited_participants: boolean;
-          updated_at: string;
+          activity_id: string;
+          distance_meters: number;
+          matched_count: number;
+          matched_profiles: Json;
         }[];
-        SetofOptions: {
-          from: "*";
-          to: "activities";
-          isOneToOne: false;
-          isSetofReturn: true;
-        };
       };
       register_search_summary_request: {
         Args: {
