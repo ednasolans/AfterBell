@@ -1,3 +1,4 @@
+import { type RecommendationActionHandlers } from "@/features/recommendations/components/RecommendationsStatus";
 import {
   type Recommendation,
   type RecommendationsPage,
@@ -27,5 +28,16 @@ export function makePage(
     recommendations: [makeRecommendation()],
     hasMore: false,
     ...overrides,
+  };
+}
+
+// One mock per action of the empty states
+export function makeRecommendationActions(): RecommendationActionHandlers {
+  return {
+    setTown: jest.fn(),
+    addProfile: jest.fn(),
+    completeProfile: jest.fn(),
+    searchActivities: jest.fn(),
+    seeAllActivities: jest.fn(),
   };
 }

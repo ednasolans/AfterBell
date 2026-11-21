@@ -13,6 +13,10 @@ import { colors } from "@/theme/colors";
 import { loadNextPage, useRecommendations } from "../hooks/useRecommendations";
 import { NextPageFooter } from "./NextPageFooter";
 import { RecommendationCard } from "./RecommendationCard";
+import {
+  type RecommendationActionHandlers,
+  RecommendationsStatus,
+} from "./RecommendationsStatus";
 
 // Wide enough to read the card, narrow enough to show that the row scrolls
 const CARD_WIDTH = 280;
@@ -24,17 +28,19 @@ type RecommendationsSectionProps = {
   profileReady?: boolean;
   onOpen: (id: string) => void;
   onSeeAll: () => void;
+  // What to do when there are no recommendations (set the town, add a profile…)
+  actions: RecommendationActionHandlers;
 };
 
 // "Recommended for you" on the home of the customer: a row of the activities
 // that fit the family, in the order of the backend (more profiles, closer,
-// newer). Without recommendations it shows nothing; why there are none
-// belongs to #109.
+// newer). Without recommendations, it says why and what to do (#109).
 export function RecommendationsSection({
   profileId,
   profileReady = true,
   onOpen,
   onSeeAll,
+  actions,
 }: Readonly<RecommendationsSectionProps>) {
   const recommendations = useRecommendations(profileId, profileReady);
 
@@ -60,6 +66,17 @@ export function RecommendationsSection({
           message="Your recommendations could not be loaded."
           onRetry={() => void recommendations.refetch()}
         />
+      </View>
+    );
+  }
+
+  // The first page says whether data is missing or nothing fits
+  const status = pages[0].status;
+  if (status !== "OK") {
+    return (
+      <View style={styles.section}>
+        <SectionTitle />
+        <RecommendationsStatus status={status} actions={actions} />
       </View>
     );
   }

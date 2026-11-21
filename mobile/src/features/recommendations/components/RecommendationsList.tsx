@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { ErrorView } from "@/components/ErrorView";
 import { LoadingView } from "@/components/LoadingView";
@@ -7,6 +7,10 @@ import { colors } from "@/theme/colors";
 import { loadNextPage, useRecommendations } from "../hooks/useRecommendations";
 import { NextPageFooter } from "./NextPageFooter";
 import { RecommendationCard } from "./RecommendationCard";
+import {
+  type RecommendationActionHandlers,
+  RecommendationsStatus,
+} from "./RecommendationsStatus";
 
 type RecommendationsListProps = {
   // The profile the customer is exploring for: its activities go first
@@ -14,6 +18,8 @@ type RecommendationsListProps = {
   // false while the active profile is not known yet, so nothing is asked twice
   profileReady?: boolean;
   onOpen: (id: string) => void;
+  // What to do when there are no recommendations (set the town, add a profile…)
+  actions: RecommendationActionHandlers;
 };
 
 // Every recommendation, one page after another ("See all")
@@ -21,6 +27,7 @@ export function RecommendationsList({
   profileId,
   profileReady = true,
   onOpen,
+  actions,
 }: Readonly<RecommendationsListProps>) {
   const recommendations = useRecommendations(profileId, profileReady);
 
@@ -36,6 +43,15 @@ export function RecommendationsList({
         message="Your recommendations could not be loaded."
         onRetry={() => void recommendations.refetch()}
       />
+    );
+  }
+
+  const status = pages[0].status;
+  if (status !== "OK") {
+    return (
+      <View style={styles.status}>
+        <RecommendationsStatus status={status} actions={actions} />
+      </View>
     );
   }
 
@@ -70,5 +86,6 @@ export function RecommendationsList({
 const styles = StyleSheet.create({
   list: { backgroundColor: colors.background },
   container: { padding: 16 },
+  status: { padding: 16 },
   empty: { textAlign: "center", color: colors.textMuted, marginTop: 24 },
 });
