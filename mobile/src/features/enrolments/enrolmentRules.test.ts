@@ -108,24 +108,10 @@ describe("places of an activity", () => {
 });
 
 describe("formatProfileAge", () => {
-  it("prefers the age from the date of birth", () => {
-    expect(
-      formatProfileAge({ familyProfileAge: 8, familyProfileAgeRange: "7-9" }),
-    ).toBe("8 years old");
-  });
-
-  it("uses the age range when there is no date of birth", () => {
-    expect(
-      formatProfileAge({
-        familyProfileAge: null,
-        familyProfileAgeRange: "7-9",
-      }),
-    ).toBe("Age 7-9");
-  });
-
-  it("returns nothing when there is neither", () => {
-    expect(
-      formatProfileAge({ familyProfileAge: null, familyProfileAgeRange: null }),
-    ).toBeNull();
+  it.each([
+    [8, "8 years old"],
+    [0, "0 years old"],
+  ])("shows %s as %s", (familyProfileAge, label) => {
+    expect(formatProfileAge({ familyProfileAge })).toBe(label);
   });
 });

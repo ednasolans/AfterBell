@@ -38,15 +38,14 @@ const PROFILE: FamilyProfile = {
   id: "profile-1",
   family_group_id: "group-1",
   first_name: "Anna",
-  age_range: "7-9",
-  date_of_birth: null,
+  date_of_birth: "2018-03-01",
   interests: ["music", "swimming"],
   created_at: "2026-10-24T10:00:00Z",
 };
 
 const FORM: FamilyProfileFormValues = {
   firstName: "Anna",
-  ageRange: "7-9",
+  dateOfBirth: "2018-03-01",
   interests: ["music", "swimming"],
 };
 

@@ -17,8 +17,8 @@ INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role) VALUES
     ('ca000000-0000-0000-0000-00000000000b', 'cap-club-b@test.com', '{"account_type":"company"}', 'authenticated', 'authenticated'),
     ('ca000000-0000-0000-0000-0000000000f1', 'cap-family@test.com', '{"account_type":"customer"}', 'authenticated', 'authenticated');
 
-INSERT INTO public.family_profiles (id, family_group_id, first_name, age_range)
-SELECT v.id::uuid, m.family_group_id, v.name, '7-9'
+INSERT INTO public.family_profiles (id, family_group_id, first_name, date_of_birth)
+SELECT v.id::uuid, m.family_group_id, v.name, DATE '2018-03-01'
 FROM (VALUES
     ('ce000000-0000-0000-0000-000000000001', 'Anna'),
     ('ce000000-0000-0000-0000-000000000002', 'Pau'),

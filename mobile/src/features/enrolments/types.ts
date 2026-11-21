@@ -52,9 +52,8 @@ export interface ReceivedEnrolmentRequest {
   activityId: string;
   activityTitle: string;
   familyProfileName: string;
-  // From the date of birth; null when the profile only has an age range
-  familyProfileAge: number | null;
-  familyProfileAgeRange: string | null;
+  // Calculated from the date of birth, which every profile has
+  familyProfileAge: number;
   customerEmail: string;
   message: string | null;
   status: EnrolmentStatus;

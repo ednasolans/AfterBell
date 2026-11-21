@@ -8,6 +8,8 @@ import {
 
 import { Alert, Text } from "react-native";
 
+import { ageOn } from "@/lib/ages";
+
 import { useFamilyProfiles } from "../hooks/useFamilyProfiles";
 import { FamilyProfilesList } from "./FamilyProfilesList";
 
@@ -21,7 +23,7 @@ const PROFILE = {
   id: "profile-1",
   family_group_id: "group-1",
   first_name: "Anna",
-  age_range: "7-9",
+  date_of_birth: "2018-03-01",
   interests: ["music"],
   created_at: "2026-10-24T10:00:00Z",
 };
@@ -106,7 +108,10 @@ describe("FamilyProfilesList", () => {
     );
 
     expect(screen.getByText("Anna")).toBeTruthy();
-    expect(screen.getByText("Age: 7-9")).toBeTruthy();
+    // Calculated today from the date of birth, so the test does not age
+    expect(
+      screen.getByText(`Age ${ageOn("2018-03-01", new Date())}`),
+    ).toBeTruthy();
 
     expect(
       screen.getByText("Add another profile"),
@@ -173,7 +178,7 @@ describe("FamilyProfilesList deletion", () => {
     id: "profile-1",
     family_group_id: "group-1",
     first_name: "Anna",
-    age_range: "7-9",
+    date_of_birth: "2018-03-01",
     interests: ["music"],
     created_at: "2026-10-24T10:00:00Z",
   };
@@ -182,7 +187,7 @@ describe("FamilyProfilesList deletion", () => {
     id: "profile-2",
     family_group_id: "group-1",
     first_name: "Marc",
-    age_range: "10-12",
+    date_of_birth: "2015-03-01",
     interests: ["football"],
     created_at: "2026-10-24T11:00:00Z",
   };

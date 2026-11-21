@@ -1,16 +1,37 @@
-
-import { AGE_RANGES } from "@/lib/ages";
 import { ACTIVITY_CATEGORIES } from "@/lib/activityCategories";
+import { toIsoDate } from "@/lib/dates";
 import type { FamilyProfileFormValues } from "./types";
 
 export type FamilyProfileErrors = {
   firstName?: string;
-  ageRange?: string;
+  dateOfBirth?: string;
   interests?: string;
 };
 
+// Same limit as the database (family_dob_reasonable)
+export const EARLIEST_DATE_OF_BIRTH = "1900-01-01";
+
+// The database also rejects a date in the future (family_date_of_birth_valid).
+// ISO dates compare as text.
+function validateDateOfBirth(
+  dateOfBirth: string | null,
+  today: Date,
+): string | undefined {
+  if (dateOfBirth === null) {
+    return "Enter the date of birth";
+  }
+  if (dateOfBirth > toIsoDate(today)) {
+    return "The date of birth cannot be in the future";
+  }
+  if (dateOfBirth < EARLIEST_DATE_OF_BIRTH) {
+    return "Enter a date of birth from 1900 onwards";
+  }
+  return undefined;
+}
+
 export function validateFamilyProfile(
   values: FamilyProfileFormValues,
+  today: Date = new Date(),
 ): FamilyProfileErrors {
   const errors: FamilyProfileErrors = {};
   const firstName = values.firstName.trim();
@@ -21,19 +42,13 @@ export function validateFamilyProfile(
     errors.firstName = "First name must be 50 characters or less";
   }
 
-  if (
-    values.ageRange === null ||
-    !AGE_RANGES.includes(values.ageRange)
-  ) {
-    errors.ageRange = "Select a valid age range";
+  const dateOfBirthError = validateDateOfBirth(values.dateOfBirth, today);
+  if (dateOfBirthError) {
+    errors.dateOfBirth = dateOfBirthError;
   }
 
   if (
-    values.interests.some(
-      (interest) =>
-        !ACTIVITY_CATEGORIES.includes(interest),
-    
-    )
+    values.interests.some((interest) => !ACTIVITY_CATEGORIES.includes(interest))
   ) {
     errors.interests = "Select valid interests";
   }
@@ -41,9 +56,7 @@ export function validateFamilyProfile(
   return errors;
 }
 
-export function hasFamilyProfileErrors(
-  errors: FamilyProfileErrors,
-): boolean {
+export function hasFamilyProfileErrors(errors: FamilyProfileErrors): boolean {
   return Object.values(errors).some(Boolean);
 }
 

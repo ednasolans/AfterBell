@@ -33,7 +33,7 @@ Requests cannot be written directly: every change goes through these functions, 
 
 Lists return 20 rows by default and 100 at most.
 
-**What the provider sees** (team decision): the first name and age of the profile (`family_profile_age` from the date of birth, or `family_profile_age_range` when there is none) and the email of the family, so the provider can contact them. Only for requests to its own activities.
+**What the provider sees** (team decision): the first name and age of the profile (`family_profile_age`, calculated from the date of birth) and the email of the family, so the provider can contact them. Only for requests to its own activities.
 
 **What the family sees:** `activity_available` is `false` when the activity has been unpublished or has finished, so the list can say so instead of hiding the request.
 
@@ -94,7 +94,7 @@ The code lives in `mobile/src/features/enrolments/`. The activity detail (catalo
 
 The provider part also lives in `features/enrolments/`. The list of activities (activities feature) gets the counter through `renderCardFooter`; the screen `app/(provider)/activities/index.tsx` joins the two features.
 
-- **Enrolment requests** (`/requests`, a card on the provider home): every request received, pending first. Each one shows the first name and age of the profile (or its age range), the activity with its places ("8 / 12" or "3 (no limit)"), the email of the family, the date, the message and the status.
+- **Enrolment requests** (`/requests`, a card on the provider home): every request received, pending first. Each one shows the first name and age of the profile, the activity with its places ("8 / 12" or "3 (no limit)"), the email of the family, the date, the message and the status.
 - **Filters** by status (All by default) and by activity, as chips. Filtering by an activity shows its places on top ("Places taken: 8 / 12 · Full").
 - **Accept / Reject** only for pending requests, after a confirmation. When the activity is full, *Accept* is disabled and the card says why; *Reject* still works. If the last place was taken in the meantime, the message of the server is shown.
 - **After answering**, the request and the counter change at once in the cache (`useAnswerEnrolmentRequest`), and then everything is read again in the background, without a loading screen. Changing a filter keeps the current list on screen while the new one loads.

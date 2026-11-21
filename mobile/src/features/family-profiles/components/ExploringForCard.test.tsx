@@ -10,18 +10,19 @@ jest.mock("../context/ActiveProfileProvider", () => ({
 
 const mockedUseActiveProfile = jest.mocked(useActiveProfile);
 const mockSetActiveProfile = jest.fn<Promise<void>, [string]>();
+// Born on 1 January ten years ago: 10 on any day of this year
+const TEN_YEARS_AGO = `${new Date().getFullYear() - 10}-01-01`;
 
 const MARC = {
   id: "p1",
   family_group_id: "g1",
   first_name: "Marc",
-  age_range: "7-9",
-  date_of_birth: null,
+  date_of_birth: TEN_YEARS_AGO,
   interests: [],
   created_at: "2026-01-01T10:00:00.000Z",
 } as FamilyProfile;
 
-const LAIA = { ...MARC, id: "p2", first_name: "Laia", age_range: null };
+const LAIA = { ...MARC, id: "p2", first_name: "Laia" };
 
 function mockContext(
   overrides: Partial<ReturnType<typeof useActiveProfile>> = {},
@@ -50,18 +51,7 @@ describe("ExploringForCard", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Exploring for Marc, 7–9 years. Change profile",
-      }),
-    ).toBeTruthy();
-  });
-
-  it("shows only the name when the profile has no age", async () => {
-    mockContext({ activeProfile: LAIA, activeProfileId: LAIA.id });
-    await render(<ExploringForCard onAddProfile={jest.fn()} />);
-
-    expect(
-      screen.getByRole("button", {
-        name: "Exploring for Laia. Change profile",
+        name: "Exploring for Marc, Age 10. Change profile",
       }),
     ).toBeTruthy();
   });

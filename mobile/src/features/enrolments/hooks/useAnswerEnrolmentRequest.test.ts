@@ -24,7 +24,6 @@ const REQUEST: ReceivedEnrolmentRequest = {
   activityTitle: "Swimming",
   familyProfileName: "Anna",
   familyProfileAge: 8,
-  familyProfileAgeRange: "7-9",
   customerEmail: "family@test.com",
   message: null,
   status: "pending",

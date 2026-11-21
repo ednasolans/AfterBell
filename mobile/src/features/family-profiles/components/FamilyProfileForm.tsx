@@ -11,8 +11,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { AGE_RANGES } from "@/lib/ages";
+import { DateField } from "@/components/DateField";
 import { ACTIVITY_CATEGORIES } from "@/lib/activityCategories";
+import { toIsoDate } from "@/lib/dates";
 import { colors } from "@/theme/colors";
 
 import {
@@ -96,47 +97,20 @@ export function FamilyProfileForm({
         <Text style={styles.error}>{errors.firstName}</Text>
       ) : null}
 
-      <Text style={styles.label}>Age range</Text>
-
-      <View style={styles.options}>
-        {AGE_RANGES.map((age) => (
-          <Pressable
-            key={age}
-            accessibilityRole="radio"
-            accessibilityState={{
-              checked: values.ageRange === age,
-            }}
-            onPress={() =>
-              setValues((previous) => ({
-                ...previous,
-                ageRange: age,
-              }))
-            }
-            style={[styles.option, values.ageRange === age && styles.selected]}
-          >
-            <Ionicons
-              name="calendar-outline"
-              size={15}
-              color={
-                values.ageRange === age ? colors.primaryDark : colors.textMuted
-              }
-            />
-            <Text
-              style={
-                values.ageRange === age
-                  ? styles.selectedText
-                  : styles.optionText
-              }
-            >
-              {age}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {errors.ageRange ? (
-        <Text style={styles.error}>{errors.ageRange}</Text>
-      ) : null}
+      <DateField
+        label="Date of birth"
+        placeholder="Choose the date of birth"
+        value={values.dateOfBirth}
+        onChange={(dateOfBirth) =>
+          setValues((previous) => ({ ...previous, dateOfBirth }))
+        }
+        maximumDate={toIsoDate(new Date())}
+        error={errors.dateOfBirth}
+      />
+      <Text style={styles.hint}>
+        We use it to keep the age right as they grow and to suggest activities
+        for that age. Providers only see the age.
+      </Text>
 
       <Text style={styles.label}>Interests (optional)</Text>
 
@@ -206,6 +180,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   subtitle: { color: colors.textMuted, lineHeight: 21, marginBottom: 8 },
+  hint: { color: colors.textMuted, fontSize: 13, lineHeight: 18 },
   label: {
     fontSize: 16,
     fontWeight: "700",

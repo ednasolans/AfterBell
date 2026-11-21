@@ -1,6 +1,6 @@
-
 import {
   CITY_MAX_LENGTH,
+  EARLIEST_DATE_OF_BIRTH,
   validateFamilyCity,
   validateFamilyProfile,
 } from "./validation";
@@ -9,7 +9,7 @@ import type { FamilyProfileFormValues } from "./types";
 
 const validForm: FamilyProfileFormValues = {
   firstName: "Anna",
-  ageRange: "7-9",
+  dateOfBirth: "2018-03-01",
   interests: ["music", "swimming"],
 };
 
@@ -36,13 +36,50 @@ describe("validateFamilyProfile", () => {
     expect(errors.firstName).toBeDefined();
   });
 
-  it("requires an age range", () => {
+  it("requires a date of birth", () => {
     const errors = validateFamilyProfile({
       ...validForm,
-      ageRange: null,
+      dateOfBirth: null,
     });
 
-    expect(errors.ageRange).toBeDefined();
+    expect(errors.dateOfBirth).toBe("Enter the date of birth");
+  });
+
+  describe("date of birth", () => {
+    const TODAY = new Date(2026, 10, 21);
+
+    it.each([
+      ["today", "2026-11-21"],
+      ["the earliest allowed day", EARLIEST_DATE_OF_BIRTH],
+    ])("accepts %s", (_case, dateOfBirth) => {
+      expect(
+        validateFamilyProfile({ ...validForm, dateOfBirth }, TODAY).dateOfBirth,
+      ).toBeUndefined();
+    });
+
+    it("rejects tomorrow", () => {
+      expect(
+        validateFamilyProfile(
+          { ...validForm, dateOfBirth: "2026-11-22" },
+          TODAY,
+        ).dateOfBirth,
+      ).toBe("The date of birth cannot be in the future");
+    });
+
+    it("rejects the day before the earliest allowed one", () => {
+      expect(
+        validateFamilyProfile(
+          { ...validForm, dateOfBirth: "1899-12-31" },
+          TODAY,
+        ).dateOfBirth,
+      ).toBe("Enter a date of birth from 1900 onwards");
+    });
+
+    it("does not change the form", () => {
+      const form = { ...validForm };
+      validateFamilyProfile(form, TODAY);
+      expect(form).toEqual(validForm);
+    });
   });
 
   it("allows an empty interests list", () => {

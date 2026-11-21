@@ -59,6 +59,33 @@ describe("DateField", () => {
     expect(onChange).toHaveBeenCalledWith("2027-07-02");
   });
 
+  it("passes the last date that can be chosen to both pickers", async () => {
+    await render(
+      <DateField
+        label="Birthday"
+        placeholder="Choose a date"
+        value={null}
+        onChange={jest.fn()}
+        maximumDate="2026-11-21"
+      />,
+    );
+    const birthday = screen.getByRole("button", {
+      name: "Birthday: Choose a date",
+    });
+
+    await fireEvent.press(birthday);
+    const props = mockedPicker.mock.lastCall?.[0];
+    expect(props?.maximumDate).toEqual(new Date(2026, 10, 21));
+    // Without a value nor a minimum, the calendar opens on the last date
+    expect(props?.value).toEqual(new Date(2026, 10, 21));
+
+    Platform.OS = "android";
+    await fireEvent.press(birthday);
+    expect(mockedOpen.mock.lastCall?.[0].maximumDate).toEqual(
+      new Date(2026, 10, 21),
+    );
+  });
+
   it("on Android, opens the dialog and reports the chosen date", async () => {
     Platform.OS = "android";
     const onChange = jest.fn();
@@ -71,5 +98,38 @@ describe("DateField", () => {
       args?.onValueChange?.({} as never, new Date(2027, 6, 2));
     });
     expect(onChange).toHaveBeenCalledWith("2027-07-02");
+  });
+
+  it("on the web, uses the browser's date input with the same limits", async () => {
+    Platform.OS = "web";
+    const onChange = jest.fn();
+    await render(
+      <DateField
+        label="Birthday"
+        placeholder="Choose a date"
+        value="2019-05-06"
+        onChange={onChange}
+        minimumDate="1900-01-01"
+        maximumDate="2026-11-21"
+        error="Too late"
+      />,
+    );
+
+    const input = screen.getByLabelText("Birthday");
+    expect(input.props).toMatchObject({
+      type: "date",
+      value: "2019-05-06",
+      min: "1900-01-01",
+      max: "2026-11-21",
+    });
+    expect(screen.getByText("Too late")).toBeOnTheScreen();
+    expect(mockedPicker).not.toHaveBeenCalled();
+
+    await fireEvent(input, "change", { target: { value: "2020-01-02" } });
+    expect(onChange).toHaveBeenCalledWith("2020-01-02");
+
+    // Clearing the browser input does not remove the chosen date
+    await fireEvent(input, "change", { target: { value: "" } });
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 });

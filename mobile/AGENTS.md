@@ -254,7 +254,7 @@ ROLLBACK;
 
 The design and its reasons are in [`docs/decisions/database.md`](../docs/decisions/database.md). Rules that are easy to break:
 
-- **Family data is about minors:** store the minimum (first name, date of birth, interests). Never photos or full names. The date of birth (`date_of_birth`) was agreed with the client in C11, so the age never goes out of date; `age_range` stays until the form uses the date. Only the members of the group can read or change it.
+- **Family data is about minors:** store the minimum (first name, date of birth, interests). Never photos or full names. The date of birth (`date_of_birth`, required) was agreed with the client in C11, so the age never goes out of date; never store an age or an age range. Only the members of the group can read or change it.
 - **One account belongs to one family group**, created automatically for every customer account. Policies that check membership call the `SECURITY DEFINER` helper `public.is_family_member(group_id)`: a policy on `family_group_members` that queries `family_group_members` fails with *infinite recursion*.
 - **AI profiles** (`provider_profiles`): one per provider, `draft` until the provider approves it, and only the approved text is visible to customers. The table is readable only by its owner, so customers read it through `public_approved_provider_profiles()`. The `generate-profile` Edge Function uses the caller's session, so RLS also applies to it; the LLM key lives only in the function's secrets. Do not send contact data to the LLM.
 - **Activities point to `provider_id`**, never to the profile.

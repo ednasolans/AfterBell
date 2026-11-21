@@ -18,12 +18,12 @@ INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role) VALUES
     ('c9000000-0000-0000-0000-0000000000f1', 'enrol-family-a@test.com', '{"account_type":"customer"}', 'authenticated', 'authenticated'),
     ('c9000000-0000-0000-0000-0000000000f2', 'enrol-family-b@test.com', '{"account_type":"customer"}', 'authenticated', 'authenticated');
 
-INSERT INTO public.family_profiles (id, family_group_id, first_name, age_range, date_of_birth)
-SELECT v.id::uuid, m.family_group_id, v.name, '7-9', v.birth::date
+INSERT INTO public.family_profiles (id, family_group_id, first_name, date_of_birth)
+SELECT v.id::uuid, m.family_group_id, v.name, v.birth::date
 FROM (VALUES
     ('a1000000-0000-0000-0000-000000000001', 'c9000000-0000-0000-0000-0000000000f1', 'Anna', '2018-03-01'),
-    ('a1000000-0000-0000-0000-000000000002', 'c9000000-0000-0000-0000-0000000000f1', 'Pau', NULL),
-    ('a1000000-0000-0000-0000-000000000003', 'c9000000-0000-0000-0000-0000000000f2', 'Marc', NULL)
+    ('a1000000-0000-0000-0000-000000000002', 'c9000000-0000-0000-0000-0000000000f1', 'Pau', '2019-06-15'),
+    ('a1000000-0000-0000-0000-000000000003', 'c9000000-0000-0000-0000-0000000000f2', 'Marc', '2017-01-10')
 ) AS v(id, account, name, birth)
 JOIN public.family_group_members m ON m.account_id = v.account::uuid;
 
@@ -150,11 +150,12 @@ SELECT pg_temp.expect('a provider cannot send requests',
 
 -- ----------------------------------------------------------------- provider
 SELECT pg_temp.check('the provider sees the pending requests with name, age and email',
-    (SELECT string_agg(family_profile_name || '/' || coalesce(family_profile_age::text, family_profile_age_range)
+    (SELECT string_agg(family_profile_name || '/' || family_profile_age::text
         || '/' || customer_email, ', ' ORDER BY family_profile_name)
      FROM public.provider_enrolment_requests('d9000000-0000-0000-0000-000000000001')),
     'Anna/' || extract(year FROM age(current_date, DATE '2018-03-01'))::text
-        || '/enrol-family-a@test.com, Pau/7-9/enrol-family-a@test.com');
+        || '/enrol-family-a@test.com, Pau/'
+        || extract(year FROM age(current_date, DATE '2019-06-15'))::text || '/enrol-family-a@test.com');
 SELECT pg_temp.expect('the provider accepts a pending request',
     $q$SELECT public.accept_enrolment_request((SELECT id FROM ids WHERE name = 'anna_one'))$q$);
 SELECT pg_temp.check('accepted requests take a place',

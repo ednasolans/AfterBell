@@ -231,8 +231,7 @@ Table family_profiles {
   id uuid [pk, default: `gen_random_uuid()`]
   family_group_id uuid [not null, note: 'FK family_groups, ON DELETE CASCADE']
   first_name text [not null, note: 'not blank, max 50']
-  age_range text [note: 'one of AGE_RANGES (lib/ages.ts)']
-  date_of_birth date [note: 'optional, not in the future']
+  date_of_birth date [not null, note: 'not before 1900, not in the future']
   interests text[] [not null, default: `'{}'`, note: 'activity categories']
   created_at timestamptz [not null, default: `now()`]
 

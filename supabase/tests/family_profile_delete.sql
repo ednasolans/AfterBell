@@ -14,13 +14,13 @@ BEGIN
   INSERT INTO public.family_profiles (
     family_group_id,
     first_name,
-    age_range,
+    date_of_birth,
     interests
   )
   VALUES (
     test_group_id,
     'Anna',
-    '7-9',
+    DATE '2018-03-01',
     ARRAY['music']::TEXT[]
   )
   RETURNING id INTO first_profile_id;
@@ -28,13 +28,13 @@ BEGIN
   INSERT INTO public.family_profiles (
     family_group_id,
     first_name,
-    age_range,
+    date_of_birth,
     interests
   )
   VALUES (
     test_group_id,
     'Marc',
-    '10-12',
+    DATE '2015-03-01',
     ARRAY['football']::TEXT[]
   )
   RETURNING id INTO second_profile_id;

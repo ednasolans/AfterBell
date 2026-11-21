@@ -31,12 +31,12 @@ It returns one row per activity, so there are no duplicates:
 | `matched_count`    | How many profiles fit it                                                          |
 | `distance_meters`  | From the (blurred) point of the family to the activity. `NULL` without a point    |
 
-| Error                                 | SQLSTATE | When                                              |
-| ------------------------------------- | -------- | ------------------------------------------------- |
-| `recommendations_not_a_customer`      | 42501    | The account has no family group (a provider)      |
-| `recommendations_no_city`             | 22023    | The family has not saved its town                 |
-| `recommendations_no_profiles`         | 22023    | The family has no profiles                        |
-| `recommendations_incomplete_profiles` | 22023    | No profile has both a date of birth and interests |
+| Error                                 | SQLSTATE | When                                         |
+| ------------------------------------- | -------- | -------------------------------------------- |
+| `recommendations_not_a_customer`      | 42501    | The account has no family group (a provider) |
+| `recommendations_no_city`             | 22023    | The family has not saved its town            |
+| `recommendations_no_profiles`         | 22023    | The family has no profiles                   |
+| `recommendations_incomplete_profiles` | 22023    | No profile has interests                     |
 
 ## Endpoint: Edge Function `recommendations` (#107)
 
@@ -82,7 +82,7 @@ unexplained. They are answered with HTTP 200 and an empty `activities` list.
 | `NO_MATCHES`          | Complete data, but nothing fits (first page)                    | wait for new activities, or change interests or town |
 | `NO_CITY`             | The family has not saved its town                               | save the town                                        |
 | `NO_PROFILES`         | The family has no profiles                                      | create a profile                                     |
-| `INCOMPLETE_PROFILES` | No profile has date of birth and interests                      | complete a profile                                   |
+| `INCOMPLETE_PROFILES` | No profile has interests                                        | complete a profile                                   |
 
 `recommend_activities` stops at the first missing data (town, then profiles), so
 a customer lacking both is told about the town first.
@@ -178,10 +178,9 @@ An activity is recommended when **all** of this is true:
     `target_age_ranges` contain it or `all_publics`.
   - **Interests:** the category of the activity is one of the interests of the profile.
 
-A profile **without date of birth** or **without interests** fits nothing. The
-old `age_range` is not used as a fallback (team decision). Profiles created before
-C11 have no date of birth until they are edited, and the function says so with
-`recommendations_incomplete_profiles` when that leaves no usable profile.
+A profile **without interests** fits nothing, and the function says so with
+`recommendations_incomplete_profiles` when that leaves no usable profile. Every
+profile has a date of birth since #151 (the old `age_range` was removed).
 
 ## Order
 

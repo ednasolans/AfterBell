@@ -13,7 +13,8 @@ BEGIN;
 
 -- Club A has an approved profile, club B does not.
 -- f1: family with 3 profiles in "lleida"; f2: another family; f3: no city;
--- f4: no profiles; f5: a profile without date of birth.
+-- f4: no profiles; f5: a profile without interests (#151: every profile has a
+-- date of birth, so interests are what can still be missing).
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role) VALUES
     ('a1060000-0000-0000-0000-00000000000a', 'rec-club-a@test.com', '{"account_type":"company"}', 'authenticated', 'authenticated'),
     ('a1060000-0000-0000-0000-00000000000b', 'rec-club-b@test.com', '{"account_type":"company"}', 'authenticated', 'authenticated'),
@@ -41,7 +42,7 @@ FROM (VALUES
     ('a1060000-0000-0000-0000-0000000000c2', 'a1060000-0000-0000-0000-0000000000f1', 'Laia', current_date - interval '8 years', '{football}'),
     ('a1060000-0000-0000-0000-0000000000c3', 'a1060000-0000-0000-0000-0000000000f1', 'Joan', current_date - interval '17 years' + interval '1 day', '{music}'),
     ('a1060000-0000-0000-0000-0000000000c4', 'a1060000-0000-0000-0000-0000000000f2', 'Pol', current_date - interval '8 years', '{football}'),
-    ('a1060000-0000-0000-0000-0000000000c5', 'a1060000-0000-0000-0000-0000000000f5', 'Ona', NULL, '{football}')
+    ('a1060000-0000-0000-0000-0000000000c5', 'a1060000-0000-0000-0000-0000000000f5', 'Ona', current_date - interval '8 years', '{}')
 ) AS v(id, account, name, dob, interests)
 JOIN public.family_group_members m ON m.account_id = v.account::uuid;
 
@@ -220,7 +221,7 @@ RESET ROLE;
 
 DO $$ BEGIN PERFORM pg_temp.login('a1060000-0000-0000-0000-0000000000f5'); END $$;
 SET LOCAL ROLE authenticated;
-SELECT pg_temp.expect('a profile without date of birth fits nothing', $q$SELECT * FROM public.recommend_activities()$q$,
+SELECT pg_temp.expect('a profile without interests fits nothing', $q$SELECT * FROM public.recommend_activities()$q$,
     'recommendations_incomplete_profiles');
 RESET ROLE;
 

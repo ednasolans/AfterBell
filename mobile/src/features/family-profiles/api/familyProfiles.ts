@@ -62,8 +62,8 @@ export async function createFamilyProfile(
 ): Promise<FamilyProfile> {
   const groupId = await getFamilyGroupId();
 
-  if (!values.ageRange) {
-    throw new Error("Age range is required");
+  if (!values.dateOfBirth) {
+    throw new Error("Date of birth is required");
   }
 
   const { data, error } = await supabase
@@ -71,7 +71,7 @@ export async function createFamilyProfile(
     .insert({
       family_group_id: groupId,
       first_name: values.firstName.trim(),
-      age_range: values.ageRange,
+      date_of_birth: values.dateOfBirth,
       interests: values.interests,
     })
     .select()
@@ -88,15 +88,15 @@ export async function updateFamilyProfile(
 ): Promise<FamilyProfile> {
   const groupId = await getFamilyGroupId();
 
-  if (!values.ageRange) {
-    throw new Error("Age range is required");
+  if (!values.dateOfBirth) {
+    throw new Error("Date of birth is required");
   }
 
   const { data, error } = await supabase
     .from("family_profiles")
     .update({
       first_name: values.firstName.trim(),
-      age_range: values.ageRange,
+      date_of_birth: values.dateOfBirth,
       interests: values.interests,
     })
     .eq("id", id)

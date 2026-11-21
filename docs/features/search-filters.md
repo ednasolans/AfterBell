@@ -188,8 +188,7 @@ Decisions:
   filter, pressing it again removes it; it is the same filter as the panel.
 - **Exploring for:** the home shows the active family profile
   (`ExploringForCard`, "Exploring for: Marc, Age 8") and uses its age as the
-  age filter (`useActiveProfileAges`): the exact age when the date of birth is
-  known, otherwise its age range. It is a normal chip ("Age 8"), so the
+  age filter (`useActiveProfileAges`): its exact age, from the date of birth. It is a normal chip ("Age 8"), so the
   customer can remove it; it is applied again when another profile is chosen.
   The profile list is the one of #21 (`ProfileSwitchModal`).
 - **Kept when an activity is opened:** the filters live in `CatalogSearch`, as

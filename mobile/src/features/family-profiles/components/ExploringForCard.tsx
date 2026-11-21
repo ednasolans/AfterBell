@@ -46,10 +46,7 @@ export function ExploringForCard({
     );
   }
 
-  const age = profileAgeLabel(activeProfile, new Date());
-  const who = age
-    ? `${activeProfile.first_name}, ${age}`
-    : activeProfile.first_name;
+  const who = `${activeProfile.first_name}, ${profileAgeLabel(activeProfile, new Date())}`;
 
   return (
     <>

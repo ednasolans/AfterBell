@@ -27,7 +27,7 @@ const PROFILE_ID = "profile-1";
 
 const VALUES: FamilyProfileFormValues = {
   firstName: "Anna",
-  ageRange: "7-9",
+  dateOfBirth: "2018-03-01",
   interests: ["music", "swimming"],
 };
 
@@ -35,7 +35,7 @@ const PROFILE = {
   id: PROFILE_ID,
   family_group_id: GROUP_ID,
   first_name: "Anna",
-  age_range: "7-9",
+  date_of_birth: "2018-03-01",
   interests: ["music", "swimming"],
   created_at: "2026-10-24T10:00:00Z",
 };
@@ -258,7 +258,7 @@ describe("createFamilyProfile", () => {
     expect(profilesQuery.insert).toHaveBeenCalledWith({
       family_group_id: GROUP_ID,
       first_name: "Anna",
-      age_range: "7-9",
+      date_of_birth: "2018-03-01",
       interests: ["music", "swimming"],
     });
   });
@@ -276,13 +276,13 @@ describe("createFamilyProfile", () => {
     );
   });
 
-  it("rejects a missing age range", async () => {
+  it("rejects a missing date of birth", async () => {
     await expect(
       createFamilyProfile({
         ...VALUES,
-        ageRange: null,
+        dateOfBirth: null,
       }),
-    ).rejects.toThrow("Age range is required");
+    ).rejects.toThrow("Date of birth is required");
 
     expect(profilesQuery.insert).not.toHaveBeenCalled();
   });
@@ -310,7 +310,7 @@ describe("updateFamilyProfile", () => {
 
     expect(profilesQuery.update).toHaveBeenCalledWith({
       first_name: "Anna",
-      age_range: "7-9",
+      date_of_birth: "2018-03-01",
       interests: ["music", "swimming"],
     });
 
@@ -325,13 +325,13 @@ describe("updateFamilyProfile", () => {
     );
   });
 
-  it("rejects a missing age range", async () => {
+  it("rejects a missing date of birth", async () => {
     await expect(
       updateFamilyProfile(PROFILE_ID, {
         ...VALUES,
-        ageRange: null,
+        dateOfBirth: null,
       }),
-    ).rejects.toThrow("Age range is required");
+    ).rejects.toThrow("Date of birth is required");
 
     expect(profilesQuery.update).not.toHaveBeenCalled();
   });
