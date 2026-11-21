@@ -54,6 +54,10 @@ export default function GroupLayout() {
               name="recommendations"
               options={{ title: "Recommended for you" }}
             />
+            <Stack.Screen
+              name="family-location"
+              options={{ title: "Your town" }}
+            />
           </Stack>
         </ActiveProfileFavourites>
       </ActiveProfileProvider>

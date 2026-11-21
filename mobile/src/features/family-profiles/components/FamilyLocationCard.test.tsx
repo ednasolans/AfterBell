@@ -27,8 +27,10 @@ jest.mock("@/lib/location", () => ({
 
 const TOWN_CENTRE = { latitude: 41.67, longitude: 0.555 };
 
-async function renderCard() {
-  await render(<FamilyLocationCard />, {
+async function renderCard(
+  props: Parameters<typeof FamilyLocationCard>[0] = {},
+) {
+  await render(<FamilyLocationCard {...props} />, {
     wrapper: createQueryClientWrapper(createTestQueryClient()),
   });
 }
@@ -160,6 +162,41 @@ describe("FamilyLocationCard", () => {
 
     expect(await screen.findByText("Lleida")).toBeOnTheScreen();
     expect(saveFamilyLocation).not.toHaveBeenCalled();
+  });
+
+  it("opens the editor at once and reports the saved town", async () => {
+    jest
+      .mocked(fetchFamilyCity)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValue("Alpicat");
+    jest.mocked(findCoordinates).mockResolvedValue(TOWN_CENTRE);
+    jest.mocked(saveFamilyLocation).mockResolvedValue();
+    const onSaved = jest.fn();
+    await renderCard({ initiallyEditing: true, onSaved });
+
+    await fireEvent.changeText(
+      await screen.findByLabelText("City or town"),
+      "Alpicat",
+    );
+    await fireEvent.press(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Alpicat")).toBeOnTheScreen();
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not report a cancel as a saved town", async () => {
+    jest.mocked(fetchFamilyCity).mockResolvedValue(null);
+    const onSaved = jest.fn();
+    await renderCard({ initiallyEditing: true, onSaved });
+
+    await fireEvent.press(
+      await screen.findByRole("button", { name: "Cancel" }),
+    );
+
+    expect(
+      await screen.findByText("Add your town to see activities near you."),
+    ).toBeOnTheScreen();
+    expect(onSaved).not.toHaveBeenCalled();
   });
 
   it("shows an error and tries again when the town cannot be loaded", async () => {
