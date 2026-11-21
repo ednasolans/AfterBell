@@ -132,15 +132,40 @@ Code in `mobile/src/features/recommendations/`.
   `hasMore` is true. `loadNextPage` asks for it at the end of a list.
 - `components/RecommendationsSection.tsx`: "Recommended for you" on the home. A
   horizontal row in the order of the backend, with "See all". It shows a spinner
-  while it loads and an error with "Try again". Without recommendations (any
-  status other than `OK`, or an empty list) it shows nothing: the messages for
-  each status belong to #109.
+  while it loads and an error with "Try again". Without recommendations it says
+  why, with an action (see **Empty states**).
 - `components/RecommendationsList.tsx`: the "See all" screen
   (`app/(customer)/recommendations.tsx`), a vertical list loaded page by page,
-  with pull to refresh.
+  with pull to refresh, and the same empty states.
+- `components/RecommendationsStatus.tsx` and `statusMessages.ts`: the message
+  and the actions of each status other than `OK`.
 - `components/RecommendationCard.tsx`: the shared `CustomerActivityCard` with
   "Suitable for" and the first names of the profiles that fit the activity.
   Tapping it opens the activity detail.
+
+### Empty states (#109)
+
+The status of the first page decides the message: the app never guesses from
+its own data. The screens decide where each action leads.
+
+| Status                | Message                                                 | Action                                                     |
+| --------------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
+| `NO_CITY`             | "Set your town to see activities near you."             | "Set your town": `family-location`, back after saving      |
+| `NO_PROFILES`         | "Add a family profile to get activities for their age." | "Add a profile": the profile form, back after saving       |
+| `INCOMPLETE_PROFILES` | "Add interests to a profile to get suggestions."        | "Add interests": the form of the active profile, then back |
+| `NO_MATCHES`          | "No activities fit your family in your town yet."       | "Search activities" and "See all activities"               |
+
+- **Back to the recommendations:** the profile form now goes back after saving
+  (`router.back()`, or the profiles list when there is nothing to go back to),
+  and `family-location` goes back once the town is saved. Saving invalidates
+  the recommendations, so they appear without doing anything else.
+- **`NO_MATCHES` on the home:** the search and the list are on the same screen,
+  so the actions use `CatalogSearch`'s handle (`ref`): `focusSearch()` puts the
+  cursor in the search box, and `showAll()` clears the text and the filters but
+  keeps the age of the active profile (team decision). On "See all", both go
+  back to the home.
+- `INCOMPLETE_PROFILES` is not in the issue, but the endpoint returns it (no
+  profile has interests), and without a message the section would be empty.
 
 ### Decisions (#108)
 
@@ -235,9 +260,13 @@ No new index. The filters use the ones that exist: `activities_target_age_ranges
    activities", each card with "Suitable for <name>". Tap a card (detail), tap
    "See all" (full list, scroll to the end to load more). Edit the profile's
    interests or the town and go back: the row changes.
+6. Empty states (#109): log in as a customer without a town. The home says
+   "Set your town"; set it and the app comes back to the home. Then the same
+   with no profiles ("Add a profile") and with a profile without interests
+   ("Add interests"). In a town with no matching activities, "Search
+   activities" puts the cursor in the search box, and "See all activities"
+   clears the filters but keeps the age.
 
 ## Pending
 
-- #109: the messages for `NO_CITY`, `NO_PROFILES`, `INCOMPLETE_PROFILES` and
-  `NO_MATCHES`, with buttons to complete the data.
 - The favourite heart on the recommendation cards.

@@ -54,7 +54,8 @@ Addresses saved before #139, or that could not be geocoded, have no point: compa
 | `features/family-profiles/api/familyLocation.ts` | `fetchFamilyCity`, `saveFamilyLocation` |
 | `features/family-profiles/hooks/useFamilyLocation.ts` | Query and mutation (`["family-profiles", "location"]`) |
 | `features/family-profiles/hooks/useFamilyLocationForm.ts` | The town, *Use my current location*, and which point to save |
-| `features/family-profiles/components/FamilyLocationCard.tsx` | *Your location* card at the top of **Family profiles** |
+| `features/family-profiles/components/FamilyLocationCard.tsx` | *Your location* card at the top of **Family profiles**. `initiallyEditing` and `onSaved` let a screen open it to set the town and go back after saving |
+| `app/(customer)/family-location.tsx` | The card alone, opened from the recommendations when the town is missing (#109); back after saving |
 
 **Which point is saved:** if the town came from *Use my current location* and was not changed, the point of the phone (blurred by the database); if it was typed, the point of the town found by geocoding. If the town cannot be found, the family sees "We could not find this town…" and nothing is saved.
 
