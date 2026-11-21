@@ -1,12 +1,18 @@
 
+import DateTimePicker from "@react-native-community/datetimepicker";
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
 } from "@testing-library/react-native";
 
+import { formatDate } from "@/lib/dates";
+
 import { FamilyProfileForm } from "./FamilyProfileForm";
+
+const mockedPicker = jest.mocked(DateTimePicker);
 
 describe("FamilyProfileForm", () => {
   it("shows errors and does not save an empty form", async () => {
@@ -28,7 +34,7 @@ describe("FamilyProfileForm", () => {
     ).toBeTruthy();
 
     expect(
-      screen.getByText("Select a valid age range"),
+      screen.getByText("Enter the date of birth"),
     ).toBeTruthy();
 
     expect(onSave).not.toHaveBeenCalled();
@@ -39,7 +45,7 @@ describe("FamilyProfileForm", () => {
       <FamilyProfileForm
         initialValues={{
           firstName: "Anna",
-          ageRange: "7-9",
+          dateOfBirth: "2018-03-01",
           interests: ["music"],
         }}
         onSave={jest.fn()}
@@ -52,8 +58,10 @@ describe("FamilyProfileForm", () => {
     ).toBeTruthy();
 
     expect(
-      screen.getByText("7-9").parent?.props.accessibilityState,
-    ).toEqual({ checked: true });
+      screen.getByRole("button", {
+        name: `Date of birth: ${formatDate("2018-03-01")}`,
+      }),
+    ).toBeTruthy();
 
     expect(
       screen.getByText("music").parent?.props.accessibilityState,
@@ -67,7 +75,7 @@ describe("FamilyProfileForm", () => {
       <FamilyProfileForm
         initialValues={{
           firstName: "Anna",
-          ageRange: "7-9",
+          dateOfBirth: "2018-03-01",
           interests: ["music"],
         }}
         onSave={onSave}
@@ -82,7 +90,7 @@ describe("FamilyProfileForm", () => {
     await waitFor(() => {
       expect(onSave).toHaveBeenCalledWith({
         firstName: "Anna",
-        ageRange: "7-9",
+        dateOfBirth: "2018-03-01",
         interests: ["music"],
       });
     });
@@ -95,7 +103,7 @@ describe("FamilyProfileForm", () => {
       <FamilyProfileForm
         initialValues={{
           firstName: "Anna",
-          ageRange: "7-9",
+          dateOfBirth: "2018-03-01",
           interests: ["music"],
         }}
         onSave={onSave}
@@ -125,7 +133,7 @@ describe("FamilyProfileForm", () => {
       <FamilyProfileForm
         initialValues={{
           firstName: "Anna",
-          ageRange: "7-9",
+          dateOfBirth: "2018-03-01",
           interests: ["music", "swimming"],
         }}
         onSave={onSave}
@@ -146,6 +154,73 @@ describe("FamilyProfileForm", () => {
         }),
       );
     });
+  });
+
+  it("explains why the date of birth is asked", async () => {
+    await render(<FamilyProfileForm onSave={jest.fn()} isSaving={false} />);
+
+    expect(
+      screen.getByText(/keep the age right as they grow/),
+    ).toBeTruthy();
+  });
+
+  it("saves the date chosen in the calendar, which ends today", async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+    await render(
+      <FamilyProfileForm
+        initialValues={{
+          firstName: "Anna",
+          dateOfBirth: null,
+          interests: [],
+        }}
+        onSave={onSave}
+        isSaving={false}
+      />,
+    );
+
+    await fireEvent.press(
+      screen.getByRole("button", {
+        name: "Date of birth: Choose the date of birth",
+      }),
+    );
+    const props = mockedPicker.mock.lastCall?.[0];
+    const today = new Date();
+    expect(props?.maximumDate).toEqual(
+      new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+    );
+    await act(async () => {
+      props?.onValueChange?.({} as never, new Date(2019, 4, 6));
+    });
+
+    await fireEvent.press(screen.getByLabelText("Save profile"));
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith({
+        firstName: "Anna",
+        dateOfBirth: "2019-05-06",
+        interests: [],
+      });
+    });
+  });
+
+  it("asks to complete an old profile without a date of birth", async () => {
+    const onSave = jest.fn();
+    await render(
+      <FamilyProfileForm
+        initialValues={{
+          firstName: "Anna",
+          dateOfBirth: null,
+          interests: ["music"],
+        }}
+        onSave={onSave}
+        isSaving={false}
+      />,
+    );
+
+    await fireEvent.press(screen.getByLabelText("Save profile"));
+
+    expect(screen.getByText("Enter the date of birth")).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
   });
 
   it("disables the save button while saving", async () => {

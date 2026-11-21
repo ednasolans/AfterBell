@@ -45,7 +45,7 @@ const PROFILE: FamilyProfile = {
 
 const FORM: FamilyProfileFormValues = {
   firstName: "Anna",
-  ageRange: "7-9",
+  dateOfBirth: "2018-03-01",
   interests: ["music", "swimming"],
 };
 

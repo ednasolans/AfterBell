@@ -22,7 +22,6 @@ import {
 import { useFamilyUser } from
   "@/features/family-profiles/hooks/useFamilyUser";
 
-import { AGE_RANGES } from "@/lib/ages";
 import { ACTIVITY_CATEGORIES } from
   "@/lib/activityCategories";
 
@@ -80,10 +79,6 @@ export default function FamilyProfileFormScreen() {
 
   const profile = profileQuery.data;
 
-  const ageRange = profile
-    ? AGE_RANGES.find((age) => age === profile.age_range)
-    : undefined;
-
   const interests = profile
     ? ACTIVITY_CATEGORIES.filter((category) =>
         profile.interests.includes(category),
@@ -94,7 +89,7 @@ export default function FamilyProfileFormScreen() {
     profile
       ? {
           firstName: profile.first_name,
-          ageRange: ageRange ?? null,
+          dateOfBirth: profile.date_of_birth,
           interests: [...interests],
         }
       : undefined;
