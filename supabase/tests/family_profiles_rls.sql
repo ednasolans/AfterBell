@@ -91,13 +91,13 @@ SET LOCAL ROLE authenticated;
 INSERT INTO public.family_profiles (
     family_group_id,
     first_name,
-    age_range,
+    date_of_birth,
     interests
 )
 SELECT
     m.family_group_id,
     'Pau',
-    '7-9',
+    DATE '2018-03-01',
     ARRAY['football', 'swimming']::TEXT[]
 FROM public.family_group_members m
 WHERE m.account_id =
@@ -107,13 +107,13 @@ WHERE m.account_id =
 INSERT INTO public.family_profiles (
     family_group_id,
     first_name,
-    age_range,
+    date_of_birth,
     interests
 )
 SELECT
     m.family_group_id,
     'Laia',
-    '4-6',
+    DATE '2021-03-01',
     ARRAY['art', 'music']::TEXT[]
 FROM public.family_group_members m
 WHERE m.account_id =
@@ -243,13 +243,13 @@ SET LOCAL ROLE authenticated;
 INSERT INTO public.family_profiles (
     family_group_id,
     first_name,
-    age_range,
+    date_of_birth,
     interests
 )
 SELECT
     m.family_group_id,
     'Biel',
-    '10-12',
+    DATE '2015-03-01',
     ARRAY['tennis']::TEXT[]
 FROM public.family_group_members m
 WHERE m.account_id =
@@ -325,13 +325,13 @@ SET LOCAL ROLE authenticated;
 INSERT INTO public.family_profiles (
     family_group_id,
     first_name,
-    age_range,
+    date_of_birth,
     interests
 )
 SELECT
     m.family_group_id,
     'Nora',
-    '7-9',
+    DATE '2018-03-01',
     ARRAY['music']::TEXT[]
 FROM public.family_group_members m
 WHERE m.account_id =

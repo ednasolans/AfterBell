@@ -26,8 +26,8 @@ SET family_group_id = (SELECT family_group_id FROM public.family_group_members
 WHERE account_id = 'fa000000-0000-0000-0000-0000000000f3';
 
 -- Family A has two children, Marc and Laia; family B has one, Pol
-INSERT INTO public.family_profiles (id, family_group_id, first_name, age_range)
-SELECT v.id::uuid, m.family_group_id, v.name, '7-9'
+INSERT INTO public.family_profiles (id, family_group_id, first_name, date_of_birth)
+SELECT v.id::uuid, m.family_group_id, v.name, DATE '2018-03-01'
 FROM (VALUES
     ('fc000000-0000-0000-0000-0000000000a1', 'fa000000-0000-0000-0000-0000000000f1', 'Marc'),
     ('fc000000-0000-0000-0000-0000000000a2', 'fa000000-0000-0000-0000-0000000000f1', 'Laia'),

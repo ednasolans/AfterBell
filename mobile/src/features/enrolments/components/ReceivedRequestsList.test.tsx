@@ -35,7 +35,6 @@ const PENDING: ReceivedEnrolmentRequest = {
   activityTitle: "Swimming",
   familyProfileName: "Anna",
   familyProfileAge: 8,
-  familyProfileAgeRange: "7-9",
   customerEmail: "family@test.com",
   message: "She loves water",
   status: "pending",
@@ -46,7 +45,7 @@ const ACCEPTED: ReceivedEnrolmentRequest = {
   ...PENDING,
   id: "r2",
   familyProfileName: "Pau",
-  familyProfileAge: null,
+  familyProfileAge: 10,
   message: null,
   status: "accepted",
 };
@@ -99,8 +98,7 @@ describe("ReceivedRequestsList", () => {
       screen.getAllByText(`Received on ${formatDate("2027-07-01")}`),
     ).toHaveLength(2);
     expect(screen.getByText("She loves water")).toBeOnTheScreen();
-    // Without a date of birth, the age range
-    expect(screen.getByText("Pau · Age 7-9")).toBeOnTheScreen();
+    expect(screen.getByText("Pau · 10 years old")).toBeOnTheScreen();
   });
 
   it("only offers accept and reject for pending requests", async () => {

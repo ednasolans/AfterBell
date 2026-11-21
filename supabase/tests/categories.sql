@@ -137,8 +137,8 @@ SELECT pg_temp.expect('a customer reads the catalogue',
     END $b$$q$);
 
 SELECT pg_temp.expect('a family profile can use a new category as interest',
-    $q$INSERT INTO public.family_profiles (family_group_id, first_name, age_range, interests)
-       SELECT family_group_id, 'Nil', '7-9', '{chess,music}'
+    $q$INSERT INTO public.family_profiles (family_group_id, first_name, date_of_birth, interests)
+       SELECT family_group_id, 'Nil', DATE '2018-03-01', '{chess,music}'
        FROM public.family_group_members
        WHERE account_id = 'c0000000-0000-0000-0000-000000000002'$q$);
 

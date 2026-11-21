@@ -17,12 +17,14 @@ function mockActive(activeProfile: Partial<FamilyProfile> | null) {
 }
 
 describe("useActiveProfileAges", () => {
-  it("gives the ages of the active profile", async () => {
-    mockActive({ date_of_birth: null, age_range: "10-12" });
+  it("gives the age of the active profile from its date of birth", async () => {
+    // Born on 1 January ten years ago: 10 on any day of this year
+    const year = new Date().getFullYear() - 10;
+    mockActive({ date_of_birth: `${year}-01-01` });
 
     const { result } = await renderHook(() => useActiveProfileAges());
 
-    expect(result.current).toEqual({ ageMin: 10, ageMax: 12 });
+    expect(result.current).toEqual({ ageMin: 10, ageMax: 10 });
   });
 
   it("is null without an active profile", async () => {

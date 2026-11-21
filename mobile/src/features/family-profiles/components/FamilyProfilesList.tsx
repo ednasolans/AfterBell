@@ -11,6 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { type ReactNode } from "react";
 
 import { useFamilyProfiles } from "../hooks/useFamilyProfiles";
+import { profileAgeLabel } from "../profileAge";
 import { colors } from "@/theme/colors";
 
 type Props = Readonly<{
@@ -37,6 +38,8 @@ export function FamilyProfilesList({
     isError,
     refetch,
   } = useFamilyProfiles(userId);
+  // The age is calculated from the date of birth each time it is shown
+  const today = new Date();
 
   function confirmDelete(id: string, firstName: string) {
     Alert.alert(
@@ -155,7 +158,9 @@ export function FamilyProfilesList({
                     size={16}
                     color={colors.primaryDark}
                   />
-                  <Text style={styles.age}>Age: {profile.age_range}</Text>
+                  <Text style={styles.age}>
+                    {profileAgeLabel(profile, today)}
+                  </Text>
                 </View>
 
                 <View style={styles.actions}>

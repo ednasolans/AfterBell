@@ -338,9 +338,8 @@ export type Database = {
       };
       family_profiles: {
         Row: {
-          age_range: string | null;
           created_at: string;
-          date_of_birth: string | null;
+          date_of_birth: string;
           family_group_id: string;
           first_name: string;
           id: string;
@@ -348,18 +347,16 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
-          age_range?: string | null;
           created_at?: string;
-          date_of_birth?: string | null;
+          date_of_birth: string;
           family_group_id: string;
           first_name: string;
           id?: string;
           interests?: string[];
         };
         Update: {
-          age_range?: string | null;
           created_at?: string;
-          date_of_birth?: string | null;
+          date_of_birth?: string;
           family_group_id?: string;
           first_name?: string;
           id?: string;
@@ -736,7 +733,6 @@ export type Database = {
           created_at: string;
           customer_email: string;
           family_profile_age: number;
-          family_profile_age_range: string;
           family_profile_name: string;
           id: string;
           message: string;

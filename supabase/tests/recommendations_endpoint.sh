@@ -38,7 +38,7 @@ check() { # name actual expected
 # ---- data -------------------------------------------------------------------
 # club: provider with an approved profile. f1: Lleida, Marc (8, football) and
 # Laia (8, art). f2: another family, Pol (8, music). f3: no city. f4: no
-# profiles. f5: a profile without date of birth. f6: Girona (nothing there).
+# profiles. f5: a profile without interests. f6: Girona (nothing there).
 CLUB=e1070000-0000-0000-0000-00000000000a
 # Users are created through the Auth API, so they can log in with a password.
 # The secret key is only read from the local stack, never written anywhere.
@@ -65,7 +65,7 @@ FROM (VALUES
   ('e1070000-0000-0000-0000-0000000000c1', 'e1070000-0000-0000-0000-0000000000f1', 'Marc', current_date - interval '8 years', '{football}'::text[]),
   ('e1070000-0000-0000-0000-0000000000c2', 'e1070000-0000-0000-0000-0000000000f1', 'Laia', current_date - interval '8 years', '{art}'),
   ('e1070000-0000-0000-0000-0000000000c3', 'e1070000-0000-0000-0000-0000000000f2', 'Pol', current_date - interval '8 years', '{music}'),
-  ('e1070000-0000-0000-0000-0000000000c5', 'e1070000-0000-0000-0000-0000000000f5', 'Ona', NULL, '{football}'),
+  ('e1070000-0000-0000-0000-0000000000c5', 'e1070000-0000-0000-0000-0000000000f5', 'Ona', current_date - interval '8 years', '{}'),
   ('e1070000-0000-0000-0000-0000000000c6', 'e1070000-0000-0000-0000-0000000000f6', 'Nil', current_date - interval '8 years', '{football}')
 ) AS v(id, account, name, dob, interests)
 JOIN public.family_group_members m ON m.account_id = v.account::uuid;
@@ -170,7 +170,7 @@ check "a customer without city: empty list" "$(field '.activities | length')" "0
 call "$FAMILY4" '{}'
 check "a customer without profiles: status" "$(field .status)" "NO_PROFILES"
 call "$FAMILY5" '{}'
-check "profiles without date of birth: status" "$(field .status)" "INCOMPLETE_PROFILES"
+check "profiles without interests: status" "$(field .status)" "INCOMPLETE_PROFILES"
 call "$FAMILY6" '{}'
 check "nothing in the town: 200" "$STATUS" "200"
 check "nothing in the town: NO_MATCHES" "$(field .status)" "NO_MATCHES"

@@ -84,16 +84,9 @@ export function isFullActivity({
   return availablePlaces !== null && availablePlaces <= 0;
 }
 
-// Age if the profile has a date of birth, otherwise its age range
+// "8 years old": the age calculated from the date of birth
 export function formatProfileAge({
   familyProfileAge,
-  familyProfileAgeRange,
-}: Pick<
-  ReceivedEnrolmentRequest,
-  "familyProfileAge" | "familyProfileAgeRange"
->): string | null {
-  if (familyProfileAge !== null) {
-    return `${familyProfileAge} years old`;
-  }
-  return familyProfileAgeRange ? `Age ${familyProfileAgeRange}` : null;
+}: Pick<ReceivedEnrolmentRequest, "familyProfileAge">): string {
+  return `${familyProfileAge} years old`;
 }

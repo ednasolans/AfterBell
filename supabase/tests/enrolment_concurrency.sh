@@ -32,8 +32,8 @@ cleanup
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role) VALUES
   ('$PROVIDER', 'race-club@test.com', '{"account_type":"company"}', 'authenticated', 'authenticated'),
   ('c9100000-0000-0000-0000-0000000000f1', 'race-family@test.com', '{"account_type":"customer"}', 'authenticated', 'authenticated');
-INSERT INTO public.family_profiles (family_group_id, first_name, age_range)
-SELECT family_group_id, n, '7-9' FROM public.family_group_members, (VALUES ('Race one'), ('Race two')) v(n)
+INSERT INTO public.family_profiles (family_group_id, first_name, date_of_birth)
+SELECT family_group_id, n, DATE '2018-03-01' FROM public.family_group_members, (VALUES ('Race one'), ('Race two')) v(n)
 WHERE account_id = 'c9100000-0000-0000-0000-0000000000f1';
 INSERT INTO public.addresses (id, provider_id, street, number, postal_code, city, province, country)
 VALUES ('b9100000-0000-0000-0000-00000000000a', '$PROVIDER', 'C/ Major', '1', '25001', 'Lleida', 'Lleida', 'Spain');

@@ -10,7 +10,7 @@ const PAU = {
   id: "10000000-0000-4000-8000-000000000001",
   family_group_id: "20000000-0000-4000-8000-000000000001",
   first_name: "Pau",
-  age_range: "7-9",
+  date_of_birth: "2018-03-01",
   interests: ["football"],
   created_at: "2026-01-01T10:00:00.000Z",
 } as FamilyProfile;
@@ -19,7 +19,7 @@ const LAIA = {
   id: "10000000-0000-4000-8000-000000000002",
   family_group_id: PAU.family_group_id,
   first_name: "Laia",
-  age_range: "4-6",
+  date_of_birth: "2021-03-01",
   interests: ["music"],
   created_at: "2026-01-02T10:00:00.000Z",
 } as FamilyProfile;
@@ -28,7 +28,7 @@ const NORA = {
   id: "10000000-0000-4000-8000-000000000003",
   family_group_id: PAU.family_group_id,
   first_name: "Nora",
-  age_range: "10-12",
+  date_of_birth: "2015-03-01",
   interests: ["art"],
   created_at: "2026-01-03T10:00:00.000Z",
 } as FamilyProfile;

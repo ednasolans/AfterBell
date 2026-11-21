@@ -28,7 +28,6 @@ const ROW: ReceivedEnrolmentRequestRow = {
   activity_title: "Swimming",
   family_profile_name: "Anna",
   family_profile_age: 8,
-  family_profile_age_range: "7-9",
   customer_email: "family@test.com",
   message: "Hello",
   status: "pending",
@@ -61,7 +60,6 @@ describe("fetchReceivedEnrolmentRequests", () => {
         activityTitle: "Swimming",
         familyProfileName: "Anna",
         familyProfileAge: 8,
-        familyProfileAgeRange: "7-9",
         customerEmail: "family@test.com",
         message: "Hello",
         status: "pending",
@@ -85,16 +83,9 @@ describe("fetchReceivedEnrolmentRequests", () => {
     });
   });
 
-  it("keeps the empty age and message as null", async () => {
+  it("keeps an empty message as null", async () => {
     mockRpc({
-      data: [
-        {
-          ...ROW,
-          family_profile_age: null,
-          family_profile_age_range: null,
-          message: null,
-        },
-      ],
+      data: [{ ...ROW, message: null }],
       error: null,
     });
 
@@ -103,8 +94,6 @@ describe("fetchReceivedEnrolmentRequests", () => {
       status: null,
     });
 
-    expect(request.familyProfileAge).toBeNull();
-    expect(request.familyProfileAgeRange).toBeNull();
     expect(request.message).toBeNull();
   });
 

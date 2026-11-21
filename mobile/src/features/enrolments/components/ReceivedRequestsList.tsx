@@ -222,7 +222,6 @@ export function ReceivedRequestsList({
       renderItem={({ item }) => {
         const activityPlaces = placesById.get(item.activityId);
         const full = activityPlaces ? isFullActivity(activityPlaces) : false;
-        const age = formatProfileAge(item);
         const isAnswering =
           answer.isPending && answer.variables?.requestId === item.id;
 
@@ -230,9 +229,7 @@ export function ReceivedRequestsList({
           <View style={styles.card}>
             <View style={styles.row}>
               <Text style={styles.title}>
-                {age
-                  ? `${item.familyProfileName} · ${age}`
-                  : item.familyProfileName}
+                {`${item.familyProfileName} · ${formatProfileAge(item)}`}
               </Text>
               <EnrolmentStatusBadge status={item.status} />
             </View>
