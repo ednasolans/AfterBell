@@ -59,7 +59,13 @@ export default function FamilyProfileFormScreen() {
         await createMutation.mutateAsync(values);
       }
 
-      router.replace("/family-profiles");
+      // Back to where the form was opened (the profiles or the
+      // recommendations, which are refreshed after the save)
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/family-profiles");
+      }
     } catch {
       // The mutation keeps the error for display.
     }

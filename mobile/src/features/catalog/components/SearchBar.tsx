@@ -1,5 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { type Ref } from "react";
+import {
+  Pressable,
+  StyleSheet,
+  TextInput,
+  type TextInputInstance,
+  View,
+} from "react-native";
 
 import { colors } from "@/theme/colors";
 
@@ -11,6 +18,8 @@ type SearchBarProps = {
   // The keyboard's search key: search at once, without waiting for the pause
   onSubmit: () => void;
   onClear: () => void;
+  // To focus the input from outside (e.g. "Search activities")
+  ref?: Ref<TextInputInstance>;
 };
 
 export function SearchBar({
@@ -18,11 +27,13 @@ export function SearchBar({
   onChangeText,
   onSubmit,
   onClear,
+  ref,
 }: Readonly<SearchBarProps>) {
   return (
     <View style={styles.bar}>
       <Ionicons name="search" size={20} color={colors.primaryDark} />
       <TextInput
+        ref={ref}
         style={styles.input}
         value={value}
         onChangeText={onChangeText}

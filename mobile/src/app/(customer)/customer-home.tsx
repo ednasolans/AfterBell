@@ -1,14 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import LogoutButton from "@/components/LogoutButton";
-import { CatalogSearch } from "@/features/catalog/components/CatalogSearch";
+import {
+  CatalogSearch,
+  type CatalogSearchHandle,
+} from "@/features/catalog/components/CatalogSearch";
 import { ExploringForCard } from "@/features/family-profiles/components/ExploringForCard";
 import { useActiveProfile } from "@/features/family-profiles/context/ActiveProfileProvider";
 import { useActiveProfileAges } from "@/features/family-profiles/hooks/useActiveProfileAges";
 import { RecommendationsSection } from "@/features/recommendations/components/RecommendationsSection";
+import { type RecommendationActionHandlers } from "@/features/recommendations/components/RecommendationsStatus";
 import { colors } from "@/theme/colors";
 
 // Home of the customer area: who the family is exploring for, the activities
@@ -18,8 +23,22 @@ export default function CustomerHomeScreen() {
   const router = useRouter();
   const profileAges = useActiveProfileAges();
   const activeProfile = useActiveProfile();
+  const catalog = useRef<CatalogSearchHandle>(null);
   const openActivity = (id: string) =>
     router.push({ pathname: "/activities/[id]", params: { id } });
+  // Without recommendations: complete the data (the screens come back here
+  // after saving) or look through the activities of this screen
+  const recommendationActions: RecommendationActionHandlers = {
+    setTown: () => router.push("/family-location"),
+    addProfile: () => router.push("/family-profile-form"),
+    completeProfile: () =>
+      router.push({
+        pathname: "/family-profile-form",
+        params: { id: activeProfile.activeProfileId ?? undefined },
+      }),
+    searchActivities: () => catalog.current?.focusSearch(),
+    seeAllActivities: () => catalog.current?.showAll(),
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -43,6 +62,7 @@ export default function CustomerHomeScreen() {
       </View>
 
       <CatalogSearch
+        ref={catalog}
         profileAges={profileAges}
         onOpen={openActivity}
         listHeader={
@@ -51,6 +71,7 @@ export default function CustomerHomeScreen() {
             profileReady={!activeProfile.isLoading}
             onOpen={openActivity}
             onSeeAll={() => router.push("/recommendations")}
+            actions={recommendationActions}
           />
         }
       />

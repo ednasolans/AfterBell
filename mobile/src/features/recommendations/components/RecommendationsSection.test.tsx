@@ -1,10 +1,4 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react-native";
+import { act, fireEvent, render, screen } from "@testing-library/react-native";
 
 import { recommendationKeys } from "@/lib/recommendationKeys";
 import {
@@ -14,6 +8,7 @@ import {
 import {
   makePage,
   makeRecommendation,
+  makeRecommendationActions,
 } from "@/test-utils/recommendationFixtures";
 import { ACTIVITY } from "@/test-utils/activityFixtures";
 
@@ -40,18 +35,20 @@ async function renderSection(
 ) {
   const onOpen = jest.fn();
   const onSeeAll = jest.fn();
+  const actions = makeRecommendationActions();
   await render(
     <RecommendationsSection
       profileId="profile-2"
       profileReady={profileReady}
       onOpen={onOpen}
       onSeeAll={onSeeAll}
+      actions={actions}
     />,
     {
       wrapper: createQueryClientWrapper(client),
     },
   );
-  return { onOpen, onSeeAll, client };
+  return { onOpen, onSeeAll, actions, client };
 }
 
 beforeEach(() => {
@@ -130,21 +127,47 @@ describe("RecommendationsSection", () => {
   });
 
   it.each([
-    "NO_CITY",
-    "NO_PROFILES",
-    "INCOMPLETE_PROFILES",
-    "NO_MATCHES",
-  ] as const)("shows nothing when the status is %s", async (status) => {
-    fetchMock.mockResolvedValue(makePage({ status, recommendations: [] }));
-    await renderSection();
+    ["NO_CITY", "Set your town", "setTown"],
+    ["NO_PROFILES", "Add a profile", "addProfile"],
+    ["INCOMPLETE_PROFILES", "Add interests", "completeProfile"],
+    ["NO_MATCHES", "Search activities", "searchActivities"],
+  ] as const)(
+    "%s: says why under the title and leads to the right place",
+    async (status, button, action) => {
+      fetchMock.mockResolvedValue(makePage({ status, recommendations: [] }));
+      const { actions } = await renderSection();
 
-    await waitFor(() =>
+      const actionButton = await screen.findByRole("button", { name: button });
       expect(
-        screen.queryByLabelText("Loading recommendations"),
-      ).not.toBeOnTheScreen(),
-    );
+        screen.getByRole("header", { name: "Recommended for you" }),
+      ).toBeOnTheScreen();
+      expect(
+        screen.queryByRole("button", { name: "See all recommendations" }),
+      ).not.toBeOnTheScreen();
+      await fireEvent.press(actionButton);
+      expect(actions[action]).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("shows the recommendations once the missing data is completed", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        makePage({ status: "NO_PROFILES", recommendations: [] }),
+      )
+      .mockResolvedValueOnce(makePage());
+    const { client } = await renderSection();
     expect(
-      screen.queryByRole("header", { name: "Recommended for you" }),
+      await screen.findByRole("button", { name: "Add a profile" }),
+    ).toBeOnTheScreen();
+
+    // What saving a family profile or the town does on success
+    await act(() =>
+      client.invalidateQueries({ queryKey: recommendationKeys.all }),
+    );
+
+    expect(await screen.findByText("Swimming for kids")).toBeOnTheScreen();
+    expect(
+      screen.queryByRole("button", { name: "Add a profile" }),
     ).not.toBeOnTheScreen();
   });
 

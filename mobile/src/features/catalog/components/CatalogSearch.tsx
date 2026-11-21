@@ -1,5 +1,11 @@
-import { type ReactElement, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import {
+  type ReactElement,
+  type Ref,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import { StyleSheet, Text, type TextInputInstance, View } from "react-native";
 
 import { type AgeBounds } from "@/lib/ages";
 import { toggleItemInArray } from "@/lib/arrays";
@@ -19,6 +25,14 @@ import { SearchResults } from "./SearchResults";
 // Pause after the last key before searching
 export const SEARCH_DEBOUNCE_MS = 300;
 
+// What another part of the screen can ask the search to do (e.g. the
+// recommendations when nothing fits the family)
+export type CatalogSearchHandle = {
+  focusSearch: () => void;
+  // Clears the text and the filters, except the age: every activity for it
+  showAll: () => void;
+};
+
 type CatalogSearchProps = {
   onOpen: (id: string) => void;
   // Ages of the profile the customer is exploring for: they become the age
@@ -27,6 +41,7 @@ type CatalogSearchProps = {
   // Shown at the top of the list while no text is searched (e.g. the
   // recommendations, which belong to another feature)
   listHeader?: ReactElement;
+  ref?: Ref<CatalogSearchHandle>;
 };
 
 // The search bar and the filters above the activities: the full list without
@@ -37,6 +52,7 @@ export function CatalogSearch({
   onOpen,
   profileAges = null,
   listHeader,
+  ref,
 }: Readonly<CatalogSearchProps>) {
   const [text, setText] = useState("");
   // The text sent with the keyboard's search key, searched without the pause
@@ -44,6 +60,20 @@ export function CatalogSearch({
   const debounced = useDebouncedValue(text, SEARCH_DEBOUNCE_MS);
   const [filters, setFilters] = useState<SearchFilters>(NO_SEARCH_FILTERS);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const inputRef = useRef<TextInputInstance>(null);
+
+  useImperativeHandle(ref, () => ({
+    focusSearch: () => inputRef.current?.focus(),
+    showAll: () => {
+      setText("");
+      setSubmitted(null);
+      setFilters((current) => ({
+        ...NO_SEARCH_FILTERS,
+        ageMin: current.ageMin,
+        ageMax: current.ageMax,
+      }));
+    },
+  }));
 
   // Applies the ages of a new profile during the render (no effect needed):
   // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
@@ -85,6 +115,7 @@ export function CatalogSearch({
   return (
     <View style={styles.container}>
       <SearchBar
+        ref={inputRef}
         value={text}
         onChangeText={setText}
         onSubmit={() => setSubmitted(text)}

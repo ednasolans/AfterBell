@@ -19,11 +19,21 @@ import {
 import { useFamilyLocationForm } from "../hooks/useFamilyLocationForm";
 import { toLocationErrorMessage } from "../locationErrors";
 
+type FamilyLocationCardProps = {
+  // Opens the editor at once (e.g. when the customer comes to set the town)
+  initiallyEditing?: boolean;
+  // After the town is saved, not after a cancel
+  onSaved?: () => void;
+};
+
 // Where the family lives, to show activities near them. It handles its own
 // loading and error states, so a failure never blocks the family profiles.
-export function FamilyLocationCard() {
+export function FamilyLocationCard({
+  initiallyEditing = false,
+  onSaved,
+}: Readonly<FamilyLocationCardProps>) {
   const city = useFamilyCity();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initiallyEditing);
 
   return (
     <View style={styles.card}>
@@ -41,7 +51,11 @@ export function FamilyLocationCard() {
       {isEditing && !city.isPending ? (
         <FamilyLocationEditor
           initialCity={city.data ?? null}
-          onDone={() => setIsEditing(false)}
+          onSaved={() => {
+            setIsEditing(false);
+            onSaved?.();
+          }}
+          onCancel={() => setIsEditing(false)}
         />
       ) : (
         <CitySummary query={city} onEdit={() => setIsEditing(true)} />
@@ -94,12 +108,14 @@ function CitySummary({ query, onEdit }: Readonly<CitySummaryProps>) {
 
 type FamilyLocationEditorProps = {
   initialCity: string | null;
-  onDone: () => void;
+  onSaved: () => void;
+  onCancel: () => void;
 };
 
 function FamilyLocationEditor({
   initialCity,
-  onDone,
+  onSaved,
+  onCancel,
 }: Readonly<FamilyLocationEditorProps>) {
   const save = useSaveFamilyLocation();
   const form = useFamilyLocationForm({
@@ -111,7 +127,7 @@ function FamilyLocationEditor({
 
   async function handleSave() {
     if (await form.submit()) {
-      onDone();
+      onSaved();
     }
   }
 
@@ -150,7 +166,7 @@ function FamilyLocationEditor({
       <View style={styles.actions}>
         <Pressable
           accessibilityRole="button"
-          onPress={onDone}
+          onPress={onCancel}
           disabled={isBusy}
           style={styles.cancel}
         >
