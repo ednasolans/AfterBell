@@ -147,8 +147,7 @@ erDiagram
         uuid id PK
         uuid family_group_id FK
         text first_name "max 50"
-        text age_range "one of AGE_RANGES, optional"
-        date date_of_birth "optional, not in the future"
+        date date_of_birth "required, not in the future"
         text_array interests "activity categories"
         timestamptz created_at
     }
@@ -236,7 +235,7 @@ The source of truth is always the migrations in `supabase/migrations/`. To see t
 | **One account belongs to one family group** (`account_id` is the primary key of `family_group_members`) | Several groups per account | Team decision: it keeps "my family" unambiguous in every screen and policy. |
 | **Only `customer` accounts can be members** | Any account | Providers do not have families in the app. Checked in the trigger and in the policies (`NOT is_company()`). |
 | **A group is created automatically for every new customer account** (a new trigger on `accounts`) | The app creates it after sign-up | Every family screen can assume the group exists. Joining another parent's group (invitations) is a later feature. |
-| **`family_profiles` store a first name, an optional date of birth, an age range and interests** | Full name / age as a number | The children are minors: store the minimum. C11 added `date_of_birth`, agreed with the client, so the age does not go out of date. `age_range` stays until the form uses the date. Interests use the activity categories. |
+| **`family_profiles` store a first name, a date of birth and interests** | Full name / age as a number / age range | The children are minors: store the minimum. The date of birth was agreed with the client in C11, so the age is calculated and never goes out of date. #151 removed `age_range` and deleted the profiles without a date. Interests use the activity categories. |
 | **Family data is visible only to the members of the group** | Visible to providers | Nobody else needs it. When a family signs up for an activity, the enrollment will store what the provider needs. |
 | **Membership checks use a `SECURITY DEFINER` helper** (`is_family_member(group_id)`) | A subquery on `family_group_members` inside its own policy | A policy on `family_group_members` that reads `family_group_members` calls itself and fails with *infinite recursion*. The helper reads the table without RLS and returns only `true` or `false`. |
 | **The family location is a town and a point blurred to about 1-2 km, stored in `family_groups` and written only through `set_family_location`** (#139) | The exact position / a location per profile | Recommendations by distance need it, but a family's home must never be stored. See [`location.md`](../features/location.md). |
