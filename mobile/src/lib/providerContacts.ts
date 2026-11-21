@@ -1,7 +1,28 @@
+import { type Tables } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 
-import { type ProviderContact } from "../types";
-import { toProviderContact } from "./toCatalogProvider";
+// Name and contact details of a provider, taken from its technical sheet
+export interface ProviderContact {
+  name: string;
+  email: string | null;
+  phoneNumber: string | null;
+  website: string | null;
+}
+
+// The columns of the technical sheet that customers can see
+export type ContactRow = Pick<
+  Tables<"technical_sheets">,
+  "provider_id" | "name" | "email" | "phone_number" | "website"
+>;
+
+export function toProviderContact(row: ContactRow): ProviderContact {
+  return {
+    name: row.name,
+    email: row.email,
+    phoneNumber: row.phone_number,
+    website: row.website,
+  };
+}
 
 // Name and contact details of the given providers, by provider id.
 // Technical sheets are private: the function returns only these columns, of

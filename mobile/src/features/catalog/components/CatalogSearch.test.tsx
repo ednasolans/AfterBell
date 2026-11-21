@@ -1,4 +1,5 @@
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { Text } from "react-native";
 
 import { NO_SEARCH_FILTERS } from "@/lib/searchFilters";
 import {
@@ -566,5 +567,54 @@ describe("CatalogSearch", () => {
         screen.queryByRole("button", { name: "Remove filter Age 8" }),
       ).toBeNull();
     });
+  });
+});
+
+describe("CatalogSearch list header", () => {
+  const HEADER = <Text>Recommended block</Text>;
+
+  async function renderWithHeader() {
+    const screen = await renderWithQuery(
+      <CatalogSearch onOpen={jest.fn()} listHeader={HEADER} />,
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Every activity")).toBeTruthy(),
+    );
+    return screen;
+  }
+
+  it("shows it above the title of the full list", async () => {
+    const screen = await renderWithHeader();
+
+    expect(screen.getByText("Recommended block")).toBeTruthy();
+    expect(
+      screen.getByRole("header", { name: "Discover activities" }),
+    ).toBeTruthy();
+  });
+
+  it("keeps it with filters, also while the results load", async () => {
+    mockSearch.mockReturnValue(new Promise(() => {}));
+    const screen = await renderWithHeader();
+
+    await fireEvent.press(screen.getByRole("checkbox", { name: "Music" }));
+
+    await waitFor(() => expect(mockSearch).toHaveBeenCalled());
+    expect(screen.getByText("Recommended block")).toBeTruthy();
+    expect(
+      screen.getByRole("header", { name: "Discover activities" }),
+    ).toBeTruthy();
+  });
+
+  it("hides it while a text is searched", async () => {
+    mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+    const screen = await renderWithHeader();
+
+    await type(screen, "piano");
+
+    expect(await screen.findByText("Piano lessons")).toBeTruthy();
+    expect(screen.queryByText("Recommended block")).toBeNull();
+    expect(
+      screen.getByRole("header", { name: "Discover activities" }),
+    ).toBeTruthy();
   });
 });

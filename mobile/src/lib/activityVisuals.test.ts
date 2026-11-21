@@ -3,7 +3,7 @@ import {
   ACTIVITY_IMAGES,
   activityIcon,
   activityImage,
-} from "./visuals";
+} from "./activityVisuals";
 
 describe("activityImage", () => {
   it("returns the image of a known category", () => {

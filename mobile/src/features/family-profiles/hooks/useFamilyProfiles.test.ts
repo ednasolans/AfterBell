@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react-native";
 
+import { recommendationKeys } from "@/lib/recommendationKeys";
 import {
   createQueryClientWrapper,
   createTestQueryClient,
@@ -170,6 +171,9 @@ describe("useCreateFamilyProfile", () => {
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: familyProfileKeys.all,
     });
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: recommendationKeys.all,
+    });
   });
 
   it("does not invalidate queries when creation fails", async () => {
@@ -212,6 +216,9 @@ describe("useUpdateFamilyProfile", () => {
 
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: familyProfileKeys.all,
+    });
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: recommendationKeys.all,
     });
   });
 
@@ -256,6 +263,9 @@ describe("useDeleteFamilyProfile", () => {
 
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: familyProfileKeys.all,
+    });
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: recommendationKeys.all,
     });
   });
 

@@ -44,8 +44,12 @@ export type RecommendOutcome =
 /** Data access with the caller's session, so RLS applies. */
 export interface RecommendationsRepository {
   getUserId(): Promise<string | null>;
-  /** Throws HttpError(403) when the account is not a customer. */
-  recommend(limit: number, offset: number): Promise<RecommendOutcome>;
+  /**
+   * Throws HttpError(403) when the account is not a customer. profileId (the
+   * profile the customer is exploring for) goes first among the activities
+   * that fit as many profiles; null keeps the plain order.
+   */
+  recommend(limit: number, offset: number, profileId: string | null): Promise<RecommendOutcome>;
   fetchActivities(ids: string[]): Promise<ActivityRow[]>;
 }
 
@@ -90,8 +94,23 @@ function optionalInteger(value: unknown, field: string, min: number, max: number
   return value as number;
 }
 
-/** The body is optional: { limit?, offset? }. Without it the first page is returned. */
-export async function parsePage(req: Request): Promise<{ limit: number; offset: number }> {
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function optionalUuid(value: unknown, field: string): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string" || !UUID.test(value)) {
+    throw new HttpError(400, "invalid_request", `"${field}" must be a UUID`);
+  }
+  return value;
+}
+
+/**
+ * The body is optional: { limit?, offset?, profile_id? }. Without it the first
+ * page is returned in the plain order.
+ */
+export async function parsePage(
+  req: Request,
+): Promise<{ limit: number; offset: number; profileId: string | null }> {
   const text = await req.text();
   let input: Record<string, unknown> = {};
   if (text.trim() !== "") {
@@ -109,6 +128,7 @@ export async function parsePage(req: Request): Promise<{ limit: number; offset: 
   return {
     limit: optionalInteger(input.limit, "limit", 1, MAX_LIMIT) ?? DEFAULT_LIMIT,
     offset: optionalInteger(input.offset, "offset", 0, 100_000) ?? 0,
+    profileId: optionalUuid(input.profile_id, "profile_id"),
   };
 }
 
@@ -147,12 +167,12 @@ export async function handleRequest(req: Request, deps: Deps): Promise<Response>
   };
 
   try {
-    const { limit, offset } = await parsePage(req);
+    const { limit, offset, profileId } = await parsePage(req);
     const userId = await deps.repo.getUserId();
     if (!userId) throw new HttpError(401, "unauthorized", "Invalid or expired session");
 
     // One more row than the page tells whether there is a next page
-    const outcome = await deps.repo.recommend(limit + 1, offset);
+    const outcome = await deps.repo.recommend(limit + 1, offset, profileId);
     const pagination = { limit, offset };
     if (outcome.kind === "missing") {
       return reply("missing_data", 200, {

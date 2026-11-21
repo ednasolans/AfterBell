@@ -50,6 +50,10 @@ export default function GroupLayout() {
               options={{ title: "My requests" }}
             />
             <Stack.Screen name="favourites" options={{ title: "Favourites" }} />
+            <Stack.Screen
+              name="recommendations"
+              options={{ title: "Recommended for you" }}
+            />
           </Stack>
         </ActiveProfileFavourites>
       </ActiveProfileProvider>

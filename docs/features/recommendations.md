@@ -1,21 +1,26 @@
-# Recommendations (#106, #107, C7)
+# Recommendations (#106, #107, #108, C7)
 
 Which activities are suggested to a customer. It is calculated in the database
 at the moment of the request, from structured data only (age, interests and
 town), never from free text. The function is `recommend_activities`. The app does
 not call it directly: it uses the Edge Function `recommendations` (#107), which
 adds the activity data, the pagination and a clear status when data is missing.
-The app screens belong to #108.
+The app shows them on the home of the customer (#108).
 
-## API: `recommend_activities(p_limit, p_offset)`
+## API: `recommend_activities(p_limit, p_offset, p_profile_id)`
 
-No ids or town are passed: the family is always the one of the logged-in account
-(`SECURITY INVOKER`, so RLS applies too), and nobody can ask for another family.
+No family or town is passed: the family is always the one of the logged-in
+account (`SECURITY INVOKER`, so RLS applies too), and nobody can ask for another
+family.
 
-| Argument   | Meaning                         |
-| ---------- | ------------------------------- |
-| `p_limit`  | Page size: 1–50, default 20     |
-| `p_offset` | Rows to skip (`page * p_limit`) |
+| Argument       | Meaning                                                               |
+| -------------- | --------------------------------------------------------------------- |
+| `p_limit`      | Page size: 1–50, default 20                                           |
+| `p_offset`     | Rows to skip (`page * p_limit`)                                       |
+| `p_profile_id` | Optional. The active profile: its activities go first (see **Order**) |
+
+`p_profile_id` is only compared with the profiles of the caller's family, so the
+id of another family's profile changes nothing and reveals nothing.
 
 It returns one row per activity, so there are no duplicates:
 
@@ -35,12 +40,13 @@ It returns one row per activity, so there are no duplicates:
 
 ## Endpoint: Edge Function `recommendations` (#107)
 
-`POST` with the session of the customer. The body is optional: `{ limit?, offset? }`.
+`POST` with the session of the customer. The body is optional: `{ limit?, offset?, profile_id? }`.
 
-| Field    | Meaning                                | Default |
-| -------- | -------------------------------------- | ------- |
-| `limit`  | Page size, whole number from 1 to 40   | 20      |
-| `offset` | Items to skip (`page * limit`), from 0 | 0       |
+| Field        | Meaning                                                     | Default |
+| ------------ | ----------------------------------------------------------- | ------- |
+| `limit`      | Page size, whole number from 1 to 40                        | 20      |
+| `offset`     | Items to skip (`page * limit`), from 0                      | 0       |
+| `profile_id` | UUID of the active profile, passed as `p_profile_id` (#108) | `null`  |
 
 The maximum is 40 and not 50 because the function asks `recommend_activities`
 for one more row than the page (`limit + 1`) to know whether there is a next
@@ -104,8 +110,9 @@ a customer lacking both is told about the town first.
   Query keeps a page for 5 minutes (`RECOMMENDATIONS_STALE_MS`), so showing the
   screen again does not recalculate anything. The cache is per device and is
   cleared on logout.
-  Trade-off: after editing a profile or the town the list can be up to 5 minutes
-  old unless the screen invalidates `recommendationKeys.all` (see #108).
+  The app invalidates `recommendationKeys.all` whenever a family profile is
+  created, edited or deleted and whenever the town is saved (#108), so the list
+  is never older than the family data.
 
 ## Mobile app
 
@@ -114,11 +121,45 @@ Code in `mobile/src/features/recommendations/`.
 - `api/fetchRecommendations.ts`: calls the function and maps the answer to
   `RecommendationsPage` (`status`, `recommendations`, `hasMore`). An answer the
   app does not understand is an error, never an empty list. The error codes
-  `forbidden` and `unauthorized` become messages.
+  `forbidden` and `unauthorized` become messages. It adds the name of each
+  provider (`fetchContacts` in `lib/providerContacts.ts`), which the card shows.
 - `hooks/useRecommendations.ts`: `useInfiniteQuery` with the key
-  `recommendationKeys.all`. It loads the next page while `hasMore` is true.
-- Not included yet (#108): the screens, the provider data of each card, and
-  invalidating the key when the family profiles or the town change.
+  `recommendationKeys.forProfile(profileId)` (`lib/recommendationKeys.ts`,
+  because the family-profiles feature invalidates `recommendationKeys.all` too).
+  Each profile has its own cache, because the order depends on it. The screens
+  pass the active profile and wait until it is known (`profileReady`), so the
+  first page is not asked twice. It loads the next page while
+  `hasMore` is true. `loadNextPage` asks for it at the end of a list.
+- `components/RecommendationsSection.tsx`: "Recommended for you" on the home. A
+  horizontal row in the order of the backend, with "See all". It shows a spinner
+  while it loads and an error with "Try again". Without recommendations (any
+  status other than `OK`, or an empty list) it shows nothing: the messages for
+  each status belong to #109.
+- `components/RecommendationsList.tsx`: the "See all" screen
+  (`app/(customer)/recommendations.tsx`), a vertical list loaded page by page,
+  with pull to refresh.
+- `components/RecommendationCard.tsx`: the shared `CustomerActivityCard` with
+  "Suitable for" and the first names of the profiles that fit the activity.
+  Tapping it opens the activity detail.
+
+### Decisions (#108)
+
+- **Where the section is.** The home passes it to `CatalogSearch` as
+  `listHeader`, so it scrolls with the activities instead of taking a fixed part
+  of the screen. It is hidden while a text is searched, because the customer is
+  looking for something specific; filters (such as the ages of the active
+  profile) keep it.
+- **Shared card.** The catalog card moved to `components/CustomerActivityCard.tsx`
+  so that both features use it without importing each other. The catalog adds
+  its favourite heart through the `accessory` prop (`CatalogActivityCard`). The
+  helpers it needs moved to `lib/` too: `activityFormat.ts`,
+  `activityVisuals.ts` and `providerContacts.ts`.
+- **No favourite heart on recommendations (yet).** Favourites and their instant
+  update live in the catalog feature. Customers save a recommended activity from
+  its detail screen.
+- **A failed next page keeps the loaded ones.** TanStack Query marks the whole
+  query as an error, so the components only show the full error when no page
+  has loaded; otherwise the footer offers "Try again".
 
 ## Rules of the calculation
 
@@ -145,8 +186,14 @@ C11 have no date of birth until they are edited, and the function says so with
 ## Order
 
 1. More profiles that fit it first (`matched_count`).
-2. Closest first. Activities without a point go last.
-3. Newest first, then `id`, so pages never repeat or skip rows.
+2. Then the ones that fit the active profile (`p_profile_id`, #108). With Laia
+   active, an activity for Laia and Marc still goes first; among the ones for
+   one profile, Laia's go before Marc's.
+3. Closest first. Activities without a point go last.
+4. Newest first, then `id`, so pages never repeat or skip rows.
+
+The order is decided in the database, not in the app: the list is paginated, so
+reordering each page would mix pages.
 
 ## Indexes
 
@@ -156,14 +203,17 @@ No new index. The filters use the ones that exist: `activities_target_age_ranges
 
 ## Files
 
-| File                                                                     | What it does                                                                            |
-| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `supabase/migrations/20261120120000_recommend_activities_for_family.sql` | `age_bracket()` and the new `recommend_activities()` (the first version had no callers) |
-| `supabase/tests/recommendations.sql`                                     | SQL tests (rolled back)                                                                 |
-| `supabase/functions/recommendations/`                                    | The Edge Function (`handler.ts` logic, `repository.ts` Supabase calls, `index.ts`)      |
-| `supabase/functions/tests/recommendations.test.ts`                       | Deno tests of the handler, with fake dependencies                                       |
-| `supabase/tests/recommendations_endpoint.sh`                             | Integration test with real sessions (login, JWT, RLS and the SQL function)              |
-| `mobile/src/features/recommendations/`                                   | `fetchRecommendations`, `useRecommendations` and their tests                            |
+| File                                                                                  | What it does                                                                            |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `supabase/migrations/20261120120000_recommend_activities_for_family.sql`              | `age_bracket()` and the new `recommend_activities()` (the first version had no callers) |
+| `supabase/migrations/20261120192014_prioritise_active_profile_in_recommendations.sql` | `p_profile_id`: the active profile first among activities that fit as many profiles     |
+| `supabase/tests/recommendations.sql`                                                  | SQL tests (rolled back)                                                                 |
+| `supabase/functions/recommendations/`                                                 | The Edge Function (`handler.ts` logic, `repository.ts` Supabase calls, `index.ts`)      |
+| `supabase/functions/tests/recommendations.test.ts`                                    | Deno tests of the handler, with fake dependencies                                       |
+| `supabase/tests/recommendations_endpoint.sh`                                          | Integration test with real sessions (login, JWT, RLS and the SQL function)              |
+| `mobile/src/features/recommendations/`                                                | API, hook, section, "See all" list and their tests                                      |
+| `mobile/src/app/(customer)/recommendations.tsx`                                       | The "See all" screen                                                                    |
+| `mobile/src/components/CustomerActivityCard.tsx`                                      | The activity card customers see, shared with the catalog                                |
 
 ## How to test
 
@@ -181,8 +231,14 @@ No new index. The filters use the ones that exist: `activities_target_age_ranges
    the limit, the three missing-data statuses and `NO_MATCHES`.
 4. `deno test --allow-env` in `supabase/functions` and
    `npx jest src/features/recommendations` in `mobile`.
+5. In the app, log in as a customer with a town and a profile with date of
+   birth and interests. The home shows "Recommended for you" above "Discover
+   activities", each card with "Suitable for <name>". Tap a card (detail), tap
+   "See all" (full list, scroll to the end to load more). Edit the profile's
+   interests or the town and go back: the row changes.
 
 ## Pending
 
-- #108 shows it in the app (screens, provider data of the cards, invalidating the
-  key when the profiles or the town change).
+- #109: the messages for `NO_CITY`, `NO_PROFILES`, `INCOMPLETE_PROFILES` and
+  `NO_MATCHES`, with buttons to complete the data.
+- The favourite heart on the recommendation cards.

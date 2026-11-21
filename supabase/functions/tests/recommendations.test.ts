@@ -24,6 +24,7 @@ function activity(n: number): ActivityRow {
 /** Fake database: records what it receives. */
 class Fakes {
   recommendCalls: { limit: number; offset: number }[] = [];
+  profileIds: (string | null)[] = [];
   fetchedIds: string[][] = [];
   logs: RecommendationsLogEvent[] = [];
 
@@ -39,8 +40,9 @@ class Fakes {
     return {
       repo: {
         getUserId: () => Promise.resolve(this.options.userId === undefined ? "user-1" : this.options.userId),
-        recommend: (limit, offset) => {
+        recommend: (limit, offset, profileId) => {
           this.recommendCalls.push({ limit, offset });
+          this.profileIds.push(profileId);
           if (this.options.recommendError) return Promise.reject(this.options.recommendError);
           const outcome = this.options.outcome ?? { kind: "rows", rows: [row(1), row(2)] };
           // Like the SQL function: it applies the limit and the offset
@@ -148,6 +150,25 @@ Deno.test("limit: the maximum is accepted and above it is rejected", async () =>
   for (const limit of [MAX_LIMIT + 1, 0, -1, 1.5, "10", []]) {
     const rejected = new Fakes();
     const { status, body } = await call(rejected, request({ limit }));
+    assertEquals(status, 400);
+    assertEquals(body.error.code, "invalid_request");
+    assertEquals(rejected.recommendCalls, []);
+  }
+});
+
+Deno.test("passes the active profile to the calculation, or null without it", async () => {
+  const profileId = "d1080000-0000-0000-0000-0000000000c1";
+  const fakes = new Fakes();
+  assertEquals((await call(fakes, request({ profile_id: profileId }))).status, 200);
+  assertEquals((await call(fakes, request({}))).status, 200);
+  assertEquals((await call(fakes, request({ profile_id: null }))).status, 200);
+  assertEquals(fakes.profileIds, [profileId, null, null]);
+});
+
+Deno.test("profile_id must be a UUID", async () => {
+  for (const profile_id of ["profile-1", 5, "", ["x"]]) {
+    const rejected = new Fakes();
+    const { status, body } = await call(rejected, request({ profile_id }));
     assertEquals(status, 400);
     assertEquals(body.error.code, "invalid_request");
     assertEquals(rejected.recommendCalls, []);

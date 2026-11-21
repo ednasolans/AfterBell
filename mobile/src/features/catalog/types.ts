@@ -1,12 +1,6 @@
+import { type CustomerCardActivity } from "@/components/CustomerActivityCard";
 import { type Activity } from "@/lib/activity";
-
-// Name and contact details of a provider, taken from its technical sheet
-export interface ProviderContact {
-  name: string;
-  email: string | null;
-  phoneNumber: string | null;
-  website: string | null;
-}
+import { type ProviderContact } from "@/lib/providerContacts";
 
 // A provider as customers see it: its approved profile, plus its contact
 // details when it has a technical sheet
@@ -34,20 +28,8 @@ export interface CatalogActivityDetail extends CatalogActivity {
   enrolledCount: number | null;
 }
 
-// What the activity card shows. The favourites list only has these fields,
-// because customers cannot read activities that are no longer published.
-export type CatalogCardActivity = Pick<
-  Activity,
-  | "id"
-  | "title"
-  | "category"
-  | "type"
-  | "startDate"
-  | "endDate"
-  | "targetAgeRanges"
-  | "price"
-  | "pricePeriod"
->;
+// What the activity card shows
+export type CatalogCardActivity = CustomerCardActivity;
 
 // An activity saved by the customer. It stays in the list when it is no
 // longer published or has finished, marked as not available.

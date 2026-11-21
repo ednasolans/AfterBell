@@ -1,4 +1,5 @@
 import { type ActivityRow, toActivity } from "@/lib/activity";
+import { fetchContacts } from "@/lib/providerContacts";
 import { supabase } from "@/lib/supabase";
 
 import {
@@ -47,6 +48,8 @@ export function toRecommendationsPage(data: unknown): RecommendationsPage {
         id: profile.id,
         firstName: profile.first_name,
       })),
+      // Filled by withProviderNames: the function only returns the activity
+      providerName: null,
       distanceMeters: item.distance_meters,
     })),
     hasMore: body.pagination?.has_more === true,
@@ -69,16 +72,37 @@ async function readErrorCode(error: unknown): Promise<string | undefined> {
   }
 }
 
+// Adds the name of each provider, which the cards show
+async function withProviderNames(
+  page: RecommendationsPage,
+): Promise<RecommendationsPage> {
+  const providerIds = Array.from(
+    new Set(page.recommendations.map((item) => item.activity.providerId)),
+  );
+  const contacts = await fetchContacts(providerIds);
+  return {
+    ...page,
+    recommendations: page.recommendations.map((item) => ({
+      ...item,
+      providerName: contacts.get(item.activity.providerId)?.name ?? null,
+    })),
+  };
+}
+
 // One page of the recommendations of the logged-in customer. Page 0 is the
 // first one. The function only knows the family of the session, so there is
-// no way to ask for another customer's recommendations.
+// no way to ask for another customer's recommendations. The activities of
+// profileId (the active profile) go first among the ones that fit as many
+// profiles.
 export async function fetchRecommendations(
   page = 0,
+  profileId: string | null = null,
 ): Promise<RecommendationsPage> {
   const { data, error } = await supabase.functions.invoke("recommendations", {
     body: {
       limit: RECOMMENDATIONS_PAGE_SIZE,
       offset: page * RECOMMENDATIONS_PAGE_SIZE,
+      profile_id: profileId,
     },
   });
   if (error) {
@@ -88,5 +112,5 @@ export async function fetchRecommendations(
         DEFAULT_RECOMMENDATIONS_ERROR,
     );
   }
-  return toRecommendationsPage(data);
+  return withProviderNames(toRecommendationsPage(data));
 }

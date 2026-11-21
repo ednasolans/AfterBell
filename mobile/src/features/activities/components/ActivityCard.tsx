@@ -2,16 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import {
-  formatAgeRanges,
-  formatActivityPrice,
-} from "@/features/catalog/format";
+import { formatAgeRanges, formatActivityPrice } from "@/lib/activityFormat";
 
 import { type Activity } from "@/lib/activity";
 import { colors } from "@/theme/colors";
 import { categoryLabel } from "@/lib/activityCategories";
 import { ACTIVITY_STATUS_LABELS } from "@/lib/activityStatus";
-import { activityImage } from "@/features/catalog/visuals";
+import { activityImage } from "@/lib/activityVisuals";
 import { Image } from "expo-image";
 
 import { ACTIVITY_TYPE_LABELS } from "@/lib/activityTypes";

@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 
 import { type CatalogActivityDetail } from "../types";
 import { fetchApprovedProfiles } from "./fetchApprovedProfiles";
-import { fetchContacts } from "./fetchContacts";
+import { fetchContacts } from "@/lib/providerContacts";
 import { toCatalogProvider } from "./toCatalogProvider";
 
 // The address is a nice-to-have: if it cannot be read, the detail is shown without it

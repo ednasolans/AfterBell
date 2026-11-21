@@ -1,3 +1,4 @@
+import { type ReactElement } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -16,6 +17,7 @@ import { SearchSummary } from "@/features/search-summary/components/SearchSummar
 import { useSearchActivities } from "../hooks/useSearchActivities";
 import { useSearchCount } from "../hooks/useSearchCount";
 import { CatalogActivityCard } from "./CatalogActivityCard";
+import { ListStateView } from "./ListStateView";
 
 type SearchResultsProps = {
   // Trimmed and valid; '' searches only with the filters
@@ -23,6 +25,8 @@ type SearchResultsProps = {
   // Valid
   filters: SearchFilters;
   onOpen: (id: string) => void;
+  // Shown above the results, and scrolled with them
+  header?: ReactElement;
 };
 
 function countLabel(total: number): string {
@@ -35,24 +39,31 @@ export function SearchResults({
   query,
   filters,
   onOpen,
+  header,
 }: Readonly<SearchResultsProps>) {
   const results = useSearchActivities(query, filters);
   const count = useSearchCount(query, filters);
 
   if (results.isPending) {
-    return <LoadingView />;
+    return (
+      <ListStateView header={header}>
+        <LoadingView />
+      </ListStateView>
+    );
   }
 
   if (results.isError) {
     console.error("Search error:", results.error);
     return (
-      <ErrorView
-        message="The search could not be completed."
-        onRetry={() => {
-          void results.refetch();
-          void count.refetch();
-        }}
-      />
+      <ListStateView header={header}>
+        <ErrorView
+          message="The search could not be completed."
+          onRetry={() => {
+            void results.refetch();
+            void count.refetch();
+          }}
+        />
+      </ListStateView>
     );
   }
 
@@ -76,20 +87,23 @@ export function SearchResults({
         }
       }}
       ListHeaderComponent={
-        activities.length > 0 ? (
-          <>
-            {/* The AI summary only starts once there are results to summarize */}
-            <SearchSummary
-              filters={{ ...filters, query: query === "" ? null : query }}
-              enabled
-            />
-            {count.data === undefined ? null : (
-              <Text style={styles.count} accessibilityLiveRegion="polite">
-                {countLabel(count.data)}
-              </Text>
-            )}
-          </>
-        ) : undefined
+        <>
+          {header}
+          {activities.length > 0 ? (
+            <>
+              {/* The AI summary only starts once there are results to summarize */}
+              <SearchSummary
+                filters={{ ...filters, query: query === "" ? null : query }}
+                enabled
+              />
+              {count.data === undefined ? null : (
+                <Text style={styles.count} accessibilityLiveRegion="polite">
+                  {countLabel(count.data)}
+                </Text>
+              )}
+            </>
+          ) : null}
+        </>
       }
       ListEmptyComponent={
         <View style={styles.empty}>

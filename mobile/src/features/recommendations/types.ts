@@ -21,6 +21,8 @@ export interface MatchedProfile {
 export interface Recommendation {
   activity: Activity;
   matchedProfiles: MatchedProfile[];
+  // From the technical sheet; null when the provider has none
+  providerName: string | null;
   // From the (blurred) point of the family; null when the activity has none
   distanceMeters: number | null;
 }
