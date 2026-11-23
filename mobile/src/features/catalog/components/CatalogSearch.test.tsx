@@ -1,5 +1,6 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
-import { Text } from "react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
+import { createRef } from "react";
+import { Text, TextInput } from "react-native";
 
 import { NO_SEARCH_FILTERS } from "@/lib/searchFilters";
 import {
@@ -14,7 +15,11 @@ import {
   renderWithQuery,
   TEST_PROFILE_ID,
 } from "../testFixtures";
-import { CatalogSearch, SEARCH_DEBOUNCE_MS } from "./CatalogSearch";
+import {
+  CatalogSearch,
+  type CatalogSearchHandle,
+  SEARCH_DEBOUNCE_MS,
+} from "./CatalogSearch";
 
 // The tests never reach the database: every request is mocked below
 jest.mock("@/lib/supabase", () => ({ supabase: {} }));
@@ -616,5 +621,59 @@ describe("CatalogSearch list header", () => {
     expect(
       screen.getByRole("header", { name: "Discover activities" }),
     ).toBeTruthy();
+  });
+});
+
+describe("CatalogSearch handle", () => {
+  it("shows every activity for the age: clears the text and other filters", async () => {
+    mockSearch.mockResolvedValue([result("r1", "Piano lessons")]);
+    const ref = createRef<CatalogSearchHandle>();
+    const screen = await renderWithQuery(
+      <CatalogSearch
+        ref={ref}
+        onOpen={jest.fn()}
+        profileAges={{ ageMin: 8, ageMax: 8 }}
+      />,
+    );
+    await fireEvent.press(screen.getByRole("checkbox", { name: "Music" }));
+    await type(screen, "piano");
+    await waitFor(() =>
+      expect(mockSearch).toHaveBeenLastCalledWith(
+        "piano",
+        { ...NO_SEARCH_FILTERS, ageMin: 8, ageMax: 8, categories: ["music"] },
+        0,
+      ),
+    );
+
+    await act(async () => {
+      ref.current?.showAll();
+    });
+
+    expect(screen.getByLabelText("Search activities").props.value).toBe("");
+    await waitFor(() =>
+      expect(mockSearch).toHaveBeenLastCalledWith(
+        "",
+        { ...NO_SEARCH_FILTERS, ageMin: 8, ageMax: 8 },
+        0,
+      ),
+    );
+    expect(
+      screen.getByRole("button", { name: "Remove filter Age 8" }),
+    ).toBeTruthy();
+  });
+
+  it("puts the cursor in the search box", async () => {
+    const focus = jest.spyOn(
+      TextInput.prototype as unknown as { focus: () => void },
+      "focus",
+    );
+    const ref = createRef<CatalogSearchHandle>();
+    await renderWithQuery(<CatalogSearch ref={ref} onOpen={jest.fn()} />);
+
+    await act(async () => {
+      ref.current?.focusSearch();
+    });
+
+    expect(focus).toHaveBeenCalledTimes(1);
   });
 });

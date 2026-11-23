@@ -12,6 +12,18 @@ export default function RecommendationsScreen() {
       onOpen={(id) =>
         router.push({ pathname: "/activities/[id]", params: { id } })
       }
+      actions={{
+        setTown: () => router.push("/family-location"),
+        addProfile: () => router.push("/family-profile-form"),
+        completeProfile: () =>
+          router.push({
+            pathname: "/family-profile-form",
+            params: { id: activeProfile.activeProfileId ?? undefined },
+          }),
+        // The search and the list of every activity are on the home
+        searchActivities: () => router.back(),
+        seeAllActivities: () => router.back(),
+      }}
     />
   );
 }

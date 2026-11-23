@@ -8,6 +8,7 @@ import {
 import {
   makePage,
   makeRecommendation,
+  makeRecommendationActions,
 } from "@/test-utils/recommendationFixtures";
 
 import { fetchRecommendations } from "../api/fetchRecommendations";
@@ -21,10 +22,16 @@ const fetchMock = jest.mocked(fetchRecommendations);
 
 async function renderList() {
   const onOpen = jest.fn();
-  await render(<RecommendationsList profileId="profile-2" onOpen={onOpen} />, {
-    wrapper: createQueryClientWrapper(createTestQueryClient()),
-  });
-  return { onOpen };
+  const actions = makeRecommendationActions();
+  await render(
+    <RecommendationsList
+      profileId="profile-2"
+      onOpen={onOpen}
+      actions={actions}
+    />,
+    { wrapper: createQueryClientWrapper(createTestQueryClient()) },
+  );
+  return { onOpen, actions };
 }
 
 beforeEach(() => {
@@ -50,15 +57,29 @@ describe("RecommendationsList", () => {
     expect(await screen.findByText("Swimming for kids")).toBeOnTheScreen();
   });
 
-  it("shows a message when there are no recommendations", async () => {
+  it("says why there are none and offers the full list", async () => {
     fetchMock.mockResolvedValue(
       makePage({ status: "NO_MATCHES", recommendations: [] }),
     );
-    await renderList();
+    const { actions } = await renderList();
 
-    expect(
-      await screen.findByText("There are no recommendations yet."),
-    ).toBeOnTheScreen();
+    await fireEvent.press(
+      await screen.findByRole("button", { name: "See all activities" }),
+    );
+    expect(actions.seeAllActivities).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("recommendations-list")).not.toBeOnTheScreen();
+  });
+
+  it("leads to set the town when it is missing", async () => {
+    fetchMock.mockResolvedValue(
+      makePage({ status: "NO_CITY", recommendations: [] }),
+    );
+    const { actions } = await renderList();
+
+    await fireEvent.press(
+      await screen.findByRole("button", { name: "Set your town" }),
+    );
+    expect(actions.setTown).toHaveBeenCalledTimes(1);
   });
 
   it("shows the profiles each activity fits and opens it", async () => {
